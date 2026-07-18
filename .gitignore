@@ -1,0 +1,32 @@
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# Java / Gradle
+.gradle/
+build/
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+
+# Docker / local runtime
+*.pid
+tmp/
+

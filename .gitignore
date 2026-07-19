@@ -21,6 +21,10 @@ coverage/
 build/
 target/
 *.class
+*.jar
+*.war
+*.ear
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/
@@ -29,4 +33,3 @@ target/
 # Docker / local runtime
 *.pid
 tmp/
-

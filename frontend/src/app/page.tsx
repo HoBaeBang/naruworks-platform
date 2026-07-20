@@ -1,35 +1,11 @@
-const projects = [
-  {
-    name: "NaruWorks Platform",
-    description: "개인 홈서버 위에서 여러 서비스를 운영하기 위한 플랫폼",
-    status: "Phase 1",
-  },
-  {
-    name: "StablePay Network",
-    description: "결제, 원장, 정산 도메인을 검증하는 기준 구현",
-    status: "External Module",
-  },
-];
+import { getProjects, getServices } from "@/lib/catalog-api";
 
-const services = [
-  {
-    name: "Project Hub",
-    description: "프로젝트와 포트폴리오를 한곳에서 보여주는 공개 허브",
-    status: "Planning",
-  },
-  {
-    name: "Service Request",
-    description: "지인이나 사용자가 필요한 서비스를 요청하는 접수 흐름",
-    status: "Next",
-  },
-  {
-    name: "Admin Dashboard",
-    description: "서비스 상태와 요청을 관리하는 관리자 화면",
-    status: "Skeleton",
-  },
-];
+export default async function Home() {
+  const [projects, services] = await Promise.all([
+    getProjects(),
+    getServices(),
+  ]);
 
-export default function Home() {
   return (
       <main className="min-h-screen bg-zinc-950 text-zinc-50">
         <section className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16 sm:px-8 lg:px-10">
@@ -79,6 +55,7 @@ function CatalogSection({
                         }: {
   title: string;
   items: {
+    slug: string;
     name: string;
     description: string;
     status: string;
@@ -91,7 +68,7 @@ function CatalogSection({
         <div className="grid gap-3">
           {items.map((item) => (
               <article
-                  key={item.name}
+                  key={item.slug}
                   className="rounded-lg border border-zinc-800 bg-zinc-900 p-5"
               >
                 <div className="flex items-start justify-between gap-4">

@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':naru-core')
+    implementation project(':naru-domain')
+}

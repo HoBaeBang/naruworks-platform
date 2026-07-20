@@ -21,6 +21,54 @@ scripts/deploy.sh
 cd /Users/banghobae/Documents/2030-korea-stablepay/naruworks-platform
 ```
 
+## Local Development
+
+일상적인 개발에서는 PostgreSQL만 Docker로 실행하고, backend는 IntelliJ에서 직접 실행하는 방식을 우선 사용합니다.
+
+### PostgreSQL만 실행
+
+```bash
+docker compose up -d postgres
+```
+
+### Backend 직접 실행
+
+IntelliJ에서 `NaruApiApplication`을 실행합니다.
+
+Run Configuration의 VM options 또는 Active profiles에 아래 profile을 설정합니다.
+
+```text
+-Dspring.profiles.active=local
+```
+
+`local` profile은 아래 설정을 사용합니다.
+
+```text
+backend:  http://localhost:8081
+postgres: localhost:5432
+```
+
+터미널에서 직접 실행하려면:
+
+```bash
+cd backend
+./gradlew :naru-api:bootRun --args='--spring.profiles.active=local'
+```
+
+### Frontend 직접 실행
+
+```bash
+cd frontend
+npm run dev
+```
+
+기본 접속 주소:
+
+```text
+frontend: http://localhost:3000
+backend:  http://localhost:8081
+```
+
 ### 전체 실행
 
 이미지를 빌드하고 frontend, backend, PostgreSQL을 함께 실행합니다.
@@ -41,6 +89,12 @@ docker compose up --build -d
 frontend: http://localhost:3000
 backend:  http://localhost:8081
 postgres: localhost:5432
+```
+
+전체 Docker Compose 실행에서는 backend 컨테이너 내부 port는 `8080`이고, Mac에서는 `8081`로 접근합니다.
+
+```text
+host localhost:8081 -> backend container:8080
 ```
 
 ### 상태 확인
@@ -130,6 +184,8 @@ lsof -i :8081
 ```
 
 해당 프로세스를 종료하거나, 개발 서버 터미널에서 `Ctrl+C`를 누른 뒤 다시 실행합니다.
+
+통합 Docker Compose를 실행할 때는 기존 `npm run dev` 또는 IntelliJ backend 실행을 종료한 뒤 실행합니다.
 
 ### PostgreSQL 데이터 초기화
 

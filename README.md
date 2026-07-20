@@ -101,3 +101,11 @@ docs/프로젝트_운영_메모리.md
 ```
 
 그 다음 README, architecture, roadmap 문서를 확인하고 현재 Phase의 작은 단위 작업부터 진행합니다.
+
+## Local Runtime
+
+Docker Compose 기반 로컬 실행과 재시작 절차는 아래 문서에 정리합니다.
+
+```text
+infra/README.md
+```

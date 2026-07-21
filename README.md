@@ -109,3 +109,7 @@ Docker Compose 기반 로컬 실행과 재시작 절차는 아래 문서에 정�
 ```text
 infra/README.md
 ```
+
+## Test
+
+백엔드 전체 테스트는 `backend` 디렉터리에서 `./gradlew test`로 실행합니다.

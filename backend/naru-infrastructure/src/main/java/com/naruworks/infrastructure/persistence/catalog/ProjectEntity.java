@@ -38,4 +38,20 @@ public class ProjectEntity {
     public Project toDomain() {
         return Project.of(slug, name, description, status);
     }
+
+    public static ProjectEntity of(
+            String slug,
+            String name,
+            String description,
+            ProjectStatus status,
+            int displayOrder
+    ) {
+        ProjectEntity entity = new ProjectEntity();
+        entity.slug = slug;
+        entity.name = name;
+        entity.description = description;
+        entity.status = status;
+        entity.displayOrder = displayOrder;
+        return entity;
+    }
 }

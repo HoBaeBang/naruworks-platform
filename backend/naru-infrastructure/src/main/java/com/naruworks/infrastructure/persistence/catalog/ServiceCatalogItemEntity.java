@@ -38,4 +38,20 @@ public class ServiceCatalogItemEntity {
     public ServiceCatalogItem toDomain() {
         return ServiceCatalogItem.of(slug, name, description, status);
     }
+
+    public static ServiceCatalogItemEntity of(
+            String slug,
+            String name,
+            String description,
+            ServiceStatus status,
+            int displayOrder
+    ) {
+        ServiceCatalogItemEntity entity = new ServiceCatalogItemEntity();
+        entity.slug = slug;
+        entity.name = name;
+        entity.description = description;
+        entity.status = status;
+        entity.displayOrder = displayOrder;
+        return entity;
+    }
 }

@@ -1,9 +1,11 @@
+import Link from "next/link";
 import type { ServiceCatalogItem } from "@/types/catalog";
 import { formatStatus, getServiceIcon } from "./status-label";
 
 export function ServiceCard({ service }: { service: ServiceCatalogItem }) {
   const isFeatured = service.slug === "naru-calendar";
   const actionLabel = isFeatured ? "첫 서비스" : "준비 예정";
+  const href = getServiceHref(service.slug);
 
   return (
     <article
@@ -30,15 +32,28 @@ export function ServiceCard({ service }: { service: ServiceCatalogItem }) {
         </p>
       </div>
 
-      <div
-        className={[
-          "mt-6 flex items-center justify-between text-sm font-bold",
-          isFeatured ? "text-[var(--primary-strong)]" : "text-[var(--muted)]",
-        ].join(" ")}
-      >
-        <span>{actionLabel}</span>
-        <span aria-hidden="true">-&gt;</span>
-      </div>
+      {href ? (
+          <Link
+              href={href}
+              className="mt-6 flex items-center justify-between text-sm font-bold text-[var(--primary-strong)]"
+          >
+            <span>{actionLabel}</span>
+            <span aria-hidden="true">-&gt;</span>
+          </Link>
+      ) : (
+          <div className="mt-6 flex items-center justify-between text-sm font-bold text-[var(--muted)]">
+            <span>{actionLabel}</span>
+            <span aria-hidden="true">-&gt;</span>
+          </div>
+      )}
     </article>
   );
+}
+
+function getServiceHref(slug: string) {
+  const hrefs: Record<string, string> = {
+    "naru-calendar": "/calendar",
+  };
+
+  return hrefs[slug];
 }

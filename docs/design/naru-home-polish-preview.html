@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Naru Home Polish Preview</title>
+  <style>
+    :root {
+      --background: #f8fbf8;
+      --foreground: #15201d;
+      --primary: #20b977;
+      --primary-strong: #087a5f;
+      --primary-soft: #e1faf1;
+      --mint-highlight: #a8f5df;
+      --surface: rgba(255, 255, 255, .82);
+      --border: rgba(21, 32, 29, .1);
+      --muted: rgba(21, 32, 29, .68);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #101816;
+        --foreground: #eff8f2;
+        --primary: #57df9a;
+        --primary-strong: #a8f5df;
+        --primary-soft: rgba(109, 238, 194, .15);
+        --mint-highlight: #a8f5df;
+        --surface: rgba(255, 255, 255, .056);
+        --border: rgba(239, 248, 242, .1);
+        --muted: rgba(239, 248, 242, .68);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 84% 12%, rgba(168, 245, 223, .36), transparent 28%),
+        radial-gradient(circle at 12% 86%, rgba(32, 185, 119, .16), transparent 30%),
+        var(--background);
+    }
+
+    header,
+    main {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #062b20;
+      font-weight: 900;
+    }
+
+    nav {
+      display: flex;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: .92fr 1.08fr;
+      gap: 48px;
+      min-height: calc(100vh - 96px);
+      align-items: center;
+      padding: 28px 0 72px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 24px 0 0;
+      max-width: 540px;
+      font-size: clamp(44px, 6vw, 76px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .copy {
+      margin: 24px 0 0;
+      max-width: 540px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .primary-action,
+    .secondary-action {
+      display: inline-flex;
+      align-items: center;
+      height: 44px;
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .primary-action {
+      background: var(--primary);
+      color: #062b20;
+      box-shadow: 0 16px 38px rgba(32, 185, 119, .22);
+    }
+
+    .secondary-action {
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      background: var(--surface);
+    }
+
+    .launcher-shell {
+      position: relative;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .38);
+      box-shadow: 0 28px 80px rgba(20, 80, 54, .1);
+      backdrop-filter: blur(18px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .launcher-shell {
+        background: rgba(255, 255, 255, .035);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, .24);
+      }
+    }
+
+    .launcher-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 8px 16px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      min-height: 172px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--surface);
+    }
+
+    .card.featured {
+      border-color: var(--primary);
+      background:
+        linear-gradient(135deg, var(--primary-soft), rgba(255, 255, 255, .62));
+      box-shadow: inset 0 0 0 1px rgba(32, 185, 119, .18);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .card.featured {
+        background:
+          linear-gradient(135deg, rgba(87, 223, 154, .16), rgba(255, 255, 255, .055));
+      }
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .icon {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--mint-highlight);
+      color: #087a5f;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .status {
+      color: var(--primary-strong);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .card h2 {
+      margin: 22px 0 0;
+      font-size: 19px;
+      line-height: 1.25;
+    }
+
+    .card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .card-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 22px;
+      color: var(--primary-strong);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .card:not(.featured) .card-action {
+      color: var(--muted);
+    }
+
+    .featured-band {
+      margin-top: -32px;
+      padding-bottom: 84px;
+    }
+
+    .feature-panel {
+      display: grid;
+      grid-template-columns: .72fr 1.28fr;
+      gap: 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 30px;
+    }
+
+    .feature-panel small {
+      color: var(--primary-strong);
+      font-weight: 900;
+    }
+
+    .feature-panel h2 {
+      margin: 12px 0 0;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    .feature-panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      main {
+        width: min(100% - 28px, 1120px);
+      }
+
+      nav {
+        gap: 12px;
+        font-size: 13px;
+      }
+
+      .hero,
+      .feature-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 24px;
+      }
+
+      .services {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">N</span>Naru</div>
+    <nav><span>서비스</span><span>캘린더</span><span>소개</span></nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Naru 서비스 홈</span>
+        <h1>매일 쓰는 도구를 조용하게 연결합니다.</h1>
+        <p class="copy">일정, 파일, 문서를 하나씩 직접 만들고 운영하는 개인 서비스 공간입니다. 필요한 도구를 Naru 안에서 차분하게 확장합니다.</p>
+        <div class="hero-actions">
+          <a class="primary-action" href="#">캘린더 준비 현황 보기</a>
+          <a class="secondary-action" href="#">서비스 둘러보기</a>
+        </div>
+      </div>
+
+      <section class="launcher-shell">
+        <div class="launcher-top">
+          <span>Service Launcher</span>
+          <span>4 services</span>
+        </div>
+        <div class="services">
+          <article class="card featured">
+            <div>
+              <div class="card-top"><span class="icon">C</span><span class="status">준비 중</span></div>
+              <h2>Naru Calendar</h2>
+              <p>일정을 관리하고 이후 Google Calendar와 동기화합니다.</p>
+            </div>
+            <div class="card-action"><span>첫 서비스</span><span>→</span></div>
+          </article>
+          <article class="card">
+            <div>
+              <div class="card-top"><span class="icon">D</span><span class="status">예정</span></div>
+              <h2>Naru Drive</h2>
+              <p>개인 파일을 저장하고 관리하는 공간입니다.</p>
+            </div>
+            <div class="card-action"><span>준비 예정</span><span>→</span></div>
+          </article>
+          <article class="card">
+            <div>
+              <div class="card-top"><span class="icon">W</span><span class="status">예정</span></div>
+              <h2>Naru Docs</h2>
+              <p>문서 작성과 편집을 위한 작업 공간입니다.</p>
+            </div>
+            <div class="card-action"><span>준비 예정</span><span>→</span></div>
+          </article>
+          <article class="card">
+            <div>
+              <div class="card-top"><span class="icon">S</span><span class="status">예정</span></div>
+              <h2>Naru Sheets</h2>
+              <p>데이터를 정리하고 계산하는 스프레드시트입니다.</p>
+            </div>
+            <div class="card-action"><span>준비 예정</span><span>→</span></div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="featured-band">
+      <div class="feature-panel">
+        <div>
+          <small>첫 번째 서비스</small>
+          <h2>Naru Calendar</h2>
+        </div>
+        <p>자체 일정 관리 기능을 먼저 만들고, 이후 Google Calendar와 동기화할 수 있는 개인 캘린더 서비스로 확장합니다. 홈에서는 Calendar를 부드럽게 강조하되, Drive와 Docs가 추가되어도 균형이 깨지지 않도록 유지합니다.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

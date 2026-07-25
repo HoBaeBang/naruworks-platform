@@ -4,7 +4,6 @@ import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventEntity;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventJpaRepository;
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,5 +95,204 @@ class CalendarEventApiIntegrationTest {
                 .andExpect(jsonPath("$[1].startAt").value("2026-07-31T23:00:00"))
                 .andExpect(jsonPath("$[1].location").value("카페"))
                 .andExpect(jsonPath("$[2]").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 생성 API는 일정을 저장하고 생성된 일정을 반환한다")
+    void createCalendarEvent() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                              "title": "운동",
+                              "description": "저녁 러닝",
+                              "startAt": "2026-07-24T19:00:00",
+                              "endAt": "2026-07-24T20:00:00",
+                              "allDay": false,
+                              "location": "한강공원",
+                              "color": "#20b977",
+                              "recurrenceRule": "NONE",
+                              "recurrenceEndAt": null
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("운동"))
+                .andExpect(jsonPath("$.description").value("저녁 러닝"))
+                .andExpect(jsonPath("$.startAt").value("2026-07-24T19:00:00"))
+                .andExpect(jsonPath("$.endAt").value("2026-07-24T20:00:00"))
+                .andExpect(jsonPath("$.allDay").value(false))
+                .andExpect(jsonPath("$.location").value("한강공원"))
+                .andExpect(jsonPath("$.color").value("#20b977"))
+                .andExpect(jsonPath("$.recurrenceRule").value("NONE"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        assertThat(calendarEventJpaRepository.findAll())
+                .extracting(CalendarEventEntity::getTitle)
+                .contains("운동");
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 생성 API는 제목이 비어 있으면 400을 반환한다")
+    void createCalendarEventWithBlankTitle() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                        {
+                          "title": "",
+                          "description": "저녁 러닝",
+                          "startAt": "2026-07-24T19:00:00",
+                          "endAt": "2026-07-24T20:00:00",
+                          "allDay": false,
+                          "location": "한강공원",
+                          "color": "#20b977",
+                          "recurrenceRule": "NONE",
+                          "recurrenceEndAt": null
+                        }
+                        """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 생성 API는 시작 일시가 종료 일시보다 늦으면 400을 반환한다")
+    void createCalendarEventWithInvalidPeriod() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                        {
+                          "title": "운동",
+                          "description": "저녁 러닝",
+                          "startAt": "2026-07-24T21:00:00",
+                          "endAt": "2026-07-24T20:00:00",
+                          "allDay": false,
+                          "location": "한강공원",
+                          "color": "#20b977",
+                          "recurrenceRule": "NONE",
+                          "recurrenceEndAt": null
+                        }
+                        """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 단건 조회 API는 id에 해당하는 일정을 반환한다")
+    void getCalendarEvent() throws Exception {
+        CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                "단건 조회 일정",
+                "단건 조회 테스트",
+                LocalDateTime.of(2026, 7, 24, 9, 0),
+                LocalDateTime.of(2026, 7, 24, 10, 0),
+                false,
+                "집",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", event.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(event.getId()))
+                .andExpect(jsonPath("$.title").value("단건 조회 일정"))
+                .andExpect(jsonPath("$.description").value("단건 조회 테스트"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 단건 조회 API는 일정이 없으면 404를 반환한다")
+    void getCalendarEventNotFound() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", 999999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 수정 API는 일정을 수정하고 수정된 일정을 반환한다")
+    void updateCalendarEvent() throws Exception {
+        CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                "수정 전 일정",
+                "수정 전 설명",
+                LocalDateTime.of(2026, 7, 24, 9, 0),
+                LocalDateTime.of(2026, 7, 24, 10, 0),
+                false,
+                "집",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/calendar/events/{id}", event.getId())
+                        .contentType("application/json")
+                        .content("""
+                        {
+                          "title": "수정된 일정",
+                          "description": "수정된 설명",
+                          "startAt": "2026-07-24T11:00:00",
+                          "endAt": "2026-07-24T12:00:00",
+                          "allDay": false,
+                          "location": "카페",
+                          "color": "#57df9a",
+                          "recurrenceRule": "NONE",
+                          "recurrenceEndAt": null
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(event.getId()))
+                .andExpect(jsonPath("$.title").value("수정된 일정"))
+                .andExpect(jsonPath("$.description").value("수정된 설명"))
+                .andExpect(jsonPath("$.location").value("카페"))
+                .andExpect(jsonPath("$.color").value("#57df9a"));
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 수정 API는 일정이 없으면 404를 반환한다")
+    void updateCalendarEventNotFound() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/calendar/events/{id}", 999999L)
+                        .contentType("application/json")
+                        .content("""
+                        {
+                          "title": "수정된 일정",
+                          "description": "수정된 설명",
+                          "startAt": "2026-07-24T11:00:00",
+                          "endAt": "2026-07-24T12:00:00",
+                          "allDay": false,
+                          "location": "카페",
+                          "color": "#57df9a",
+                          "recurrenceRule": "NONE",
+                          "recurrenceEndAt": null
+                        }
+                        """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 삭제 API는 일정을 삭제하고 204를 반환한다")
+    void deleteCalendarEvent() throws Exception {
+        CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                "삭제할 일정",
+                "삭제 테스트",
+                LocalDateTime.of(2026, 7, 24, 9, 0),
+                LocalDateTime.of(2026, 7, 24, 10, 0),
+                false,
+                "집",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", event.getId()))
+                .andExpect(status().isNoContent());
+
+        assertThat(calendarEventJpaRepository.findById(event.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 삭제 API는 일정이 없으면 404를 반환한다")
+    void deleteCalendarEventNotFound() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", 999999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
     }
 }

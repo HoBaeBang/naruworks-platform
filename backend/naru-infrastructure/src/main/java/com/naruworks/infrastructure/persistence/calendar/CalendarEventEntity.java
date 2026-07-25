@@ -112,4 +112,33 @@ public class CalendarEventEntity {
         entity.updatedAt = LocalDateTime.now();
         return entity;
     }
+
+    public static CalendarEventEntity from(CalendarEvent event) {
+        return CalendarEventEntity.of(
+                event.title(),
+                event.description(),
+                event.startAt(),
+                event.endAt(),
+                event.allDay(),
+                event.location(),
+                event.color(),
+                event.recurrenceRule(),
+                event.recurrenceEndAt(),
+                event.status()
+        );
+    }
+
+    public void update(CalendarEvent event) {
+        this.title = event.title();
+        this.description = event.description();
+        this.startAt = event.startAt();
+        this.endAt = event.endAt();
+        this.allDay = event.allDay();
+        this.location = event.location();
+        this.color = event.color();
+        this.recurrenceRule = event.recurrenceRule();
+        this.recurrenceEndAt = event.recurrenceEndAt();
+        this.status = event.status();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

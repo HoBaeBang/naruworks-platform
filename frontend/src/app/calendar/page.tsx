@@ -81,28 +81,6 @@ export default async function CalendarPage({
                     events={events}
                     selectedDate={selectedDate}
                 />
-                {selectedDate && (
-                    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-sm font-bold text-[var(--primary-strong)]">
-                                    선택한 날짜
-                                </p>
-                                <h2 className="mt-2 text-2xl font-semibold">{selectedDate}</h2>
-                                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                                    이 날짜에 새 일정을 추가하거나 기존 일정을 확인하는 영역으로 확장합니다.
-                                </p>
-                            </div>
-
-                            <Link
-                                href={`/calendar?year=${year}&month=${month}&date=${selectedDate}&mode=create`}
-                                className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-bold text-[#062b20] shadow-[0_14px_32px_rgba(32,185,119,0.20)]"
-                            >
-                                새 일정
-                            </Link>
-                        </div>
-                    </section>
-                )}
                 {selectedDate && mode === "create" && (
                     <CalendarEventCreateModal
                         selectedDate={selectedDate}

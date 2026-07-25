@@ -35,26 +35,31 @@ export function CalendarMonthView({
                         <article
                             key={day.date.toISOString()}
                             className={[
-                                "min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)]",
+                                "relative min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)]",
                                 day.isCurrentMonth ? "" : "opacity-35",
                                 selectedDate === formatDate(day.date) ? "bg-[var(--primary-soft)]" : "",
                             ].join(" ")}
                         >
-                            <div className="flex items-center justify-between">
-                                <Link
-                                    href={`/calendar?year=${day.date.getFullYear()}&month=${day.date.getMonth() + 1}&date=${formatDate(day.date)}`}
-                                    className={[
-                                        "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
-                                        day.isToday
-                                            ? "bg-[var(--primary)] text-[#062b20]"
-                                            : "text-[var(--foreground)]",
-                                    ].join(" ")}
+                            <Link
+                                href={`/calendar?year=${day.date.getFullYear()}&month=${day.date.getMonth() + 1}&date=${formatDate(day.date)}&mode=create`}
+                                aria-label={`${formatDate(day.date)} 새 일정 만들기`}
+                                className="absolute inset-0 z-0"
+                            />
+
+                            <div className="pointer-events-none relative z-10 flex items-center justify-between">
+                                <span
+                                  className={[
+                                      "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
+                                      day.isToday
+                                          ? "bg-[var(--primary)] text-[#062b20]"
+                                          : "text-[var(--foreground)]",
+                                  ].join(" ")}
                                 >
                                     {day.date.getDate()}
-                                </Link>
+                                </span>
                             </div>
 
-                            <div className="mt-2 flex flex-col gap-1">
+                            <div className="relative z-10 mt-2 flex flex-col gap-1">
                                 {dayEvents.slice(0, 3).map((event) => (
                                     <Link
                                         key={event.id}

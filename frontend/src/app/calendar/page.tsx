@@ -2,13 +2,21 @@ import Link from "next/link";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { getCalendarEvents } from "@/lib/calendar-api";
+import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
 
 export default async function CalendarPage({
                                                searchParams,
                                            }: {
-    searchParams: Promise<{ year?: string; month?: string; date?: string; mode?: string }>;
+    searchParams: Promise<{
+      year?: string;
+      month?: string;
+      date?: string;
+      mode?: string;
+      eventId?: string;
+}>;
 }) {
     const params = await searchParams;
+    const selectedEventId = params.eventId ? Number(params.eventId) : null;
     const selectedDate = params.date;
     const mode = params.mode;
     const today = new Date();
@@ -20,6 +28,9 @@ export default async function CalendarPage({
     const to = getNextMonthStart(year, month);
 
     const events = await getCalendarEvents(from, to);
+    const selectedEvent = selectedEventId
+      ? events.find((event) => event.id === selectedEventId)
+      : null;
 
     const previousMonth = getAdjacentMonth(year, month, -1);
     const nextMonth = getAdjacentMonth(year, month, 1);
@@ -94,6 +105,15 @@ export default async function CalendarPage({
                 )}
                 {selectedDate && mode === "create" && (
                     <CalendarEventCreateModal
+                        selectedDate={selectedDate}
+                        year={year}
+                        month={month}
+                    />
+                )}
+
+                {selectedDate && mode === "edit" && selectedEvent && (
+                    <CalendarEventEditModal
+                        event={selectedEvent}
                         selectedDate={selectedDate}
                         year={year}
                         month={month}

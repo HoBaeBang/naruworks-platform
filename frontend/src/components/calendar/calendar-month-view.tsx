@@ -31,11 +31,9 @@ export function CalendarMonthView({
             <div className="grid grid-cols-7">
                 {days.map((day) => {
                     const dayEvents = getEventsForDay(events, day.date);
-
                     return (
-                        <Link
+                        <article
                             key={day.date.toISOString()}
-                            href={`/calendar?year=${day.date.getFullYear()}&month=${day.date.getMonth() + 1}&date=${formatDate(day.date)}`}
                             className={[
                                 "min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)]",
                                 day.isCurrentMonth ? "" : "opacity-35",
@@ -43,31 +41,33 @@ export function CalendarMonthView({
                             ].join(" ")}
                         >
                             <div className="flex items-center justify-between">
-                <span
-                    className={[
-                        "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
-                        day.isToday
-                            ? "bg-[var(--primary)] text-[#062b20]"
-                            : "text-[var(--foreground)]",
-                    ].join(" ")}
-                >
-                  {day.date.getDate()}
-                </span>
+                                <Link
+                                    href={`/calendar?year=${day.date.getFullYear()}&month=${day.date.getMonth() + 1}&date=${formatDate(day.date)}`}
+                                    className={[
+                                        "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
+                                        day.isToday
+                                            ? "bg-[var(--primary)] text-[#062b20]"
+                                            : "text-[var(--foreground)]",
+                                    ].join(" ")}
+                                >
+                                    {day.date.getDate()}
+                                </Link>
                             </div>
 
                             <div className="mt-2 flex flex-col gap-1">
                                 {dayEvents.slice(0, 3).map((event) => (
-                                    <div
+                                    <Link
                                         key={event.id}
+                                        href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&eventId=${event.id}&mode=edit`}
                                         className="truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"
                                         style={{ backgroundColor: event.color }}
                                         title={event.title}
                                     >
                                         {event.title}
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
-                        </Link>
+                        </article>
                     );
                 })}
             </div>

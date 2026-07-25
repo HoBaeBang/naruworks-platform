@@ -23,3 +23,5 @@ export type CalendarEventCreateRequest = {
     recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY";
     recurrenceEndAt: string | null;
 };
+
+export type CalendarEventUpdateRequest = CalendarEventCreateRequest;

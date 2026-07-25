@@ -1,6 +1,7 @@
 import type {
-    CalendarEvent,
-    CalendarEventCreateRequest,
+  CalendarEvent,
+  CalendarEventCreateRequest,
+  CalendarEventUpdateRequest,
 } from "@/types/calendar";
 
 const API_BASE_URL =
@@ -46,4 +47,33 @@ export async function createCalendarEvent(
     }
 
     return response.json() as Promise<CalendarEvent>;
+}
+
+export async function updateCalendarEvent(
+  id: number,
+  request: CalendarEventUpdateRequest,
+): Promise<CalendarEvent> {
+  const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error("Calendar event update failed");
+  }
+
+  return response.json() as Promise<CalendarEvent>;
+}
+
+export async function deleteCalendarEvent(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Calendar event delete failed");
+  }
 }

@@ -27,6 +27,9 @@ services:
     container_name: naruworks-backend
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      POSTGRES_DB: ${POSTGRES_DB:-naruworks_local}
+      POSTGRES_USER: ${POSTGRES_USER:-naruworks_local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_password}
     ports:
       - "8081:8080"
     depends_on:

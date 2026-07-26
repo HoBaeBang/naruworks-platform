@@ -5,10 +5,12 @@ import type {
 } from "@/types/calendar";
 
 const API_BASE_URL =
-    process.env.CALENDAR_API_BASE_URL ??
-    process.env.CATALOG_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    "http://localhost:8081";
+  typeof window === "undefined"
+    ? process.env.CALENDAR_API_BASE_URL ??
+      process.env.CATALOG_API_BASE_URL ??
+      process.env.NEXT_PUBLIC_API_BASE_URL ??
+      "http://backend:8080"
+    : "";
 
 async function fetchJson<T>(path: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${path}`, {

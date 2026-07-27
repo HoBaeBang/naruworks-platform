@@ -1,4 +1,4 @@
-ㅊ# Cloudflared Docker Compose Runtime
+# Cloudflared Docker Compose Runtime
 
 ## 목적
 
@@ -43,12 +43,13 @@ http://localhost:3000
 ```
 
 하지만 `cloudflared`를 Docker Compose 안에서 실행하면 `localhost`는 cloudflared 컨테이너 자신을 의미한다.
-따라서 frontend 컨테이너로 연결하려면 Docker Compose 서비스 이름을 사용해야 한다.
+따라서 다른 컨테이너로 연결하려면 Docker Compose 서비스 이름을 사용해야 한다.
 
 변경 후 설정:
 
 ```text
 app.naruworks.com -> http://frontend:3000
+api.naruworks.com -> http://backend:8080
 ```
 
 Cloudflare 설정 경로:
@@ -62,6 +63,13 @@ Cloudflare Dashboard
 -> Public Hostname
 -> app.naruworks.com
 -> Service URL을 http://frontend:3000 으로 변경
+```
+
+인증/인가 도입 이후에는 backend API를 독립 진입점으로 운영하기 위해 Public Hostname을 하나 더 추가한다.
+
+```text
+Public Hostname: api.naruworks.com
+Service URL: http://backend:8080
 ```
 
 ## 실행 방법
@@ -99,6 +107,7 @@ Cloudflare Zero Trust에서 tunnel 상태가 `Healthy`인지 확인한다.
 ```text
 https://app.naruworks.com
 https://app.naruworks.com/calendar
+https://api.naruworks.com/api/health
 ```
 
 Calendar에서는 생성, 수정, 삭제까지 확인한다.
@@ -108,6 +117,7 @@ Calendar에서는 생성, 수정, 삭제까지 확인한다.
 `CLOUDFLARED_TUNNEL_TOKEN`이 비어 있거나 잘못되면 cloudflared 컨테이너가 정상 연결되지 않는다.
 
 Cloudflare Public Hostname이 여전히 `http://localhost:3000`이면 cloudflared 컨테이너 기준의 localhost를 바라보게 되어 접속이 실패할 수 있다.
+compose 방식에서는 `frontend:3000`, `backend:8080`처럼 Docker Compose 서비스 이름을 사용한다.
 
 운영 DB 데이터가 생긴 뒤에는 아래 명령을 조심한다.
 

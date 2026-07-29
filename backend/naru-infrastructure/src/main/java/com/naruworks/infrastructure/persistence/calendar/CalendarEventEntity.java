@@ -115,30 +115,30 @@ public class CalendarEventEntity {
 
     public static CalendarEventEntity from(CalendarEvent event) {
         return CalendarEventEntity.of(
-                event.title(),
-                event.description(),
-                event.startAt(),
-                event.endAt(),
-                event.allDay(),
-                event.location(),
-                event.color(),
-                event.recurrenceRule(),
-                event.recurrenceEndAt(),
-                event.status()
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.isAllDay(),
+                event.getLocation(),
+                event.getColor(),
+                event.getRecurrenceRule(),
+                event.getRecurrenceEndAt(),
+                event.getStatus()
         );
     }
 
     public void update(CalendarEvent event) {
-        this.title = event.title();
-        this.description = event.description();
-        this.startAt = event.startAt();
-        this.endAt = event.endAt();
-        this.allDay = event.allDay();
-        this.location = event.location();
-        this.color = event.color();
-        this.recurrenceRule = event.recurrenceRule();
-        this.recurrenceEndAt = event.recurrenceEndAt();
-        this.status = event.status();
+        this.title = event.getTitle();
+        this.description = event.getDescription();
+        this.startAt = event.getStartAt();
+        this.endAt = event.getEndAt();
+        this.allDay = event.isAllDay();
+        this.location = event.getLocation();
+        this.color = event.getColor();
+        this.recurrenceRule = event.getRecurrenceRule();
+        this.recurrenceEndAt = event.getRecurrenceEndAt();
+        this.status = event.getStatus();
         this.updatedAt = LocalDateTime.now();
     }
 }

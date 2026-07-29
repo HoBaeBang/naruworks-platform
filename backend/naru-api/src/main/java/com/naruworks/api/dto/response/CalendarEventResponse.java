@@ -22,17 +22,17 @@ public record CalendarEventResponse(
 
     public static CalendarEventResponse from(CalendarEvent event) {
         return new CalendarEventResponse(
-                event.id(),
-                event.title(),
-                event.description(),
-                event.startAt(),
-                event.endAt(),
-                event.allDay(),
-                event.location(),
-                event.color(),
-                event.recurrenceRule(),
-                event.recurrenceEndAt(),
-                event.status()
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.isAllDay(),
+                event.getLocation(),
+                event.getColor(),
+                event.getRecurrenceRule(),
+                event.getRecurrenceEndAt(),
+                event.getStatus()
         );
     }
 }

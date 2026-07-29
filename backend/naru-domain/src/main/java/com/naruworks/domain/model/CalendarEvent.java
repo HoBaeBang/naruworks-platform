@@ -2,22 +2,26 @@ package com.naruworks.domain.model;
 
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
-
 import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Getter;
 
-public record CalendarEvent (
-        Long id,
-        String title,
-        String description,
-        LocalDateTime startAt,
-        LocalDateTime endAt,
-        boolean allDay,
-        String location,
-        String color,
-        CalendarEventRecurrenceRule recurrenceRule,
-        LocalDateTime recurrenceEndAt,
-        CalendarEventStatus status
-){
+@Getter
+@Builder
+public class CalendarEvent {
+
+    private final Long id;
+    private final String title;
+    private final String description;
+    private final LocalDateTime startAt;
+    private final LocalDateTime endAt;
+    private final boolean allDay;
+    private final String location;
+    private final String color;
+    private final CalendarEventRecurrenceRule recurrenceRule;
+    private final LocalDateTime recurrenceEndAt;
+    private final CalendarEventStatus status;
+
     public static CalendarEvent of(
             Long id,
             String title,
@@ -31,18 +35,18 @@ public record CalendarEvent (
             LocalDateTime recurrenceEndAt,
             CalendarEventStatus status
     ) {
-        return new CalendarEvent(
-                id,
-                title,
-                description,
-                startAt,
-                endAt,
-                allDay,
-                location,
-                color,
-                recurrenceRule,
-                recurrenceEndAt,
-                status
-        );
+        return CalendarEvent.builder()
+                .id(id)
+                .title(title)
+                .description(description)
+                .startAt(startAt)
+                .endAt(endAt)
+                .allDay(allDay)
+                .location(location)
+                .color(color)
+                .recurrenceRule(recurrenceRule)
+                .recurrenceEndAt(recurrenceEndAt)
+                .status(status)
+                .build();
     }
 }

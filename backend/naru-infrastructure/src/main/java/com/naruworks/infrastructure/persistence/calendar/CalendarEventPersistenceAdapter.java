@@ -40,7 +40,7 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
 
     @Override
     public CalendarEvent update(CalendarEvent event) {
-        CalendarEventEntity entity = calendarEventJpaRepository.findById(event.id())
+        CalendarEventEntity entity = calendarEventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
 
         entity.update(event);

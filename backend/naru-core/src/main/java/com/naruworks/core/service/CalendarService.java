@@ -27,15 +27,15 @@ public class CalendarService {
 
         CalendarEvent newEvent = CalendarEvent.of(
                 null,
-                event.title(),
-                event.description(),
-                event.startAt(),
-                event.endAt(),
-                event.allDay(),
-                event.location(),
-                event.color(),
-                event.recurrenceRule(),
-                event.recurrenceEndAt(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.isAllDay(),
+                event.getLocation(),
+                event.getColor(),
+                event.getRecurrenceRule(),
+                event.getRecurrenceEndAt(),
                 CalendarEventStatus.ACTIVE
         );
 
@@ -47,15 +47,15 @@ public class CalendarService {
 
         CalendarEvent updateEvent = CalendarEvent.of(
                 id,
-                event.title(),
-                event.description(),
-                event.startAt(),
-                event.endAt(),
-                event.allDay(),
-                event.location(),
-                event.color(),
-                event.recurrenceRule(),
-                event.recurrenceEndAt(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.isAllDay(),
+                event.getLocation(),
+                event.getColor(),
+                event.getRecurrenceRule(),
+                event.getRecurrenceEndAt(),
                 CalendarEventStatus.ACTIVE
         );
 
@@ -71,7 +71,7 @@ public class CalendarService {
     }
 
     private void validateEventPeriod(CalendarEvent event) {
-        if (!event.startAt().isBefore(event.endAt())) {
+        if (!event.getStartAt().isBefore(event.getEndAt())) {
             throw new IllegalArgumentException("일정 시작 일시는 종료 일시보다 빨라야 합니다.");
         }
     }

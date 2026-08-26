@@ -23,37 +23,58 @@ Google 로그인으로 가입 요청을 만든다.
 Google 로그인 = NaruWorks 가입 요청
 ```
 
-사용자는 Google 계정으로 로그인하고, NaruWorks는 Google에서 받은 식별 정보를 기반으로 내부 회원을 생성한다.
-신규 회원의 최초 상태는 `PENDING`이다.
+신규 사용자는 유효한 초대 링크 또는 추천 코드가 있어야만 Google 로그인을 시작할 수 있다.
+Google 로그인 성공만으로는 내부 회원을 생성하지 않고, `/join/terms`에서 약관 동의를 완료한 시점에만 내부 회원을 생성한다.
 
 운영자는 관리자 화면에서 가입 대기 사용자를 확인하고 승인 또는 거절한다.
 
-## 추천인명
+## 추천 관계와 초대
 
-신규 사용자는 가입 요청 과정에서 `추천인명`을 입력할 수 있다.
-
-추천인명은 초기에는 자유 텍스트로 저장한다.
+추천인은 회원 관계로 관리한다. 자유 텍스트 추천인명은 동명이인, 오타, 이름 변경 때문에 추천 관계의 기준값으로 사용하지 않는다.
 
 ```text
-referrerName
-= 가입자가 "누구의 소개로 들어왔는지" 적는 값
-= 예: 방호배, 김나루, 회사 동료 홍길동
+members.referrer_member_id
+= 가입자를 초대한 기존 회원의 members.id를 참조하는 자기 참조 외래 키
+
+members.referral_code
+= 회원별 고유 추천 코드
+= 영문 대문자와 숫자로 구성된 6자리 값 (예: AB12CD)
+
+초대 링크
+= https://app.naruworks.com/join?ref={referralCode}
 ```
 
-초기에는 추천인을 기존 회원 id와 강하게 연결하지 않는다.
-이유는 아래와 같다.
+추천 코드는 관계를 연결하기 위한 공개 식별자이고, 실제 관계의 기준값은 `referrer_member_id`다.
+이 구조를 사용하면 추천인별 가입자 수, 승인 전환율, 여러 단계의 추천 관계를 정확하게 조회할 수 있다.
+
+초기 정책:
 
 ```text
-1. 아직 회원 수가 적고 운영자가 직접 확인할 수 있다.
-2. 추천인이 반드시 기존 가입자일 필요는 없다.
-3. 승인 과정에서 운영자가 맥락을 판단하는 보조 정보면 충분하다.
+추천인은 APPROVED 회원만 될 수 있다.
+한 회원은 한 명의 추천인만 가진다.
+추천 관계는 PENDING 상태에서만 변경할 수 있고 APPROVED 이후에는 변경하지 않는다.
+추천 코드는 영문 대문자와 숫자로 구성된 6자리 임의 값으로 생성하고 unique 제약조건을 둔다.
+초대 링크 또는 추천 코드가 없는 신규 사용자는 Google 로그인을 시작할 수 없다.
 ```
 
-나중에 추천 구조가 중요해지면 아래처럼 확장할 수 있다.
+사용자 경험은 초대 링크를 기본으로 한다.
 
 ```text
-referrerMemberId
-= 기존 회원을 직접 참조하는 추천인 id
+기존 회원: 초대 링크 복사 후 공유
+신규 회원: app.naruworks.com/join?ref=... 링크 클릭 -> 추천 코드 검증 -> Google 로그인 -> 약관 동의 -> 가입 요청 생성
+예외 상황: /join 화면에서 추천 코드 직접 입력 후 Google 로그인
+```
+
+Google OAuth 과정에서는 frontend query parameter가 그대로 유지되지 않으므로, backend가 추천 코드를 session에 임시 보관해야 한다.
+Spring Security가 CSRF 방지용으로 관리하는 OAuth `state`에는 추천 코드를 넣지 않는다.
+
+```text
+GET /api/auth/google?ref={referralCode}
+-> 유효한 추천 코드인지 확인
+-> HttpSession attribute naru.pending-referral-code에 보관
+-> /oauth2/authorization/google으로 redirect
+-> OAuth 성공 handler는 회원을 만들지 않고 /join/terms로 redirect
+-> 약관 동의 API가 session의 code를 읽어 회원 관계와 함께 Member를 생성
 ```
 
 ## 회원 상태
@@ -207,48 +228,66 @@ sequenceDiagram
     participant BE as Spring Boot
     participant DB as PostgreSQL
 
-    User->>FE: Google 로그인 클릭
-    FE->>BE: /oauth2/authorization/google 이동
-    BE->>Google: OAuth 인증 요청
-    Google-->>BE: profile / email / provider id
-    BE->>DB: member 조회
-    alt 기존 회원 없음
-        BE->>DB: PENDING 회원 생성
-    else 기존 회원 있음
+    User->>FE: 초대 링크 접속 또는 추천 코드 입력
+    FE->>BE: /api/auth/google?ref={referralCode}
+    BE->>DB: APPROVED 추천 회원의 code인지 확인
+    alt 유효한 추천 코드
+        BE->>BE: session에 naru.pending-referral-code 저장
+        BE->>Google: OAuth 인증 요청
+        Google-->>BE: profile / email / provider id
+        BE->>DB: member 조회
+    alt 기존 회원
         BE->>DB: lastLoginAt 갱신
+        BE-->>FE: 상태별 redirect
+    else 신규 회원
+        BE-->>FE: /join/terms redirect
+        User->>FE: 약관 동의
+        FE->>BE: 가입 요청 API
+        BE->>DB: PENDING 회원 및 약관 동의 이력 생성
+        BE-->>FE: /join/pending redirect
     end
-    BE-->>FE: 상태별 redirect
-    alt PENDING
-        FE-->>User: 추천인명 입력 또는 승인 대기 화면
-    else APPROVED
-        FE-->>User: 서비스 진입
-    else REJECTED or SUSPENDED
-        FE-->>User: 이용 불가 안내
+    else 유효하지 않은 추천 코드
+        BE-->>FE: /join?error=invalid-referral-code redirect
     end
 ```
 
-## 추천인명 입력 흐름
+## 추천 코드 입력 흐름
 
-추천인명은 최초 Google 로그인 이후 입력한다.
+초대 링크를 받은 사용자는 Google 로그인 전에 추천 코드가 자동으로 검증·저장된다.
+초대 링크 없이 가입하려는 사용자는 `/join` 화면에서 추천 코드를 입력해야 한다.
 
 ```text
-1. 사용자가 Google 로그인
-2. 신규 사용자라면 PENDING 회원 생성
-3. /join/pending 또는 /join/request 화면으로 이동
-4. 추천인명 입력
-5. 가입 요청 메시지 저장
-6. 운영자가 관리자 화면에서 확인
+1. 사용자가 app.naruworks.com/join?ref={referralCode}로 접근
+2. frontend가 api.naruworks.com/api/auth/google?ref={referralCode}로 이동
+3. backend가 code를 검증하고 HttpSession의 naru.pending-referral-code에 임시 보관
+4. Google 로그인 성공 후 기존 회원 여부를 조회
+5. 기존 회원이 없으면 /join/terms 화면으로 이동하며, 이 시점에는 DB 회원을 만들지 않음
+6. 약관 동의 API가 session의 referral code로 APPROVED 추천인을 조회
+7. 가입자의 referrer_member_id와 새 referral_code를 포함해 PENDING Member를 처음 생성
+8. /join/pending 화면으로 이동
+9. 운영자가 추천인 정보와 가입자를 함께 확인하고 승인
 ```
 
-추천인명은 필수값으로 둘지 선택값으로 둘지 구현 전에 결정한다.
-초기 추천은 선택값이다.
+추천 코드는 신규 가입에 필수다. 초대 코드 없이 일반 Google 로그인을 시도한 신규 사용자는 회원을 생성하지 않고 session을 종료한 뒤 `/join?error=invitation-required`로 이동한다.
 
-이유:
+## 최초 운영자 Bootstrap
+
+초대 링크를 발급할 첫 회원이 필요하므로, 최초 운영자만 제한적으로 초대 코드 없이 생성할 수 있다.
 
 ```text
-운영자가 직접 지인을 확인하는 서비스이므로 추천인명이 없어도 승인할 수 있다.
-사용자가 Google 로그인 후 입력 장벽 때문에 이탈하지 않게 한다.
+조건
+1. NARU_INITIAL_ADMIN_EMAIL 환경변수와 Google email이 같다.
+2. members 테이블이 완전히 비어 있다.
+3. 약관 동의 API를 제출했다.
+
+생성 결과
+role = ADMIN
+status = APPROVED
+referrer_member_id = null
+referral_code = 새 6자리 코드
 ```
+
+최초 운영자 생성 후에는 `NARU_INITIAL_ADMIN_EMAIL`을 운영 환경에서 제거한다.
 
 ## 관리자 승인 흐름
 
@@ -278,7 +317,7 @@ flowchart TD
 
 ```text
 승인 대기 회원 목록 조회
-회원 email/name/profile/referrerName 확인
+회원 email/name/profile/referrerMember 확인
 승인 처리
 거절 처리
 정지 처리
@@ -335,9 +374,10 @@ ADMIN이라도 초기에는 사용자 일정 임의 수정 기능을 제공하�
 
 ```mermaid
 erDiagram
-    NARU_MEMBER ||--o{ CALENDAR_EVENT : owns
+    MEMBER ||--o{ CALENDAR_EVENT : owns
+    MEMBER ||--o{ MEMBER : refers
 
-    NARU_MEMBER {
+    MEMBER {
         bigint id PK
         string email
         string display_name
@@ -346,7 +386,8 @@ erDiagram
         string provider_user_id
         string role
         string status
-        string referrer_name
+        bigint referrer_member_id FK
+        string referral_code UK
         datetime created_at
         datetime approved_at
         datetime last_login_at
@@ -407,7 +448,13 @@ frontend/src/app/login/page.tsx
 = 로그인 화면
 
 frontend/src/app/join/pending/page.tsx
-= 승인 대기 / 추천인명 입력 화면
+= 가입 승인 대기 화면
+
+frontend/src/app/join/page.tsx
+= 초대 링크의 ref query parameter 확인 또는 추천 코드 입력 후 backend OAuth 시작 주소로 이동하는 진입 화면
+
+frontend/src/app/join/terms/page.tsx
+= Google 로그인은 완료됐지만 아직 회원이 아닌 사용자의 약관 동의 화면
 
 frontend/src/app/admin/members/page.tsx
 = 관리자 회원 승인 화면
@@ -439,8 +486,6 @@ https://api.naruworks.com/oauth2/authorization/google
 ## 이후 확장 후보
 
 ```text
-초대 코드
-추천인 member 연결
 Cloudflare Access 기반 관리자 보호
 사용자별 서비스 권한
 조직/그룹

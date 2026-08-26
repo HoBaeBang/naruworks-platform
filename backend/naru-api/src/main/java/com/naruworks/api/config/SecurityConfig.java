@@ -1,5 +1,7 @@
 package com.naruworks.api.config;
 
+import com.naruworks.api.security.OAuth2LoginSuccessHandler;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +11,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -32,7 +37,9 @@ public class SecurityConfig {
                 );
 
         if (clientRegistrationRepository.getIfAvailable() != null) {
-            http.oauth2Login(Customizer.withDefaults());
+            http.oauth2Login(oauth2 -> oauth2
+                    .successHandler(oAuth2LoginSuccessHandler)
+            );
         }
 
         return http.build();

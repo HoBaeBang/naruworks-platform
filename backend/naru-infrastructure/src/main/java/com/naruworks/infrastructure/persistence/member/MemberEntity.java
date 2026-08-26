@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "naru_members",
+        name = "members",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_naru_members_provider_user",
+                        name = "uk_members_provider_user",
                         columnNames = {"provider", "provider_user_id"}
                 )
         }

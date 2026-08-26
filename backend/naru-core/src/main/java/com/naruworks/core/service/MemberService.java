@@ -6,6 +6,7 @@ import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.AuthProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ public class MemberService {
     private final MemberWriter memberWriter;
     private final Clock clock;
 
-
+    @Transactional
     public Member findOrCreateGoogleMember(
             String providerUserId,
             String email,

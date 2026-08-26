@@ -1,4 +1,4 @@
-# Auth Approval Implementation Plan
+# Auth Invitation Implementation Plan
 
 ## 목표
 
@@ -12,7 +12,7 @@ NaruWorks를 외부 도메인으로 배포한 뒤 Calendar 데이터가 누구�
 Google 로그인
 가입 요청 생성
 추천 코드/초대 링크 연결
-운영자 승인
+약관 동의 후 자동 승인
 승인된 사용자만 Calendar 접근
 사용자별 CalendarEvent 분리
 ```
@@ -20,10 +20,10 @@ Google 로그인
 ## 우선순위
 
 ```text
-1. 회원/승인 도메인 설계
+1. 회원/초대 도메인 설계
 2. Google 로그인 도입
-3. 승인 대기/추천 코드 및 초대 링크 흐름
-4. 관리자 승인 화면
+3. 약관 동의/추천 코드 및 초대 링크 흐름
+4. 관리자 회원 관리 화면
 5. Calendar 접근 보호
 6. CalendarEvent owner 분리
 7. 홈서버 재배포 및 검증
@@ -175,8 +175,8 @@ backend 책임:
 Google OAuth2 Login 시작
 OAuth callback 처리
 Google profile 기반 기존 Member 조회
-신규 사용자는 /join/terms로 이동하고 약관 동의 API에서만 Member 생성
-PENDING/APPROVED/REJECTED/SUSPENDED 상태별 redirect
+신규 사용자는 /join/terms로 이동하고 약관 동의 API에서만 USER + APPROVED Member 생성
+APPROVED/REJECTED/SUSPENDED 상태별 redirect
 session cookie 발급
 CORS credentials 허용
 ```
@@ -185,7 +185,6 @@ CORS credentials 허용
 
 ```text
 APPROVED -> /calendar
-PENDING -> /join/pending
 REJECTED -> /join/rejected
 SUSPENDED -> /join/suspended
 ```
@@ -197,7 +196,7 @@ frontend 로그인 버튼:
 신규 가입: https://app.naruworks.com/join 또는 초대 링크
 ```
 
-## Phase 3: 가입 대기 + 추천 코드/초대 링크
+## Phase 3: 약관 동의 + 추천 코드/초대 링크
 
 추가 후보:
 
@@ -214,7 +213,7 @@ frontend/src/lib/api-client.ts
 유효한 추천 코드일 때만 Google 로그인 시작
 Google 로그인 후 /join/terms 화면 표시
 약관 동의 후에만 가입 요청 생성
-PENDING 회원에게 승인 대기 상태 안내
+가입 완료 후 Calendar 이동
 ```
 
 backend API 후보:
@@ -272,6 +271,7 @@ frontend의 /join 화면이 GET /api/auth/google?ref=... 주소로 브라우저�
 추천 코드는 OAuth state가 아니라 HttpSession attribute naru.pending-referral-code에 저장한다.
 OAuth 성공 handler는 신규 Member를 만들지 않고 /join/terms로 이동시킨다.
 POST /api/registrations가 session의 referral code로 추천 관계와 Member를 함께 생성한다.
+일반 초대 회원은 USER + APPROVED로 생성하고 /calendar로 이동한다.
 ```
 
 최초 운영자 bootstrap:
@@ -282,7 +282,7 @@ NARU_INITIAL_ADMIN_EMAIL과 Google email이 같고 members 테이블이 비어 �
 최초 운영자 생성 후 NARU_INITIAL_ADMIN_EMAIL은 운영 환경에서 제거한다.
 ```
 
-## Phase 4: 관리자 승인
+## Phase 4: 관리자 회원 관리
 
 추가 후보:
 
@@ -294,23 +294,24 @@ backend/naru-api/src/main/java/com/naruworks/api/controller/AdminMemberControlle
 backend API 후보:
 
 ```text
-GET /api/admin/members?status=PENDING
-POST /api/admin/members/{id}/approve
-POST /api/admin/members/{id}/reject
+GET /api/admin/members
 POST /api/admin/members/{id}/suspend
+POST /api/admin/members/{id}/restore
+POST /api/admin/members/{id}/referral-code/rotate
 ```
 
 관리자 화면 1차 기능:
 
 ```text
-승인 대기 회원 목록
+회원 목록
 email
 displayName
 profileImageUrl
 referrerMember
 createdAt
-승인 버튼
-거절 버튼
+정지 버튼
+정지 해제 버튼
+추천 코드 재발급 버튼
 ```
 
 관리자 권한:
@@ -319,21 +320,8 @@ createdAt
 APPROVED + ADMIN만 접근 가능
 ```
 
-초기 ADMIN 생성 방식은 구현 전에 결정한다.
-
-후보:
-
-```text
-1. 첫 운영자 email을 환경변수로 지정
-2. Flyway seed로 운영자 email 등록
-3. DB에서 수동으로 role/status 변경
-```
-
-초기 추천:
-
-```text
-환경변수 NARU_INITIAL_ADMIN_EMAIL 사용
-```
+초기 ADMIN은 NARU_INITIAL_ADMIN_EMAIL과 Google email이 같고 members 테이블이 비어 있을 때만, 약관 동의 후 자동 생성한다.
+최초 운영자 생성이 끝나면 해당 환경변수는 운영 환경에서 제거한다.
 
 ## Phase 5: Calendar 접근 보호
 
@@ -426,8 +414,8 @@ Frontend test/manual check:
 비로그인 /calendar 접근 시 /login 이동
 유효한 추천 코드가 있어야 신규 Google 로그인 시작
 Google 로그인 직후 신규 회원이면 /join/terms 이동
-약관 동의 API 성공 시 PENDING 회원 생성
-ADMIN이 사용자 승인
+약관 동의 API 성공 시 USER + APPROVED 회원 생성
+ADMIN이 사용자 정지·정지 해제·추천 코드 재발급
 APPROVED 사용자가 Calendar 접근
 사용자 A 일정이 사용자 B에게 보이지 않음
 ```
@@ -458,8 +446,8 @@ docker compose ps
 https://app.naruworks.com/login
 https://api.naruworks.com/actuator 또는 health 확인 후보
 Google 로그인
-승인 대기 화면
-관리자 승인
+Calendar 이동
+관리자 회원 관리
 Calendar CRUD
 비로그인 Calendar 접근 차단
 ```
@@ -471,8 +459,8 @@ flowchart TD
     P0["Phase 0: OAuth/env/Cloudflare 확인"]
     P1["Phase 1: Member 도메인/DB"]
     P2["Phase 2: Spring Security Google 로그인"]
-    P3["Phase 3: 추천 코드/초대 링크/승인대기"]
-    P4["Phase 4: 관리자 승인"]
+    P3["Phase 3: 추천 코드/초대 링크/약관 동의"]
+    P4["Phase 4: 관리자 회원 관리"]
     P5["Phase 5: Calendar 접근 보호"]
     P6["Phase 6: CalendarEvent owner 분리"]
     P7["Phase 7: 테스트"]
@@ -497,14 +485,14 @@ flowchart TD
 2. Spring Security OAuth2 설정 초안
 3. 초대 코드 검증 후 OAuth 시작
 4. OAuth 성공 후 약관 동의 화면
-5. 약관 동의 API에서 최초 PENDING 회원 생성
+5. 약관 동의 API에서 최초 USER + APPROVED 회원 생성
 ```
 
 두 번째 작업 단위:
 
 ```text
 1. 관리자 회원 목록
-2. 승인/거절/정지
+2. 정지/정지 해제/추천 코드 재발급
 3. Calendar 페이지 접근 보호
 ```
 

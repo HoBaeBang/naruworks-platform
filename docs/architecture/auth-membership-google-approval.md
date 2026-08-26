@@ -20,13 +20,14 @@ Google 로그인으로 가입 요청을 만든다.
 대신 아래 흐름을 사용한다.
 
 ```text
-Google 로그인 = NaruWorks 가입 요청
+유효한 초대 코드 + Google 로그인 + 약관 동의 = NaruWorks 가입
 ```
 
 신규 사용자는 유효한 초대 링크 또는 추천 코드가 있어야만 Google 로그인을 시작할 수 있다.
 Google 로그인 성공만으로는 내부 회원을 생성하지 않고, `/join/terms`에서 약관 동의를 완료한 시점에만 내부 회원을 생성한다.
 
-운영자는 관리자 화면에서 가입 대기 사용자를 확인하고 승인 또는 거절한다.
+일반 초대 회원은 약관 동의가 완료되면 즉시 `APPROVED` 상태로 생성된다.
+운영자는 회원을 조회·정지하고 추천 코드 운영을 관리한다.
 
 ## 추천 관계와 초대
 
@@ -52,9 +53,10 @@ members.referral_code
 ```text
 추천인은 APPROVED 회원만 될 수 있다.
 한 회원은 한 명의 추천인만 가진다.
-추천 관계는 PENDING 상태에서만 변경할 수 있고 APPROVED 이후에는 변경하지 않는다.
+추천 관계는 회원 생성 시 한 번만 설정하고 이후에는 변경하지 않는다.
 추천 코드는 영문 대문자와 숫자로 구성된 6자리 임의 값으로 생성하고 unique 제약조건을 둔다.
 초대 링크 또는 추천 코드가 없는 신규 사용자는 Google 로그인을 시작할 수 없다.
+유효한 초대 코드와 약관 동의가 완료된 일반 초대 회원은 USER + APPROVED 상태로 생성한다.
 ```
 
 사용자 경험은 초대 링크를 기본으로 한다.
@@ -95,7 +97,7 @@ ADMIN
 
 ```text
 PENDING
-= Google 로그인은 완료했지만 아직 승인 대기
+= 향후 운영자 직접 검토 가입 경로를 위한 예약 상태
 
 APPROVED
 = 서비스 사용 가능
@@ -115,9 +117,6 @@ APPROVED + USER
 
 APPROVED + ADMIN
 = 관리자
-
-PENDING + USER
-= 로그인은 했지만 서비스 사용 불가
 
 SUSPENDED + USER
 = 기존 사용자를 임시 차단
@@ -243,8 +242,8 @@ sequenceDiagram
         BE-->>FE: /join/terms redirect
         User->>FE: 약관 동의
         FE->>BE: 가입 요청 API
-        BE->>DB: PENDING 회원 및 약관 동의 이력 생성
-        BE-->>FE: /join/pending redirect
+        BE->>DB: USER + APPROVED 회원 및 약관 동의 이력 생성
+        BE-->>FE: /calendar redirect
     end
     else 유효하지 않은 추천 코드
         BE-->>FE: /join?error=invalid-referral-code redirect
@@ -263,9 +262,8 @@ sequenceDiagram
 4. Google 로그인 성공 후 기존 회원 여부를 조회
 5. 기존 회원이 없으면 /join/terms 화면으로 이동하며, 이 시점에는 DB 회원을 만들지 않음
 6. 약관 동의 API가 session의 referral code로 APPROVED 추천인을 조회
-7. 가입자의 referrer_member_id와 새 referral_code를 포함해 PENDING Member를 처음 생성
-8. /join/pending 화면으로 이동
-9. 운영자가 추천인 정보와 가입자를 함께 확인하고 승인
+7. 가입자의 referrer_member_id와 새 referral_code를 포함해 USER + APPROVED Member를 처음 생성
+8. /calendar 화면으로 이동
 ```
 
 추천 코드는 신규 가입에 필수다. 초대 코드 없이 일반 Google 로그인을 시도한 신규 사용자는 회원을 생성하지 않고 session을 종료한 뒤 `/join?error=invitation-required`로 이동한다.
@@ -289,38 +287,37 @@ referral_code = 새 6자리 코드
 
 최초 운영자 생성 후에는 `NARU_INITIAL_ADMIN_EMAIL`을 운영 환경에서 제거한다.
 
-## 관리자 승인 흐름
+## 관리자 회원 관리 흐름
 
 ```mermaid
 flowchart TD
     Admin["관리자"]
     UserList["/admin/members"]
-    Pending["승인 대기 목록"]
+    Members["회원 목록"]
     Detail["회원 상세"]
-    Approve["승인"]
-    Reject["거절"]
     Suspend["정지"]
+    Restore["정지 해제"]
+    Rotate["추천 코드 재발급"]
     DB["member table"]
 
     Admin --> UserList
-    UserList --> Pending
-    Pending --> Detail
-    Detail --> Approve
-    Detail --> Reject
+    UserList --> Members
+    Members --> Detail
     Detail --> Suspend
-    Approve --> DB
-    Reject --> DB
+    Detail --> Restore
+    Detail --> Rotate
     Suspend --> DB
+    Restore --> DB
+    Rotate --> DB
 ```
 
 관리자 화면 1차 기능:
 
 ```text
-승인 대기 회원 목록 조회
 회원 email/name/profile/referrerMember 확인
-승인 처리
-거절 처리
 정지 처리
+정지 해제 처리
+추천 코드 재발급·폐기
 ```
 
 ## 서비스 접근 규칙
@@ -337,12 +334,12 @@ flowchart TD
 /admin/**
 = APPROVED + ADMIN 회원만 접근 가능
 
-/join/pending
-= PENDING 회원 접근 가능
+/join/terms
+= 유효한 초대 코드로 Google 로그인을 완료했지만 아직 회원이 아닌 사용자 접근 가능
 ```
 
 비로그인 사용자는 Calendar에 접근할 수 없다.
-승인 대기 사용자는 로그인은 가능하지만 Calendar 데이터를 볼 수 없다.
+정상 초대 회원은 약관 동의 완료 후 즉시 Calendar 데이터를 이용할 수 있다.
 
 ## Calendar 데이터 소유권
 
@@ -448,7 +445,7 @@ frontend/src/app/login/page.tsx
 = 로그인 화면
 
 frontend/src/app/join/pending/page.tsx
-= 가입 승인 대기 화면
+= 향후 운영자 직접 검토 가입 경로를 위한 예약 화면
 
 frontend/src/app/join/page.tsx
 = 초대 링크의 ref query parameter 확인 또는 추천 코드 입력 후 backend OAuth 시작 주소로 이동하는 진입 화면
@@ -482,6 +479,8 @@ https://api.naruworks.com/oauth2/authorization/google
 5. PENDING/REJECTED/SUSPENDED 회원은 Calendar API에 접근할 수 없다.
 6. CalendarEvent는 member_id 기준으로 항상 필터링한다.
 7. 관리자 화면은 ADMIN role만 접근 가능하다.
+8. 초대 코드 검증 API에는 rate limit을 적용한다.
+9. 추천 코드는 입장 권한이므로 재발급·폐기 기능을 제공한다.
 
 ## 이후 확장 후보
 

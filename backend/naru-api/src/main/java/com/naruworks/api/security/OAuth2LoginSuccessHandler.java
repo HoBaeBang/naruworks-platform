@@ -20,7 +20,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final MemberService memberService;
 
-    @Value("${naru.frontend-base-url:http://localhost:3000}")
+    @Value("${naru.frontend-base-url}")
     private String frontendBaseUrl;
 
     @Override

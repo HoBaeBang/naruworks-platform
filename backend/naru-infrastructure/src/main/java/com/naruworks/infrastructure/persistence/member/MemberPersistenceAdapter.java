@@ -4,6 +4,7 @@ import com.naruworks.core.port.MemberReader;
 import com.naruworks.core.port.MemberWriter;
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.AuthProvider;
+import com.naruworks.domain.value.ReferralCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -22,6 +23,17 @@ public class MemberPersistenceAdapter implements MemberReader, MemberWriter {
     ) {
         return memberJpaRepository.findByProviderAndProviderUserId(provider, providerUserId)
                 .map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Member> findByReferralCode(ReferralCode referralCode) {
+        return memberJpaRepository.findByReferralCode(referralCode.value())
+                .map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public boolean existsAnyMember() {
+        return memberJpaRepository.count() > 0;
     }
 
     @Override

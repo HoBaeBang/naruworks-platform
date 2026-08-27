@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -31,19 +32,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
         String providerUserId = oAuth2User.getAttribute("sub");
-        String email = oAuth2User.getAttribute("email");
-        String displayName = oAuth2User.getAttribute("name");
-        String profileImageUrl = oAuth2User.getAttribute("picture");
 
-        Member member = memberService.findOrCreateGoogleMember(
-                providerUserId,
-                email,
-                displayName,
-                profileImageUrl
-        );
+        Optional<Member> member = memberService.findAndUpdateExistingGoogleMember(providerUserId);
 
-        response.sendRedirect(getRedirectUrl(member.getStatus()));
-    }
+        if (member.isPresent()) {
+            response.sendRedirect(getRedirectUrl(member.get().getStatus()));
+            return;
+        }
+
+        response.sendRedirect(frontendBaseUrl + "/join?error=invitation-required");    }
 
     private String getRedirectUrl(MemberStatus status) {
         return switch (status) {

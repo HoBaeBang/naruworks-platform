@@ -4,6 +4,7 @@ import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.AuthProvider;
 import com.naruworks.domain.type.MemberRole;
 import com.naruworks.domain.type.MemberStatus;
+import com.naruworks.domain.value.ReferralCode;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -60,9 +61,13 @@ public class MemberEntity {
     @Column(nullable = false, length = 30)
     private MemberStatus status;
 
-    /** 가입 요청자가 입력한 추천인명 */
-    @Column(name = "referrer_name", length = 100)
-    private String referrerName;
+    /** 가입자를 초대한 기존 회원의 내부 식별자 */
+    @Column(name = "referrer_member_id")
+    private Long referrerMemberId;
+
+    /** 회원 초대에 사용하는 영문 대문자와 숫자 6자리 추천 코드 */
+    @Column(name = "referral_code", nullable = false, length = 6)
+    private String referralCode;
 
     /** 회원 생성 시각 */
     @Column(name = "created_at", nullable = false)
@@ -86,7 +91,8 @@ public class MemberEntity {
         entity.providerUserId = member.getProviderUserId();
         entity.role = member.getRole();
         entity.status = member.getStatus();
-        entity.referrerName = member.getReferrerName();
+        entity.referrerMemberId = member.getReferrerMemberId();
+        entity.referralCode = member.getReferralCode().value();
         entity.createdAt = member.getCreatedAt();
         entity.approvedAt = member.getApprovedAt();
         entity.lastLoginAt = member.getLastLoginAt();
@@ -104,7 +110,8 @@ public class MemberEntity {
                 .providerUserId(providerUserId)
                 .role(role)
                 .status(status)
-                .referrerName(referrerName)
+                .referrerMemberId(referrerMemberId)
+                .referralCode(ReferralCode.of(referralCode))
                 .createdAt(createdAt)
                 .approvedAt(approvedAt)
                 .lastLoginAt(lastLoginAt)

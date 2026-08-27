@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.AuthProvider;
+import com.naruworks.domain.value.ReferralCode;
 import com.naruworks.infrastructure.InfrastructureTestApplication;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
@@ -27,11 +28,12 @@ class MemberJpaRepositoryTest {
     void findByProviderAndProviderUserId() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 29, 10, 0);
 
-        Member member = Member.createPendingGoogleMember(
+        Member member = Member.createApprovedInitialAdminGoogleMember(
                 "naru@example.com",
-                "Naru User",
+                "Naru Admin",
                 "https://example.com/profile.png",
                 "google-user-id",
+                ReferralCode.of("AB12CD"),
                 now
         );
 
@@ -44,6 +46,28 @@ class MemberJpaRepositoryTest {
 
         assertThat(found).isPresent();
         assertThat(found.get().getEmail()).isEqualTo("naru@example.com");
-        assertThat(found.get().getStatus().name()).isEqualTo("PENDING");
+        assertThat(found.get().getStatus().name()).isEqualTo("APPROVED");
+    }
+
+    @Test
+    @DisplayName("추천 코드로 회원을 조회한다")
+    void findByReferralCode() {
+        LocalDateTime now = LocalDateTime.of(2026, 7, 29, 10, 0);
+
+        Member member = Member.createApprovedInitialAdminGoogleMember(
+                "naru@example.com",
+                "Naru Admin",
+                "https://example.com/profile.png",
+                "google-user-id",
+                ReferralCode.of("ZX90QW"),
+                now
+        );
+
+        memberJpaRepository.save(MemberEntity.from(member));
+
+        var found = memberJpaRepository.findByReferralCode("ZX90QW");
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("naru@example.com");
     }
 }

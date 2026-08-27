@@ -10,4 +10,6 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
             AuthProvider provider,
             String providerUserId
     );
+
+    Optional<MemberEntity> findByReferralCode(String referralCode);
 }

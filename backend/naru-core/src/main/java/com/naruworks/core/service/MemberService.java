@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,27 +20,13 @@ public class MemberService {
     private final Clock clock;
 
     @Transactional
-    public Member findOrCreateGoogleMember(
-            String providerUserId,
-            String email,
-            String displayName,
-            String profileImageUrl
-    ) {
+    public Optional<Member> findAndUpdateExistingGoogleMember(String providerUserId) {
         LocalDateTime now = LocalDateTime.now(clock);
 
         return memberReader.findByProviderAndProviderUserId(
                         AuthProvider.GOOGLE,
                         providerUserId
                 )
-                .map(member -> memberWriter.save(member.updateLastLoginAt(now)))
-                .orElseGet(() -> memberWriter.save(
-                        Member.createPendingGoogleMember(
-                                email,
-                                displayName,
-                                profileImageUrl,
-                                providerUserId,
-                                now
-                        )
-                ));
+                .map(member -> memberWriter.save(member.updateLastLoginAt(now)));
     }
 }

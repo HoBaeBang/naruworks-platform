@@ -29,4 +29,9 @@ public class MemberService {
                 )
                 .map(member -> memberWriter.save(member.updateLastLoginAt(now)));
     }
+
+    @Transactional(readOnly = true)
+    public boolean hasNoMember() {
+        return !memberReader.existsAnyMember();
+    }
 }

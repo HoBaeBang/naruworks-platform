@@ -1,4 +1,5 @@
 import type { Project, ServiceCatalogItem } from "@/types/catalog";
+import { getLoginUrl } from "@/lib/auth-url";
 import { ServiceCard } from "./service-card";
 
 export function Header() {
@@ -10,11 +11,19 @@ export function Header() {
         </span>
         Naru
       </div>
-      <nav className="flex items-center gap-4 text-sm text-[var(--muted)] sm:gap-5">
-        <span>서비스</span>
-        <span>캘린더</span>
-        <span>소개</span>
-      </nav>
+      <div className="flex items-center gap-4 text-sm sm:gap-5">
+        <nav className="hidden items-center gap-4 text-[var(--muted)] sm:flex sm:gap-5">
+          <a href="#services">서비스</a>
+          <a href="#calendar">캘린더</a>
+          <a href="#about">소개</a>
+        </nav>
+        <a
+          href={getLoginUrl()}
+          className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
+        >
+          로그인
+        </a>
+      </div>
     </header>
   );
 }
@@ -115,7 +124,7 @@ export function UpcomingServices({
   services: ServiceCatalogItem[];
 }) {
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 py-10 sm:px-8 lg:px-10">
+    <section id="about" className="mx-auto w-full max-w-6xl px-6 py-10 sm:px-8 lg:px-10">
       <h2 className="text-2xl font-semibold">다음에 열릴 서비스</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {services.map((service) => (

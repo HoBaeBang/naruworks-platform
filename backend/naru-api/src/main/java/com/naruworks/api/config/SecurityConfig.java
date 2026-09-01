@@ -25,18 +25,19 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/api/auth/registrations").authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/registrations"
+                        ).authenticated()
                         .requestMatchers(
                                 "/api/health",
                                 "/api/projects",
                                 "/api/services",
-                                "/api/calendar/events",
-                                "/api/calendar/events/**",
                                 "/oauth2/**",
                                 "/api/auth/**",
                                 "/login/**"
                         ).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 );
 
         if (clientRegistrationRepository.getIfAvailable() != null) {

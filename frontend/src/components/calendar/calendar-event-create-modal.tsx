@@ -9,10 +9,12 @@ export function CalendarEventCreateModal({
   selectedDate,
   year,
   month,
+  onEventChanged,
 }: {
   selectedDate: string;
   year: number;
   month: number;
+  onEventChanged?: () => Promise<void> | void;
 }) {
   const closeHref = `/calendar?year=${year}&month=${month}&date=${selectedDate}`;
 
@@ -45,8 +47,8 @@ export function CalendarEventCreateModal({
         recurrenceEndAt: null,
       });
 
+      await onEventChanged?.();
       router.push(closeHref);
-      router.refresh();
     } catch {
       setErrorMessage("일정을 저장하지 못했습니다. 입력값을 확인해주세요.");
     } finally {

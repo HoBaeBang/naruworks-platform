@@ -36,6 +36,7 @@ public record CalendarEventUpdateRequest(
     public CalendarEvent toDomain(Long id) {
         return CalendarEvent.of(
                 id,
+                null,
                 title,
                 description,
                 startAt,

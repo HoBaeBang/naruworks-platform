@@ -9,3 +9,7 @@ export function getInvitationLoginUrl(referralCode: string) {
 
   return `${apiBaseUrl}/api/auth/google?${params.toString()}`;
 }
+
+export function getMemberRegistrationUrl() {
+  return `${apiBaseUrl}/api/auth/registrations`;
+}

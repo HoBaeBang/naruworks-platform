@@ -27,6 +27,7 @@ public record CalendarEventCreateRequest(
     public CalendarEvent toDomain() {
         return CalendarEvent.of(
                 null,
+                null,
                 title,
                 description,
                 startAt,

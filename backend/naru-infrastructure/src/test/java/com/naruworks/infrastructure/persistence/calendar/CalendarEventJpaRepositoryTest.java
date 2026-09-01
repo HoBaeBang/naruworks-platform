@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(InfrastructureTestApplication.class)
 class CalendarEventJpaRepositoryTest {
 
+    private static final Long MEMBER_A_ID = 1L;
+
     @Autowired
     private CalendarEventJpaRepository calendarEventJpaRepository;
 
@@ -31,6 +33,7 @@ class CalendarEventJpaRepositoryTest {
         LocalDateTime to = LocalDateTime.of(2026, 8, 1, 0, 0);
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                MEMBER_A_ID,
                 "6월부터 이어지는 일정",
                 "조회 시작일보다 먼저 시작하지만 기간과 겹치는 일정",
                 LocalDateTime.of(2026, 6, 30, 10, 0),
@@ -44,6 +47,7 @@ class CalendarEventJpaRepositoryTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                MEMBER_A_ID,
                 "7월 일정",
                 "조회 기간 안에 들어오는 일정",
                 LocalDateTime.of(2026, 7, 10, 9, 0),
@@ -57,6 +61,7 @@ class CalendarEventJpaRepositoryTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                MEMBER_A_ID,
                 "8월까지 이어지는 일정",
                 "조회 종료일 이후까지 이어지는 일정",
                 LocalDateTime.of(2026, 7, 31, 23, 0),
@@ -70,6 +75,7 @@ class CalendarEventJpaRepositoryTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                MEMBER_A_ID,
                 "조회 범위 밖 일정",
                 "조회 기간과 겹치지 않는 일정",
                 LocalDateTime.of(2026, 8, 2, 9, 0),
@@ -83,7 +89,7 @@ class CalendarEventJpaRepositoryTest {
         ));
 
         List<CalendarEventEntity> events =
-                calendarEventJpaRepository.findAllByStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(to, from);
+                calendarEventJpaRepository.findAllByMemberIdAndStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(MEMBER_A_ID, to, from);
 
         assertThat(events)
                 .extracting(CalendarEventEntity::getTitle)

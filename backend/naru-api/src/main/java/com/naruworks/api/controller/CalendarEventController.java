@@ -3,10 +3,15 @@ package com.naruworks.api.controller;
 import com.naruworks.api.dto.request.CalendarEventCreateRequest;
 import com.naruworks.api.dto.request.CalendarEventUpdateRequest;
 import com.naruworks.api.dto.response.CalendarEventResponse;
+import com.naruworks.api.security.CurrentMember;
+import com.naruworks.api.security.CurrentMemberResolver;
 import com.naruworks.core.service.CalendarService;
+import com.naruworks.domain.model.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,13 +23,15 @@ import java.util.List;
 public class CalendarEventController {
 
     private final CalendarService calendarService;
+    private final CurrentMemberResolver currentMemberResolver;
 
     @GetMapping
     public List<CalendarEventResponse> getEvents(
+            @CurrentMember Member member,
             @RequestParam LocalDateTime from,
             @RequestParam LocalDateTime to
     ) {
-        return calendarService.findEvents(from, to)
+        return calendarService.findEvents(member.getId(), from, to)
                 .stream()
                 .map(CalendarEventResponse::from)
                 .toList();
@@ -33,33 +40,41 @@ public class CalendarEventController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CalendarEventResponse createEvent(
+            @CurrentMember Member member,
             @Valid @RequestBody CalendarEventCreateRequest request
     ) {
         return CalendarEventResponse.from(
-                calendarService.createEvent(request.toDomain())
+                calendarService.createEvent(member.getId(), request.toDomain())
         );
     }
 
     @GetMapping("/{id}")
-    public CalendarEventResponse getEvent(@PathVariable Long id) {
+    public CalendarEventResponse getEvent(
+            @CurrentMember Member member,
+            @PathVariable Long id
+    ) {
         return CalendarEventResponse.from(
-                calendarService.findEvent(id)
+                calendarService.findEvent(member.getId(), id)
         );
     }
 
     @PutMapping("/{id}")
     public CalendarEventResponse updateEvent(
+            @CurrentMember Member member,
             @PathVariable Long id,
             @Valid @RequestBody CalendarEventUpdateRequest request
     ) {
         return CalendarEventResponse.from(
-                calendarService.updateEvent(id, request.toDomain(id))
+                calendarService.updateEvent(member.getId(), id, request.toDomain(id))
         );
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteEvent(@PathVariable Long id) {
-        calendarService.deleteEvent(id);
+    public void deleteEvent(
+            @CurrentMember Member member,
+            @PathVariable Long id
+    ) {
+        calendarService.deleteEvent(member.getId(), id);
     }
 }

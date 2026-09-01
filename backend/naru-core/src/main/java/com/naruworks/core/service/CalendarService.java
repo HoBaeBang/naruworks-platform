@@ -17,16 +17,20 @@ public class CalendarService {
     private final CalendarEventReader calendarEventReader;
     private final CalendarEventWriter calendarEventWriter;
 
-    public List<CalendarEvent> findEvents(LocalDateTime from, LocalDateTime to) {
-        return calendarEventReader.findEvents(from, to);
+    public List<CalendarEvent> findEvents(
+            Long memberId,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        return calendarEventReader.findEvents(memberId, from, to);
     }
 
-    public CalendarEvent createEvent(CalendarEvent event) {
-
+    public CalendarEvent createEvent(Long memberId, CalendarEvent event) {
         validateEventPeriod(event);
 
         CalendarEvent newEvent = CalendarEvent.of(
                 null,
+                memberId,
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),
@@ -42,11 +46,16 @@ public class CalendarService {
         return calendarEventWriter.save(newEvent);
     }
 
-    public CalendarEvent updateEvent(Long id, CalendarEvent event) {
+    public CalendarEvent updateEvent(
+            Long memberId,
+            Long id,
+            CalendarEvent event
+    ) {
         validateEventPeriod(event);
 
         CalendarEvent updateEvent = CalendarEvent.of(
                 id,
+                memberId,
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),
@@ -59,15 +68,15 @@ public class CalendarService {
                 CalendarEventStatus.ACTIVE
         );
 
-        return calendarEventWriter.update(updateEvent);
+        return calendarEventWriter.update(memberId, updateEvent);
     }
 
-    public CalendarEvent findEvent(Long id) {
-        return calendarEventReader.findEvent(id);
+    public CalendarEvent findEvent(Long memberId, Long id) {
+        return calendarEventReader.findEvent(memberId, id);
     }
 
-    public void deleteEvent(Long id) {
-        calendarEventWriter.delete(id);
+    public void deleteEvent(Long memberId, Long id) {
+        calendarEventWriter.delete(memberId, id);
     }
 
     private void validateEventPeriod(CalendarEvent event) {

@@ -14,11 +14,13 @@ export function CalendarEventEditModal({
                                            selectedDate,
                                            year,
                                            month,
+                                           onEventChanged,
                                        }: {
     event: CalendarEvent;
     selectedDate: string;
     year: number;
     month: number;
+    onEventChanged?: () => Promise<void> | void;
 }) {
     const closeHref = `/calendar?year=${year}&month=${month}&date=${selectedDate}`;
     const router = useRouter();
@@ -52,8 +54,8 @@ export function CalendarEventEditModal({
                 recurrenceEndAt: event.recurrenceEndAt,
             });
 
+            await onEventChanged?.();
             router.push(closeHref);
-            router.refresh();
         } catch {
             setErrorMessage("일정을 수정하지 못했습니다. 입력값을 확인해주세요.");
         } finally {
@@ -68,8 +70,8 @@ export function CalendarEventEditModal({
         try {
             await deleteCalendarEvent(event.id);
 
+            await onEventChanged?.();
             router.push(closeHref);
-            router.refresh();
         } catch {
             setErrorMessage("일정을 삭제하지 못했습니다.");
         } finally {

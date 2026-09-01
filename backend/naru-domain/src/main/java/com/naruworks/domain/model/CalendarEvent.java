@@ -11,6 +11,7 @@ import lombok.Getter;
 public class CalendarEvent {
 
     private final Long id;
+    private final Long memberId;
     private final String title;
     private final String description;
     private final LocalDateTime startAt;
@@ -24,6 +25,7 @@ public class CalendarEvent {
 
     public static CalendarEvent of(
             Long id,
+            Long memberId,
             String title,
             String description,
             LocalDateTime startAt,
@@ -37,6 +39,7 @@ public class CalendarEvent {
     ) {
         return CalendarEvent.builder()
                 .id(id)
+                .memberId(memberId)
                 .title(title)
                 .description(description)
                 .startAt(startAt)

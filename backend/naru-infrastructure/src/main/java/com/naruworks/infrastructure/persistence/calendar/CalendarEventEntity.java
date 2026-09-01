@@ -20,6 +20,10 @@ public class CalendarEventEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 일정을 소유한 회원의 내부 식별자 */
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
+
     /** 일정 제목 */
     @Column(nullable = false, length = 100)
     private String title;
@@ -72,6 +76,7 @@ public class CalendarEventEntity {
     public CalendarEvent toDomain() {
         return CalendarEvent.of(
                 id,
+                memberId,
                 title,
                 description,
                 startAt,
@@ -86,6 +91,7 @@ public class CalendarEventEntity {
     }
 
     public static CalendarEventEntity of(
+            Long memberId,
             String title,
             String description,
             LocalDateTime startAt,
@@ -98,6 +104,7 @@ public class CalendarEventEntity {
             CalendarEventStatus status
     ) {
         CalendarEventEntity entity = new CalendarEventEntity();
+        entity.memberId = memberId;
         entity.title = title;
         entity.description = description;
         entity.startAt = startAt;
@@ -115,6 +122,7 @@ public class CalendarEventEntity {
 
     public static CalendarEventEntity from(CalendarEvent event) {
         return CalendarEventEntity.of(
+                event.getMemberId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),

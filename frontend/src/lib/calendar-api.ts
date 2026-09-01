@@ -4,21 +4,26 @@ import type {
   CalendarEventUpdateRequest,
 } from "@/types/calendar";
 
-const API_BASE_URL =
-  typeof window === "undefined"
-    ? process.env.CALENDAR_API_BASE_URL ??
-      process.env.CATALOG_API_BASE_URL ??
-      process.env.NEXT_PUBLIC_API_BASE_URL ??
-      "http://backend:8080"
-    : "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081";
+
+export class CalendarApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "CalendarApiError";
+  }
+}
 
 async function fetchJson<T>(path: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-        cache: "no-store",
+      cache: "no-store",
+      credentials: "include",
     });
 
     if (!response.ok) {
-        throw new Error(`API request failed: ${path}`);
+      throw new CalendarApiError(`API request failed: ${path}`, response.status);
     }
 
     return response.json() as Promise<T>;
@@ -38,6 +43,7 @@ export async function createCalendarEvent(
 ): Promise<CalendarEvent> {
     const response = await fetch(`${API_BASE_URL}/api/calendar/events`, {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
         },
@@ -45,7 +51,7 @@ export async function createCalendarEvent(
     });
 
     if (!response.ok) {
-        throw new Error("Calendar event create failed");
+        throw new CalendarApiError("Calendar event create failed", response.status);
     }
 
     return response.json() as Promise<CalendarEvent>;
@@ -57,6 +63,7 @@ export async function updateCalendarEvent(
 ): Promise<CalendarEvent> {
   const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}`, {
     method: "PUT",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -64,7 +71,7 @@ export async function updateCalendarEvent(
   });
 
   if (!response.ok) {
-    throw new Error("Calendar event update failed");
+    throw new CalendarApiError("Calendar event update failed", response.status);
   }
 
   return response.json() as Promise<CalendarEvent>;
@@ -73,9 +80,10 @@ export async function updateCalendarEvent(
 export async function deleteCalendarEvent(id: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}`, {
     method: "DELETE",
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error("Calendar event delete failed");
+    throw new CalendarApiError("Calendar event delete failed", response.status);
   }
 }

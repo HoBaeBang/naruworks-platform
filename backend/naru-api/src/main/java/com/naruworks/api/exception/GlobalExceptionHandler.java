@@ -1,5 +1,6 @@
 package com.naruworks.api.exception;
 
+import com.naruworks.core.exception.AuthorizationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,4 +28,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AuthorizationException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Map<String, String> handleAuthorizationException(
+            AuthorizationException exception
+    ) {
+        return Map.of(
+                "message", exception.getMessage()
+        );
+    }
 }

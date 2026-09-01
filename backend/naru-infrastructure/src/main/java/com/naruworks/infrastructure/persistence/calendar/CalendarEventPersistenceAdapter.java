@@ -16,14 +16,6 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
 
     private final CalendarEventJpaRepository calendarEventJpaRepository;
 
-    public List<CalendarEvent> findEvents(LocalDateTime from, LocalDateTime to) {
-        return calendarEventJpaRepository
-                .findAllByStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(to, from)
-                .stream()
-                .map(CalendarEventEntity::toDomain)
-                .toList();
-    }
-
     @Override
     public CalendarEvent save(CalendarEvent event) {
         CalendarEventEntity savedEntity = calendarEventJpaRepository.save(CalendarEventEntity.from(event));
@@ -32,16 +24,30 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
     }
 
     @Override
-    public CalendarEvent findEvent(Long id) {
-        return calendarEventJpaRepository.findById(id)
+    public List<CalendarEvent> findEvents(
+            Long memberId,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        return calendarEventJpaRepository
+                .findAllByMemberIdAndStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(
+                        memberId,
+                        to,
+                        from
+                )
+                .stream()
                 .map(CalendarEventEntity::toDomain)
-                .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
+                .toList();
     }
 
     @Override
-    public CalendarEvent update(CalendarEvent event) {
-        CalendarEventEntity entity = calendarEventJpaRepository.findById(event.getId())
-                .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
+    public CalendarEvent findEvent(Long memberId, Long id) {
+        return getOwnedEvent(memberId, id).toDomain();
+    }
+
+    @Override
+    public CalendarEvent update(Long memberId, CalendarEvent event) {
+        CalendarEventEntity entity = getOwnedEvent(memberId, event.getId());
 
         entity.update(event);
 
@@ -49,10 +55,14 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
     }
 
     @Override
-    public void delete(Long id) {
-        CalendarEventEntity entity = calendarEventJpaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
+    public void delete(Long memberId, Long id) {
+        CalendarEventEntity entity = getOwnedEvent(memberId, id);
 
         calendarEventJpaRepository.delete(entity);
+    }
+
+    private CalendarEventEntity getOwnedEvent(Long memberId, Long id) {
+        return calendarEventJpaRepository.findByIdAndMemberId(id, memberId)
+                .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));
     }
 }

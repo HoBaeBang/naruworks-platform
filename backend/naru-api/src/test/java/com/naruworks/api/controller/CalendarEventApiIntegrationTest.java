@@ -1,9 +1,13 @@
 package com.naruworks.api.controller;
 
+import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
+import com.naruworks.domain.value.ReferralCode;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventEntity;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventJpaRepository;
+import com.naruworks.infrastructure.persistence.member.MemberEntity;
+import com.naruworks.infrastructure.persistence.member.MemberJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,12 +16,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
 @SpringBootTest(properties = {
         "spring.flyway.enabled=false",
@@ -25,6 +31,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 class CalendarEventApiIntegrationTest {
+
+    private static final String MEMBER_A_PROVIDER_USER_ID = "google-member-a";
+
+    @Autowired
+    private MemberJpaRepository memberJpaRepository;
+
+    private Long memberAId;
 
     @Autowired
     private MockMvc mockMvc;
@@ -35,8 +48,21 @@ class CalendarEventApiIntegrationTest {
     @BeforeEach
     void setUp() {
         calendarEventJpaRepository.deleteAll();
+        memberJpaRepository.deleteAll();
+
+        Member memberA = Member.createApprovedInitialAdminGoogleMember(
+                "member-a@example.com",
+                "Member A",
+                null,
+                MEMBER_A_PROVIDER_USER_ID,
+                ReferralCode.of("ADMIN1"),
+                LocalDateTime.of(2026, 7, 1, 0, 0)
+        );
+
+        memberAId = memberJpaRepository.save(MemberEntity.from(memberA)).getId();
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "7월 첫 일정",
                 "조회 기간 안에 들어오는 일정",
                 LocalDateTime.of(2026, 7, 10, 9, 0),
@@ -50,6 +76,7 @@ class CalendarEventApiIntegrationTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "7월 말 일정",
                 "조회 종료일 이후까지 이어지는 일정",
                 LocalDateTime.of(2026, 7, 31, 23, 0),
@@ -63,6 +90,7 @@ class CalendarEventApiIntegrationTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "조회 범위 밖 일정",
                 "조회 기간과 겹치지 않는 일정",
                 LocalDateTime.of(2026, 8, 2, 9, 0),
@@ -81,7 +109,8 @@ class CalendarEventApiIntegrationTest {
     void getCalendarEvents() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events")
                         .param("from", "2026-07-01T00:00:00")
-                        .param("to", "2026-08-01T00:00:00"))
+                        .param("to", "2026-08-01T00:00:00")
+                        .with(memberAAuthentication()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value("7월 첫 일정"))
                 .andExpect(jsonPath("$[0].startAt").value("2026-07-10T09:00:00"))
@@ -114,7 +143,8 @@ class CalendarEventApiIntegrationTest {
                               "recurrenceRule": "NONE",
                               "recurrenceEndAt": null
                             }
-                            """))
+                            """)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("운동"))
                 .andExpect(jsonPath("$.description").value("저녁 러닝"))
@@ -148,7 +178,8 @@ class CalendarEventApiIntegrationTest {
                           "recurrenceRule": "NONE",
                           "recurrenceEndAt": null
                         }
-                        """))
+                        """)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -169,7 +200,8 @@ class CalendarEventApiIntegrationTest {
                           "recurrenceRule": "NONE",
                           "recurrenceEndAt": null
                         }
-                        """))
+                        """)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -177,6 +209,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 단건 조회 API는 id에 해당하는 일정을 반환한다")
     void getCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "단건 조회 일정",
                 "단건 조회 테스트",
                 LocalDateTime.of(2026, 7, 24, 9, 0),
@@ -189,7 +222,8 @@ class CalendarEventApiIntegrationTest {
                 CalendarEventStatus.ACTIVE
         ));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", event.getId()))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", event.getId())
+                        .with(memberAAuthentication()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(event.getId()))
                 .andExpect(jsonPath("$.title").value("단건 조회 일정"))
@@ -200,7 +234,8 @@ class CalendarEventApiIntegrationTest {
     @Test
     @DisplayName("캘린더 일정 단건 조회 API는 일정이 없으면 404를 반환한다")
     void getCalendarEventNotFound() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", 999999L))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events/{id}", 999999L)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
     }
@@ -209,6 +244,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 수정 API는 일정을 수정하고 수정된 일정을 반환한다")
     void updateCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "수정 전 일정",
                 "수정 전 설명",
                 LocalDateTime.of(2026, 7, 24, 9, 0),
@@ -235,7 +271,8 @@ class CalendarEventApiIntegrationTest {
                           "recurrenceRule": "NONE",
                           "recurrenceEndAt": null
                         }
-                        """))
+                        """)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(event.getId()))
                 .andExpect(jsonPath("$.title").value("수정된 일정"))
@@ -261,7 +298,8 @@ class CalendarEventApiIntegrationTest {
                           "recurrenceRule": "NONE",
                           "recurrenceEndAt": null
                         }
-                        """))
+                        """)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
     }
@@ -270,6 +308,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 삭제 API는 일정을 삭제하고 204를 반환한다")
     void deleteCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
                 "삭제할 일정",
                 "삭제 테스트",
                 LocalDateTime.of(2026, 7, 24, 9, 0),
@@ -282,7 +321,8 @@ class CalendarEventApiIntegrationTest {
                 CalendarEventStatus.ACTIVE
         ));
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", event.getId()))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", event.getId())
+                        .with(memberAAuthentication()))
                 .andExpect(status().isNoContent());
 
         assertThat(calendarEventJpaRepository.findById(event.getId())).isEmpty();
@@ -291,8 +331,15 @@ class CalendarEventApiIntegrationTest {
     @Test
     @DisplayName("캘린더 일정 삭제 API는 일정이 없으면 404를 반환한다")
     void deleteCalendarEventNotFound() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", 999999L))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}", 999999L)
+                        .with(memberAAuthentication()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."));
+    }
+
+    private RequestPostProcessor memberAAuthentication() {
+        return oauth2Login().attributes(attributes ->
+                attributes.put("sub", MEMBER_A_PROVIDER_USER_ID)
+        );
     }
 }

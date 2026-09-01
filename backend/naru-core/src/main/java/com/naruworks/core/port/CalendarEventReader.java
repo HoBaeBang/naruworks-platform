@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface CalendarEventReader {
 
-    List<CalendarEvent> findEvents(LocalDateTime from, LocalDateTime to);
+    List<CalendarEvent> findEvents(Long memberId, LocalDateTime from, LocalDateTime to);
 
-    CalendarEvent findEvent(Long id);
+    CalendarEvent findEvent(Long memberId, Long id);
 }

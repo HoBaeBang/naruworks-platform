@@ -62,10 +62,11 @@ private 메서드, 내부 Builder 호출, 특정 Repository 호출 횟수 자체
 | Domain Model / Value Object | JUnit 단위 테스트 | 값 검증, 상태 전이, 도메인 규칙 |
 | Service | JUnit + Mockito | 트랜잭션 흐름, 권한·소유자 규칙, Port 조합 |
 | JPA Repository | `@DataJpaTest` | 조회 조건, 정렬, 저장, 제약 조건 |
-| Controller / Security | `@SpringBootTest` + MockMvc | HTTP 상태, 인증, validation, 예외 처리 |
+| Controller HTTP 계약 | `@WebMvcTest` + MockMvc | HTTP 상태, 요청 검증, 응답 JSON, 예외 형식 |
+| Security / Resolver / JPA 연결 | `@SpringBootTest` + MockMvc | 실제 인증, Argument Resolver, Service, JPA 연결 |
 | Frontend | lint, build, 브라우저 수동 흐름 | 화면 상태, API 연결, 실제 사용자 경험 |
 
-모든 것을 통합 테스트로 만들지 않는다. 빠른 단위 테스트를 기본으로 하고, 계층 사이의 연결이 중요한 경우에만 통합 테스트를 추가한다.
+모든 것을 통합 테스트로 만들지 않는다. 빠른 단위 테스트와 slice 테스트를 기본으로 하고, 계층 사이의 실제 연결이 중요한 경우에만 `@SpringBootTest` 통합 테스트를 추가한다.
 
 ## NaruWorks에서의 작성 방식
 
@@ -93,9 +94,26 @@ Then: Writer에 전달되는 CalendarEvent의 memberId는 A의 ID다.
 
 Mockito는 외부 의존성을 대체하는 도구다. 테스트 대상은 Mock이 아니라 Service의 결과와 규칙이다.
 
-### API: MockMvc 통합 테스트
+### Controller: `@WebMvcTest`
 
-Controller, Spring Security, Argument Resolver, validation, Service, JPA 연결을 함께 검증한다.
+새 API의 TDD 시작점은 `@WebMvcTest(대상Controller.class)`이다. Controller가 받는
+Service나 Resolver 의존성은 Mockito로 대체하고, HTTP 계약을 먼저 Red -> Green으로 만든다.
+
+```text
+Given: 고정된 현재 회원을 반환하는 CurrentMemberArgumentResolver mock
+When: GET /api/members/me
+Then: 200과 약속한 JSON 필드를 반환
+```
+
+이 테스트는 DB와 전체 애플리케이션을 시작하지 않으므로 빠르다. 인증과 현재 회원 해석은
+통합 테스트에서 검증하고, 여기서는 Controller가 전달받은 Member를 올바른 HTTP 응답으로
+변환하는 데 집중한다.
+
+### API 연결: `@SpringBootTest` + MockMvc
+
+`@SpringBootTest`는 Controller, Spring Security, Argument Resolver, Service, JPA 연결을
+함께 검증한다. 같은 HTTP 계약을 모든 경우에 중복하지 않고, 핵심 인증 경로와 소유권 경계에
+소수로 둔다.
 
 OAuth 실제 로그인은 호출하지 않고 `oauth2Login()`으로 테스트용 인증 정보를 만든다.
 
@@ -113,7 +131,7 @@ OAuth2User sub
 -> Controller의 @CurrentMember Member 전달
 ```
 
-인증이 필요한 API의 기존 테스트에는 인증 정보를 붙인다. 인증 없이 차단되는 동작은 별도 테스트로 남긴다.
+인증이 필요한 API의 통합 테스트에는 인증 정보를 붙인다. 인증 없이 차단되는 동작은 별도 테스트로 남긴다.
 
 ```text
 인증된 회원 A의 생성 요청 -> 201
@@ -150,7 +168,7 @@ DB 컬럼이나 API 계약이 바뀌는 리팩터링은 테스트도 함께 바�
 2. 새 규칙의 핵심 테스트를 먼저 추가한다.
 3. Domain / Entity / Repository 계약을 함께 변경한다.
 4. 컴파일 오류가 난 fixture를 새 데이터 구조로 맞춘다.
-5. 단위 테스트 -> Repository 테스트 -> API 통합 테스트 순서로 실행한다.
+5. 단위 테스트 -> Repository 테스트 -> Controller slice 테스트 -> API 통합 테스트 순서로 실행한다.
 6. 마지막에 실제 브라우저와 PostgreSQL로 사용자 흐름을 확인한다.
 ```
 

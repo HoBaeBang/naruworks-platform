@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
+import { MemberMenu } from "@/components/auth/member-menu";
 import { CalendarApiError, getCalendarEvents } from "@/lib/calendar-api";
 import { getLoginUrl } from "@/lib/auth-url";
 import type { CalendarEvent } from "@/types/calendar";
@@ -66,7 +67,8 @@ export function CalendarClientPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <MemberMenu />
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)]">
               {year}년 {month}월
             </div>

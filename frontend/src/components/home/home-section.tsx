@@ -1,5 +1,5 @@
 import type { Project, ServiceCatalogItem } from "@/types/catalog";
-import { getLoginUrl } from "@/lib/auth-url";
+import { MemberMenu } from "@/components/auth/member-menu";
 import { ServiceCard } from "./service-card";
 
 export function Header() {
@@ -17,12 +17,7 @@ export function Header() {
           <a href="#calendar">캘린더</a>
           <a href="#about">소개</a>
         </nav>
-        <a
-          href={getLoginUrl()}
-          className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
-        >
-          로그인
-        </a>
+        <MemberMenu />
       </div>
     </header>
   );

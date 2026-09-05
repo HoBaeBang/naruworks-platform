@@ -37,6 +37,16 @@ public class AuthController {
         response.sendRedirect("/oauth2/authorization/google");
     }
 
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+
+        if (session != null) {
+            session.invalidate();
+        }
+    }
+
     @GetMapping("/google")
     public void googleLogin(
             @RequestParam("ref") String rawReferralCode,

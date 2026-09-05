@@ -81,4 +81,18 @@ public class Member {
                 .lastLoginAt(now)
                 .build();
     }
+
+    public Member changeOperationalStatus(MemberStatus status) {
+        if (role == MemberRole.ADMIN) {
+            throw new IllegalArgumentException("관리자 계정은 상태를 변경할 수 없습니다.");
+        }
+
+        if (status != MemberStatus.APPROVED && status != MemberStatus.SUSPENDED) {
+            throw new IllegalArgumentException("회원 상태는 APPROVED 또는 SUSPENDED로만 변경할 수 있습니다.");
+        }
+
+        return toBuilder()
+                .status(status)
+                .build();
+    }
 }

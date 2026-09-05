@@ -61,7 +61,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private String getRedirectUrl(MemberStatus status) {
         return switch (status) {
             case PENDING -> frontendBaseUrl + "/join/pending";
-            case APPROVED -> frontendBaseUrl + "/calendar";
+            case APPROVED -> frontendBaseUrl + "/";
             case REJECTED -> frontendBaseUrl + "/join/rejected";
             case SUSPENDED -> frontendBaseUrl + "/join/suspended";
         };

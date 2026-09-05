@@ -28,7 +28,7 @@ export default function JoinTermsPage() {
         termsOfServiceAgreed,
         privacyPolicyAgreed,
       });
-      router.replace("/calendar");
+      router.replace("/");
     } catch (error) {
       setErrorMessage(
         error instanceof Error

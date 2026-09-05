@@ -1,31 +1,9 @@
 import type { Project, ServiceCatalogItem } from "@/types/catalog";
-import { MemberMenu } from "@/components/auth/member-menu";
 import { ServiceCard } from "./service-card";
-
-export function Header() {
-  return (
-    <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
-      <div className="flex items-center gap-3 text-lg font-bold tracking-tight">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--primary)] text-sm font-black text-[#062b20]">
-          N
-        </span>
-        Naru
-      </div>
-      <div className="flex items-center gap-4 text-sm sm:gap-5">
-        <nav className="hidden items-center gap-4 text-[var(--muted)] sm:flex sm:gap-5">
-          <a href="#services">서비스</a>
-          <a href="#calendar">캘린더</a>
-          <a href="#about">소개</a>
-        </nav>
-        <MemberMenu />
-      </div>
-    </header>
-  );
-}
 
 export function Hero({ services }: { services: ServiceCatalogItem[] }) {
   return (
-    <section className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-8 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-24">
+    <section className="mx-auto grid min-h-[calc(100vh-64px)] w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-8 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-24">
       <div className="flex flex-col justify-center">
         <span className="w-fit rounded-full bg-[var(--primary-soft)] px-3 py-1.5 text-sm font-bold text-[var(--primary-strong)]">
           Naru 서비스 홈

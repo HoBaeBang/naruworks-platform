@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { MemberMenu } from "@/components/auth/member-menu";
 import {
   AdminMemberApiError,
   getAdminMembers,
@@ -90,18 +88,6 @@ export function AdminMemberPage() {
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
-      <header className="border-b border-[var(--border)]">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-5">
-          <div className="flex items-baseline gap-3">
-            <Link href="/" className="text-lg font-black tracking-wide text-[var(--primary-strong)]">
-              NaruWorks
-            </Link>
-            <span className="text-sm font-bold text-[var(--muted)]">회원 관리</span>
-          </div>
-          <MemberMenu />
-        </div>
-      </header>
-
       <section className="mx-auto max-w-6xl px-5 py-10">
         <div className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--border)] pb-6">
           <div>

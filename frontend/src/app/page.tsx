@@ -1,6 +1,5 @@
 import {
   FeaturedService,
-  Header,
   Hero,
   ProjectNote,
   UpcomingServices,
@@ -22,7 +21,6 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
-      <Header />
       <Hero services={services} />
       <FeaturedService service={featuredService} />
       <UpcomingServices services={upcomingServices} />

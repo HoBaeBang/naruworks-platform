@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { getLoginUrl } from "@/lib/auth-url";
 import {
   getCurrentMember,
@@ -107,6 +108,17 @@ export function MemberMenu() {
               {member.referralCode}
             </p>
           </div>
+
+          {member.role === "ADMIN" && (
+            <Link
+              href="/admin/members"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex h-10 w-full items-center rounded-lg px-3 text-left text-sm font-bold transition hover:bg-[var(--primary-soft)]"
+            >
+              회원 관리
+            </Link>
+          )}
 
           <button
             type="button"

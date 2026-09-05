@@ -7,7 +7,11 @@ export type AdminMember = {
   profileImageUrl: string | null;
   role: "USER" | "ADMIN";
   status: "APPROVED" | "PENDING" | "REJECTED" | "SUSPENDED";
-  referrerMemberId: number | null;
+  referrer: {
+    id: number;
+    displayName: string;
+    email: string;
+  } | null;
   referralCode: string;
   createdAt: string;
   approvedAt: string | null;

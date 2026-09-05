@@ -8,6 +8,7 @@ import com.naruworks.domain.value.ReferralCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,13 @@ public class MemberPersistenceAdapter implements MemberReader, MemberWriter {
     public Optional<Member> findById(Long memberId) {
         return memberJpaRepository.findById(memberId)
                 .map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public List<Member> findAllByIdIn(Collection<Long> memberIds) {
+        return memberJpaRepository.findAllById(memberIds).stream()
+                .map(MemberEntity::toDomain)
+                .toList();
     }
 
     @Override

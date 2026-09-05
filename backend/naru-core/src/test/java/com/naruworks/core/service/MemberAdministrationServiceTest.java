@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.naruworks.core.exception.NotFoundException;
+import com.naruworks.core.model.MemberAdministrationMember;
 import com.naruworks.core.port.MemberReader;
 import com.naruworks.core.port.MemberWriter;
 import com.naruworks.domain.model.Member;
@@ -17,6 +18,7 @@ import com.naruworks.domain.value.ReferralCode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,14 +36,23 @@ class MemberAdministrationServiceTest {
     private MemberWriter memberWriter;
 
     @Test
-    @DisplayName("회원 목록을 최신 가입 순서로 조회한다")
+    @DisplayName("회원 목록을 최신 가입 순서와 추천인 정보로 조회한다")
     void getMembers() {
-        List<Member> members = List.of(member(2L, MemberStatus.APPROVED), member(1L, MemberStatus.APPROVED));
+        Member referrer = member(1L, MemberStatus.APPROVED);
+        Member invitedMember = member(2L, MemberStatus.APPROVED).toBuilder()
+                .referrerMemberId(referrer.getId())
+                .build();
+        List<Member> members = List.of(invitedMember, referrer);
         given(memberReader.findAllByOrderByCreatedAtDesc()).willReturn(members);
+        given(memberReader.findAllByIdIn(Set.of(referrer.getId()))).willReturn(List.of(referrer));
 
-        List<Member> result = service().getMembers();
+        List<MemberAdministrationMember> result = service().getMembers();
 
-        assertThat(result).containsExactlyElementsOf(members);
+        assertThat(result)
+                .extracting(item -> item.member().getId())
+                .containsExactly(2L, 1L);
+        assertThat(result.getFirst().referrer()).isEqualTo(referrer);
+        assertThat(result.get(1).referrer()).isNull();
     }
 
     @Test
@@ -51,12 +62,15 @@ class MemberAdministrationServiceTest {
         given(memberReader.findById(1L)).willReturn(Optional.of(targetMember));
         given(memberWriter.save(any(Member.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        Member result = service().changeMemberStatus(1L, MemberStatus.SUSPENDED);
+        MemberAdministrationMember result = service().changeMemberStatus(
+                1L,
+                MemberStatus.SUSPENDED
+        );
 
         ArgumentCaptor<Member> savedMember = ArgumentCaptor.forClass(Member.class);
         then(memberWriter).should().save(savedMember.capture());
         assertThat(savedMember.getValue().getStatus()).isEqualTo(MemberStatus.SUSPENDED);
-        assertThat(result.getStatus()).isEqualTo(MemberStatus.SUSPENDED);
+        assertThat(result.member().getStatus()).isEqualTo(MemberStatus.SUSPENDED);
     }
 
     @Test

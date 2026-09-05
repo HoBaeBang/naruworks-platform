@@ -181,7 +181,16 @@ export function AdminMemberPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm font-medium text-[var(--muted)]">
-                        {member.referrerMemberId ?? "-"}
+                        {member.referrer ? (
+                          <>
+                            <p className="font-bold text-[var(--foreground)]">
+                              {member.referrer.displayName}
+                            </p>
+                            <p className="mt-1 text-xs">{member.referrer.email}</p>
+                          </>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="px-4 py-4 text-sm font-medium text-[var(--muted)]">
                         {formatDateTime(member.createdAt)}

@@ -83,7 +83,10 @@ class AdminMemberApiIntegrationTest {
                 .andExpect(jsonPath("$[0].id").value(adminMemberId))
                 .andExpect(jsonPath("$[0].role").value("ADMIN"))
                 .andExpect(jsonPath("$[1].id").value(userMemberId))
-                .andExpect(jsonPath("$[1].status").value("APPROVED"));
+                .andExpect(jsonPath("$[1].status").value("APPROVED"))
+                .andExpect(jsonPath("$[1].referrer.id").value(adminMemberId))
+                .andExpect(jsonPath("$[1].referrer.displayName").value("Admin Member Management"))
+                .andExpect(jsonPath("$[1].referrer.email").value("admin-member-management@naruworks.com"));
     }
 
     @Test
@@ -109,7 +112,8 @@ class AdminMemberApiIntegrationTest {
                         ))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userMemberId))
-                .andExpect(jsonPath("$.status").value("SUSPENDED"));
+                .andExpect(jsonPath("$.status").value("SUSPENDED"))
+                .andExpect(jsonPath("$.referrer.displayName").value("Admin Member Management"));
 
         MemberEntity member = memberJpaRepository.findById(userMemberId).orElseThrow();
         assertThat(member.getStatus()).isEqualTo(MemberStatus.SUSPENDED);

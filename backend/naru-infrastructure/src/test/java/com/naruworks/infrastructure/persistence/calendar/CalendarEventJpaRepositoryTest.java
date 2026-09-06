@@ -27,8 +27,8 @@ class CalendarEventJpaRepositoryTest {
     private CalendarEventJpaRepository calendarEventJpaRepository;
 
     @Test
-    @DisplayName("조회 기간과 겹치는 일정을 시작일 오름차순으로 조회한다")
-    void findEventsOverlappingPeriod() {
+    @DisplayName("조회 기간에 표시할 단일 일정과 반복 일정 원본을 조회한다")
+    void findDisplayCandidates() {
         LocalDateTime from = LocalDateTime.of(2026, 7, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 8, 1, 0, 0);
 
@@ -42,6 +42,20 @@ class CalendarEventJpaRepositoryTest {
                 "서울",
                 "#20b977",
                 CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
+
+        calendarEventJpaRepository.save(CalendarEventEntity.of(
+                MEMBER_A_ID,
+                "6월부터 반복되는 운동",
+                "원본은 조회 기간 전이지만 반복 발생 건은 기간 안에 있음",
+                LocalDateTime.of(2026, 6, 5, 19, 0),
+                LocalDateTime.of(2026, 6, 5, 20, 0),
+                false,
+                "한강공원",
+                "#20b977",
+                CalendarEventRecurrenceRule.WEEKLY,
                 null,
                 CalendarEventStatus.ACTIVE
         ));
@@ -89,11 +103,18 @@ class CalendarEventJpaRepositoryTest {
         ));
 
         List<CalendarEventEntity> events =
-                calendarEventJpaRepository.findAllByMemberIdAndStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(MEMBER_A_ID, to, from);
+                calendarEventJpaRepository.findDisplayCandidates(
+                        MEMBER_A_ID,
+                        from,
+                        to,
+                        CalendarEventRecurrenceRule.NONE,
+                        CalendarEventStatus.ACTIVE
+                );
 
         assertThat(events)
                 .extracting(CalendarEventEntity::getTitle)
                 .containsExactly(
+                        "6월부터 반복되는 운동",
                         "6월부터 이어지는 일정",
                         "7월 일정",
                         "8월까지 이어지는 일정"

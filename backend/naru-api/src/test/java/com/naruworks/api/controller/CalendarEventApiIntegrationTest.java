@@ -22,7 +22,9 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
@@ -125,6 +127,34 @@ class CalendarEventApiIntegrationTest {
                 .andExpect(jsonPath("$[1].startAt").value("2026-07-31T23:00:00"))
                 .andExpect(jsonPath("$[1].location").value("카페"))
                 .andExpect(jsonPath("$[2]").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 목록 API는 조회 기간에 포함된 반복 일정 발생 건을 반환한다")
+    void getCalendarEventOccurrences() throws Exception {
+        calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
+                "주간 운동",
+                "매주 금요일 러닝",
+                LocalDateTime.of(2026, 6, 26, 19, 0),
+                LocalDateTime.of(2026, 6, 26, 20, 0),
+                false,
+                "한강공원",
+                "#20b977",
+                CalendarEventRecurrenceRule.WEEKLY,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/calendar/events")
+                        .param("from", "2026-07-01T00:00:00")
+                        .param("to", "2026-08-01T00:00:00")
+                        .with(memberAAuthentication()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"title\":\"주간 운동\"")))
+                .andExpect(content().string(containsString("\"startAt\":\"2026-07-03T19:00:00\"")))
+                .andExpect(content().string(containsString("\"startAt\":\"2026-07-31T19:00:00\"")))
+                .andExpect(content().string(containsString("\"originalOccurrence\":false")));
     }
 
     @Test

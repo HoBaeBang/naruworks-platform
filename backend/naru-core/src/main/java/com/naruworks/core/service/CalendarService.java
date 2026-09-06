@@ -3,6 +3,7 @@ package com.naruworks.core.service;
 import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.domain.model.CalendarEvent;
+import com.naruworks.domain.model.CalendarEventOccurrence;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,18 @@ public class CalendarService {
 
     private final CalendarEventReader calendarEventReader;
     private final CalendarEventWriter calendarEventWriter;
+    private final CalendarEventRecurrenceExpander calendarEventRecurrenceExpander;
 
-    public List<CalendarEvent> findEvents(
+    public List<CalendarEventOccurrence> findEvents(
             Long memberId,
             LocalDateTime from,
             LocalDateTime to
     ) {
-        return calendarEventReader.findEvents(memberId, from, to);
+        return calendarEventReader.findEvents(memberId, from, to)
+                .stream()
+                .flatMap(event -> calendarEventRecurrenceExpander.expand(event, from, to).stream())
+                .sorted((left, right) -> left.event().getStartAt().compareTo(right.event().getStartAt()))
+                .toList();
     }
 
     public CalendarEvent createEvent(Long memberId, CalendarEvent event) {

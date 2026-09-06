@@ -10,6 +10,8 @@ export type CalendarEvent = {
     recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY";
     recurrenceEndAt: string | null;
     status: "ACTIVE" | "CANCELLED";
+    occurrenceKey: string;
+    originalOccurrence: boolean;
 };
 
 export type CalendarEventCreateRequest = {

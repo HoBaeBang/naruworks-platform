@@ -1,6 +1,7 @@
 package com.naruworks.api.dto.response;
 
 import com.naruworks.domain.model.CalendarEvent;
+import com.naruworks.domain.model.CalendarEventOccurrence;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 
@@ -17,10 +18,17 @@ public record CalendarEventResponse(
         String color,
         CalendarEventRecurrenceRule recurrenceRule,
         LocalDateTime recurrenceEndAt,
-        CalendarEventStatus status
+        CalendarEventStatus status,
+        String occurrenceKey,
+        boolean originalOccurrence
 ) {
 
     public static CalendarEventResponse from(CalendarEvent event) {
+        return from(CalendarEventOccurrence.single(event));
+    }
+
+    public static CalendarEventResponse from(CalendarEventOccurrence occurrence) {
+        CalendarEvent event = occurrence.event();
         return new CalendarEventResponse(
                 event.getId(),
                 event.getTitle(),
@@ -32,7 +40,9 @@ public record CalendarEventResponse(
                 event.getColor(),
                 event.getRecurrenceRule(),
                 event.getRecurrenceEndAt(),
-                event.getStatus()
+                event.getStatus(),
+                occurrence.occurrenceKey(),
+                occurrence.originalOccurrence()
         );
     }
 }

@@ -17,7 +17,7 @@ export function CalendarClientPage() {
   const month = getPositiveNumber(searchParams.get("month"), today.getMonth() + 1);
   const selectedDate = searchParams.get("date") ?? undefined;
   const mode = searchParams.get("mode");
-  const selectedEventId = getOptionalPositiveNumber(searchParams.get("eventId"));
+  const selectedOccurrenceKey = searchParams.get("occurrenceKey");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [error, setError] = useState<CalendarApiError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,8 +45,8 @@ export function CalendarClientPage() {
     void Promise.resolve().then(loadEvents);
   }, [loadEvents]);
 
-  const selectedEvent = selectedEventId
-    ? events.find((event) => event.id === selectedEventId)
+  const selectedEvent = selectedOccurrenceKey
+    ? events.find((event) => event.occurrenceKey === selectedOccurrenceKey)
     : undefined;
   const previousMonth = getAdjacentMonth(year, month, -1);
   const nextMonth = getAdjacentMonth(year, month, 1);
@@ -142,11 +142,6 @@ function CalendarNavLink({ label, ariaLabel, year, month }: { label: string; ari
 function getPositiveNumber(value: string | null, fallback: number) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : fallback;
-}
-
-function getOptionalPositiveNumber(value: string | null) {
-  const number = Number(value);
-  return Number.isInteger(number) && number > 0 ? number : null;
 }
 
 function pad(value: number) {

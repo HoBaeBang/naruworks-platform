@@ -93,7 +93,11 @@ class CalendarServiceTest {
     }
 
     private CalendarService service() {
-        return new CalendarService(calendarEventReader, calendarEventWriter);
+        return new CalendarService(
+                calendarEventReader,
+                calendarEventWriter,
+                new CalendarEventRecurrenceExpander()
+        );
     }
 
     private CalendarEvent event(

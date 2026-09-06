@@ -3,6 +3,8 @@ package com.naruworks.infrastructure.persistence.calendar;
 import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.domain.model.CalendarEvent;
+import com.naruworks.domain.type.CalendarEventRecurrenceRule;
+import com.naruworks.domain.type.CalendarEventStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import com.naruworks.core.exception.NotFoundException;
@@ -30,10 +32,12 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
             LocalDateTime to
     ) {
         return calendarEventJpaRepository
-                .findAllByMemberIdAndStartAtLessThanAndEndAtGreaterThanOrderByStartAtAsc(
+                .findDisplayCandidates(
                         memberId,
+                        from,
                         to,
-                        from
+                        CalendarEventRecurrenceRule.NONE,
+                        CalendarEventStatus.ACTIVE
                 )
                 .stream()
                 .map(CalendarEventEntity::toDomain)

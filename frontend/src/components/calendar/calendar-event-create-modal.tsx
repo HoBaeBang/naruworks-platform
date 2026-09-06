@@ -35,6 +35,10 @@ export function CalendarEventCreateModal({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!confirmRecurrenceAdjustment(recurrenceRule, selectedDate)) {
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage(null);
 
@@ -198,4 +202,23 @@ function toRecurrenceEndAt(
   }
 
   return `${recurrenceEndDate}T23:59:59`;
+}
+
+function confirmRecurrenceAdjustment(
+  recurrenceRule: CalendarEvent["recurrenceRule"],
+  startDate: string,
+) {
+  const [, month, day] = startDate.split("-").map(Number);
+
+  if (recurrenceRule === "MONTHLY" && day >= 29) {
+    return window.confirm(
+      "날짜가 없는 달에는 해당 월의 마지막 날에 반복 일정이 표시됩니다. 계속 저장할까요?",
+    );
+  }
+
+  if (recurrenceRule === "YEARLY" && month === 2 && day === 29) {
+    window.alert("2월 29일 일정은 평년에는 2월 28일에 표시됩니다.");
+  }
+
+  return true;
 }

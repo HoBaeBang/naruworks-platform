@@ -4,6 +4,7 @@ import {
     deleteCalendarEvent,
     updateCalendarEvent,
 } from "@/lib/calendar-api";
+import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -31,6 +32,10 @@ export function CalendarEventEditModal({
     const [location, setLocation] = useState(event.location ?? "");
     const [description, setDescription] = useState(event.description ?? "");
     const [color, setColor] = useState(event.color);
+    const [recurrenceRule, setRecurrenceRule] = useState(event.recurrenceRule);
+    const [recurrenceEndDate, setRecurrenceEndDate] = useState(
+        toDateValue(event.recurrenceEndAt),
+    );
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,8 +55,8 @@ export function CalendarEventEditModal({
                 allDay: event.allDay,
                 location,
                 color,
-                recurrenceRule: event.recurrenceRule,
-                recurrenceEndAt: event.recurrenceEndAt,
+                recurrenceRule,
+                recurrenceEndAt: toRecurrenceEndAt(recurrenceRule, recurrenceEndDate),
             });
 
             await onEventChanged?.();
@@ -109,6 +114,18 @@ export function CalendarEventEditModal({
                             className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-base outline-none transition focus:border-[var(--primary)]"
                         />
                     </label>
+
+                    <CalendarRecurrenceFields
+                        recurrenceRule={recurrenceRule}
+                        recurrenceEndDate={recurrenceEndDate}
+                        onRecurrenceRuleChange={(nextRecurrenceRule) => {
+                            setRecurrenceRule(nextRecurrenceRule);
+                            if (nextRecurrenceRule === "NONE") {
+                                setRecurrenceEndDate("");
+                            }
+                        }}
+                        onRecurrenceEndDateChange={setRecurrenceEndDate}
+                    />
 
                     <div className="grid gap-3 sm:grid-cols-2">
                         <label className="flex flex-col gap-2">
@@ -206,4 +223,19 @@ export function CalendarEventEditModal({
 
 function toTimeValue(value: string) {
     return value.slice(11, 16);
+}
+
+function toDateValue(value: string | null) {
+    return value?.slice(0, 10) ?? "";
+}
+
+function toRecurrenceEndAt(
+    recurrenceRule: CalendarEvent["recurrenceRule"],
+    recurrenceEndDate: string,
+) {
+    if (recurrenceRule === "NONE" || !recurrenceEndDate) {
+        return null;
+    }
+
+    return `${recurrenceEndDate}T23:59:59`;
 }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createCalendarEvent } from "@/lib/calendar-api";
+import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
+import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarEventCreateModal({
   selectedDate,
@@ -25,6 +27,8 @@ export function CalendarEventCreateModal({
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#20b977");
+  const [recurrenceRule, setRecurrenceRule] = useState<CalendarEvent["recurrenceRule"]>("NONE");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -43,8 +47,8 @@ export function CalendarEventCreateModal({
         allDay: false,
         location,
         color,
-        recurrenceRule: "NONE",
-        recurrenceEndAt: null,
+        recurrenceRule,
+        recurrenceEndAt: toRecurrenceEndAt(recurrenceRule, recurrenceEndDate),
       });
 
       await onEventChanged?.();
@@ -87,6 +91,18 @@ export function CalendarEventCreateModal({
               className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-base outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
             />
           </label>
+
+          <CalendarRecurrenceFields
+            recurrenceRule={recurrenceRule}
+            recurrenceEndDate={recurrenceEndDate}
+            onRecurrenceRuleChange={(nextRecurrenceRule) => {
+              setRecurrenceRule(nextRecurrenceRule);
+              if (nextRecurrenceRule === "NONE") {
+                setRecurrenceEndDate("");
+              }
+            }}
+            onRecurrenceEndDateChange={setRecurrenceEndDate}
+          />
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-2">
@@ -171,4 +187,15 @@ export function CalendarEventCreateModal({
       </section>
     </div>
   );
+}
+
+function toRecurrenceEndAt(
+  recurrenceRule: CalendarEvent["recurrenceRule"],
+  recurrenceEndDate: string,
+) {
+  if (recurrenceRule === "NONE" || !recurrenceEndDate) {
+    return null;
+  }
+
+  return `${recurrenceEndDate}T23:59:59`;
 }

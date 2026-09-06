@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -159,6 +160,63 @@ class CalendarEventApiIntegrationTest {
         assertThat(calendarEventJpaRepository.findAll())
                 .extracting(CalendarEventEntity::getTitle)
                 .contains("운동");
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 생성 API는 반복 규칙과 반복 종료일을 저장한다")
+    void createCalendarEventWithRecurrence() throws Exception {
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                              "title": "주간 운동",
+                              "description": "매주 러닝",
+                              "startAt": "2026-07-24T19:00:00",
+                              "endAt": "2026-07-24T20:00:00",
+                              "allDay": false,
+                              "location": "한강공원",
+                              "color": "#20b977",
+                              "recurrenceRule": "WEEKLY",
+                              "recurrenceEndAt": "2026-10-31T23:59:59"
+                            }
+                            """)
+                        .with(memberAAuthentication()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("주간 운동"))
+                .andExpect(jsonPath("$.recurrenceRule").value("WEEKLY"))
+                .andExpect(jsonPath("$.recurrenceEndAt").value("2026-10-31T23:59:59"))
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        Number eventId = com.jayway.jsonpath.JsonPath.read(responseBody, "$.id");
+        CalendarEventEntity event = calendarEventJpaRepository.findById(eventId.longValue()).orElseThrow();
+        assertThat(event.getRecurrenceRule()).isEqualTo(CalendarEventRecurrenceRule.WEEKLY);
+        assertThat(event.getRecurrenceEndAt())
+                .isEqualTo(LocalDateTime.of(2026, 10, 31, 23, 59, 59));
+    }
+
+    @Test
+    @DisplayName("캘린더 일정 생성 API는 반복하지 않는 일정의 반복 종료일을 거부한다")
+    void createCalendarEventWithRecurrenceEndAtAndNoRecurrence() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                              "title": "단일 일정",
+                              "description": "반복하지 않음",
+                              "startAt": "2026-07-24T19:00:00",
+                              "endAt": "2026-07-24T20:00:00",
+                              "allDay": false,
+                              "location": "한강공원",
+                              "color": "#20b977",
+                              "recurrenceRule": "NONE",
+                              "recurrenceEndAt": "2026-10-31T23:59:59"
+                            }
+                            """)
+                        .with(memberAAuthentication()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("반복하지 않는 일정에는 반복 종료일을 설정할 수 없습니다."));
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.naruworks.core.service;
 import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.domain.model.CalendarEvent;
+import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class CalendarService {
     }
 
     public CalendarEvent createEvent(Long memberId, CalendarEvent event) {
-        validateEventPeriod(event);
+        validateEvent(event);
 
         CalendarEvent newEvent = CalendarEvent.of(
                 null,
@@ -51,7 +52,7 @@ public class CalendarService {
             Long id,
             CalendarEvent event
     ) {
-        validateEventPeriod(event);
+        validateEvent(event);
 
         CalendarEvent updateEvent = CalendarEvent.of(
                 id,
@@ -79,9 +80,26 @@ public class CalendarService {
         calendarEventWriter.delete(memberId, id);
     }
 
+    private void validateEvent(CalendarEvent event) {
+        validateEventPeriod(event);
+        validateRecurrence(event);
+    }
+
     private void validateEventPeriod(CalendarEvent event) {
         if (!event.getStartAt().isBefore(event.getEndAt())) {
             throw new IllegalArgumentException("일정 시작 일시는 종료 일시보다 빨라야 합니다.");
+        }
+    }
+
+    private void validateRecurrence(CalendarEvent event) {
+        if (event.getRecurrenceRule() == CalendarEventRecurrenceRule.NONE
+                && event.getRecurrenceEndAt() != null) {
+            throw new IllegalArgumentException("반복하지 않는 일정에는 반복 종료일을 설정할 수 없습니다.");
+        }
+
+        if (event.getRecurrenceEndAt() != null
+                && event.getRecurrenceEndAt().isBefore(event.getStartAt())) {
+            throw new IllegalArgumentException("반복 종료 일시는 일정 시작 일시보다 빠를 수 없습니다.");
         }
     }
 }

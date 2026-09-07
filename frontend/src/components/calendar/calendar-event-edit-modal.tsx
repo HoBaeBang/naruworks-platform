@@ -2,13 +2,15 @@
 
 import {
     deleteCalendarEvent,
+    deleteCalendarEventOccurrence,
     updateCalendarEvent,
+    updateCalendarEventOccurrence,
 } from "@/lib/calendar-api";
 import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { CalendarEvent } from "@/types/calendar";
+import type { CalendarEvent, CalendarEventOccurrenceScope } from "@/types/calendar";
 
 export function CalendarEventEditModal({
                                            event,
@@ -36,6 +38,9 @@ export function CalendarEventEditModal({
     const [recurrenceEndDate, setRecurrenceEndDate] = useState(
         toDateValue(event.recurrenceEndAt),
     );
+    const [occurrenceScope, setOccurrenceScope] = useState<CalendarEventOccurrenceScope | null>(
+        event.recurrenceRule === "NONE" ? "ALL" : null,
+    );
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,12 +51,16 @@ export function CalendarEventEditModal({
         if (!confirmRecurrenceAdjustment(recurrenceRule, selectedDate)) {
             return;
         }
+        if (event.recurrenceRule !== "NONE" && !occurrenceScope) {
+            setErrorMessage("반복 일정에 적용할 범위를 선택해주세요.");
+            return;
+        }
 
         setIsSaving(true);
         setErrorMessage(null);
 
         try {
-            await updateCalendarEvent(event.id, {
+            const request = {
                 title,
                 description,
                 startAt: `${selectedDate}T${startTime}:00`,
@@ -61,7 +70,18 @@ export function CalendarEventEditModal({
                 color,
                 recurrenceRule,
                 recurrenceEndAt: toRecurrenceEndAt(recurrenceRule, recurrenceEndDate),
-            });
+            };
+
+            if (event.recurrenceRule === "NONE") {
+                await updateCalendarEvent(event.id, request);
+            } else {
+                await updateCalendarEventOccurrence(
+                    event.id,
+                    event.occurrenceStartAt,
+                    occurrenceScope!,
+                    request,
+                );
+            }
 
             await onEventChanged?.();
             router.push(closeHref);
@@ -73,11 +93,24 @@ export function CalendarEventEditModal({
     }
 
     async function handleDelete() {
+        if (event.recurrenceRule !== "NONE" && !occurrenceScope) {
+            setErrorMessage("반복 일정에 적용할 범위를 선택해주세요.");
+            return;
+        }
+
         setIsDeleting(true);
         setErrorMessage(null);
 
         try {
-            await deleteCalendarEvent(event.id);
+            if (event.recurrenceRule === "NONE") {
+                await deleteCalendarEvent(event.id);
+            } else {
+                await deleteCalendarEventOccurrence(
+                    event.id,
+                    event.occurrenceStartAt,
+                    occurrenceScope!,
+                );
+            }
 
             await onEventChanged?.();
             router.push(closeHref);
@@ -130,6 +163,17 @@ export function CalendarEventEditModal({
                         }}
                         onRecurrenceEndDateChange={setRecurrenceEndDate}
                     />
+
+                    {event.recurrenceRule !== "NONE" && (
+                        <fieldset className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+                            <legend className="px-1 text-sm font-bold text-[var(--muted)]">변경 범위</legend>
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                <ScopeButton scope="THIS" label="이 일정만" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
+                                <ScopeButton scope="THIS_AND_FOLLOWING" label="이후 일정" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
+                                <ScopeButton scope="ALL" label="전체 일정" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
+                            </div>
+                        </fieldset>
+                    )}
 
                     <div className="grid gap-3 sm:grid-cols-2">
                         <label className="flex flex-col gap-2">
@@ -222,6 +266,33 @@ export function CalendarEventEditModal({
                 </form>
             </section>
         </div>
+    );
+}
+
+function ScopeButton({
+    scope,
+    label,
+    selectedScope,
+    onSelect,
+}: {
+    scope: CalendarEventOccurrenceScope;
+    label: string;
+    selectedScope: CalendarEventOccurrenceScope | null;
+    onSelect: (scope: CalendarEventOccurrenceScope) => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={() => onSelect(scope)}
+            className={[
+                "h-10 rounded-lg border px-3 text-sm font-bold transition",
+                selectedScope === scope
+                    ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]"
+                    : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--primary)]",
+            ].join(" ")}
+        >
+            {label}
+        </button>
     );
 }
 

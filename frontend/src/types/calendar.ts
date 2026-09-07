@@ -11,6 +11,7 @@ export type CalendarEvent = {
     recurrenceEndAt: string | null;
     status: "ACTIVE" | "CANCELLED";
     occurrenceKey: string;
+    occurrenceStartAt: string;
     originalOccurrence: boolean;
 };
 
@@ -27,3 +28,5 @@ export type CalendarEventCreateRequest = {
 };
 
 export type CalendarEventUpdateRequest = CalendarEventCreateRequest;
+
+export type CalendarEventOccurrenceScope = "THIS" | "THIS_AND_FOLLOWING" | "ALL";

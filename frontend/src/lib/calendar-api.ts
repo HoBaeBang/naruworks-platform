@@ -1,6 +1,7 @@
 import type {
   CalendarEvent,
   CalendarEventCreateRequest,
+  CalendarEventOccurrenceScope,
   CalendarEventUpdateRequest,
 } from "@/types/calendar";
 
@@ -85,5 +86,43 @@ export async function deleteCalendarEvent(id: number): Promise<void> {
 
   if (!response.ok) {
     throw new CalendarApiError("Calendar event delete failed", response.status);
+  }
+}
+
+export async function updateCalendarEventOccurrence(
+  id: number,
+  occurrenceStartAt: string,
+  scope: CalendarEventOccurrenceScope,
+  request: CalendarEventUpdateRequest,
+): Promise<CalendarEvent> {
+  const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}/occurrence`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ occurrenceStartAt, scope, ...request }),
+  });
+
+  if (!response.ok) {
+    throw new CalendarApiError("Calendar event occurrence update failed", response.status);
+  }
+
+  return response.json() as Promise<CalendarEvent>;
+}
+
+export async function deleteCalendarEventOccurrence(
+  id: number,
+  occurrenceStartAt: string,
+  scope: CalendarEventOccurrenceScope,
+): Promise<void> {
+  const params = new URLSearchParams({ occurrenceStartAt, scope });
+  const response = await fetch(`${API_BASE_URL}/api/calendar/events/${id}/occurrence?${params}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new CalendarApiError("Calendar event occurrence delete failed", response.status);
   }
 }

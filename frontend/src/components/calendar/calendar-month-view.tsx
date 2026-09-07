@@ -61,26 +61,15 @@ export function CalendarMonthView({
 
                             <div className="relative z-10 mt-2 flex flex-col gap-1">
                                 {dayEvents.slice(0, 3).map((event) => (
-                                    event.originalOccurrence ? (
-                                        <Link
-                                            key={event.occurrenceKey}
-                                            href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=edit`}
-                                            className="truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"
-                                            style={{ backgroundColor: event.color }}
-                                            title={event.title}
-                                        >
-                                            {event.title}
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            key={event.occurrenceKey}
-                                            className="truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"
-                                            style={{ backgroundColor: event.color }}
-                                            title={`${event.title} (반복 일정)`}
-                                        >
-                                            {event.title}
-                                        </span>
-                                    )
+                                    <Link
+                                        key={event.occurrenceKey}
+                                        href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=edit`}
+                                        className="truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"
+                                        style={{ backgroundColor: event.color }}
+                                        title={event.recurrenceRule === "NONE" ? event.title : `${event.title} (반복 일정)`}
+                                    >
+                                        {event.title}
+                                    </Link>
                                 ))}
                             </div>
                         </article>

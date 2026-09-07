@@ -17,17 +17,14 @@ import type { CalendarEvent, CalendarEventOccurrenceScope } from "@/types/calend
 export function CalendarEventEditModal({
                                            event,
                                            selectedDate,
-                                           year,
-                                           month,
+                                           closeHref,
                                            onEventChanged,
                                        }: {
     event: CalendarEvent;
     selectedDate: string;
-    year: number;
-    month: number;
+    closeHref: string;
     onEventChanged?: () => Promise<void> | void;
 }) {
-    const closeHref = `/calendar?year=${year}&month=${month}&date=${selectedDate}`;
     const router = useRouter();
 
     const [title, setTitle] = useState(event.title);

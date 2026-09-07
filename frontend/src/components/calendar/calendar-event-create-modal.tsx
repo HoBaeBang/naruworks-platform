@@ -11,17 +11,13 @@ import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarEventCreateModal({
   selectedDate,
-  year,
-  month,
+  closeHref,
   onEventChanged,
 }: {
   selectedDate: string;
-  year: number;
-  month: number;
+  closeHref: string;
   onEventChanged?: () => Promise<void> | void;
 }) {
-  const closeHref = `/calendar?year=${year}&month=${month}&date=${selectedDate}`;
-
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [startTime, setStartTime] = useState("09:00");

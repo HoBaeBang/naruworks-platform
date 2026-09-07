@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -169,6 +170,7 @@ public class CalendarService {
     /** 생성·수정 요청에 공통으로 적용하는 일정 시간과 반복 규칙 검증 */
     private void validateEvent(CalendarEvent event) {
         validateEventPeriod(event);
+        validateAllDayEvent(event);
         validateRecurrence(event);
     }
 
@@ -176,6 +178,15 @@ public class CalendarService {
     private void validateEventPeriod(CalendarEvent event) {
         if (!event.getStartAt().isBefore(event.getEndAt())) {
             throw new IllegalArgumentException("일정 시작 일시는 종료 일시보다 빨라야 합니다.");
+        }
+    }
+
+    /** 종일 일정은 날짜 경계를 명확히 하기 위해 시작과 종료 시각을 자정으로만 허용한다. */
+    private void validateAllDayEvent(CalendarEvent event) {
+        if (event.isAllDay()
+                && (!event.getStartAt().toLocalTime().equals(LocalTime.MIDNIGHT)
+                || !event.getEndAt().toLocalTime().equals(LocalTime.MIDNIGHT))) {
+            throw new IllegalArgumentException("종일 일정은 시작과 종료 시각을 자정으로 설정해야 합니다.");
         }
     }
 

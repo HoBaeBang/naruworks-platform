@@ -103,6 +103,58 @@ class CalendarServiceTest {
     }
 
     @Test
+    @DisplayName("종일 일정은 자정부터 다음 날 자정까지 저장할 수 있다")
+    void createEvent_allDayEventAtMidnight() {
+        CalendarEvent allDayEvent = CalendarEvent.of(
+                null,
+                null,
+                "휴가",
+                "여름 휴가",
+                LocalDateTime.of(2026, 7, 24, 0, 0),
+                LocalDateTime.of(2026, 7, 25, 0, 0),
+                true,
+                "제주",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+        given(calendarEventWriter.save(any(CalendarEvent.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        CalendarEvent result = service().createEvent(1L, allDayEvent);
+
+        assertThat(result.isAllDay()).isTrue();
+        assertThat(result.getStartAt()).isEqualTo(LocalDateTime.of(2026, 7, 24, 0, 0));
+        assertThat(result.getEndAt()).isEqualTo(LocalDateTime.of(2026, 7, 25, 0, 0));
+    }
+
+    @Test
+    @DisplayName("종일 일정은 자정이 아닌 시각으로 저장할 수 없다")
+    void createEvent_allDayEventWithNonMidnightTime() {
+        CalendarEvent allDayEvent = CalendarEvent.of(
+                null,
+                null,
+                "휴가",
+                "여름 휴가",
+                LocalDateTime.of(2026, 7, 24, 9, 0),
+                LocalDateTime.of(2026, 7, 25, 0, 0),
+                true,
+                "제주",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+
+        assertThatThrownBy(() -> service().createEvent(1L, allDayEvent))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("종일 일정은 시작과 종료 시각을 자정으로 설정해야 합니다.");
+
+        then(calendarEventWriter).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("반복 일정의 이번 회차 수정은 원본 대신 예외 일정을 저장한다")
     void updateOccurrence_thisStoresOverrideException() {
         CalendarEvent series = CalendarEvent.of(

@@ -64,11 +64,23 @@ export function CalendarMonthView({
                                     <Link
                                         key={event.occurrenceKey}
                                         href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=edit`}
-                                        className="truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"
-                                        style={{ backgroundColor: event.color }}
+                                        className={[
+                                            "flex min-w-0 flex-col items-start rounded-md px-2 py-1 text-xs font-semibold transition",
+                                            event.allDay
+                                                ? "text-[#062b20]"
+                                                : "border bg-[var(--surface)] text-[var(--foreground)]",
+                                        ].join(" ")}
+                                        style={event.allDay
+                                            ? { backgroundColor: event.color }
+                                            : { borderColor: event.color }}
                                         title={event.recurrenceRule === "NONE" ? event.title : `${event.title} (반복 일정)`}
                                     >
-                                        {event.title}
+                                        {!event.allDay && (
+                                            <span className="text-[10px] font-medium leading-4 text-[var(--muted)]">
+                                                {formatTimeRange(event)}
+                                            </span>
+                                        )}
+                                        <span className="w-full truncate">{event.title}</span>
                                     </Link>
                                 ))}
                             </div>
@@ -98,12 +110,20 @@ function createMonthDays(year: number, month: number): CalendarDay[] {
 }
 
 function getEventsForDay(events: CalendarEvent[], date: Date) {
-    return events.filter((event) => {
-        const startAt = new Date(event.startAt);
-        const endAt = new Date(event.endAt);
+    return events
+        .filter((event) => {
+            const startAt = new Date(event.startAt);
+            const endAt = new Date(event.endAt);
 
-        return startAt <= endOfDay(date) && endAt >= startOfDay(date);
-    });
+            return startAt <= endOfDay(date) && endAt >= startOfDay(date);
+        })
+        .sort((left, right) => {
+            if (left.allDay !== right.allDay) {
+                return left.allDay ? -1 : 1;
+            }
+
+            return new Date(left.startAt).getTime() - new Date(right.startAt).getTime();
+        });
 }
 
 function startOfDay(date: Date) {
@@ -128,4 +148,8 @@ function formatDate(date: Date) {
     const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
+}
+
+function formatTimeRange(event: CalendarEvent) {
+    return `${event.startAt.slice(11, 16)} - ${event.endAt.slice(11, 16)}`;
 }

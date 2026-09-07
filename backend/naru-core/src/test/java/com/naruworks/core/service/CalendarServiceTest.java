@@ -8,7 +8,11 @@ import static org.mockito.BDDMockito.then;
 
 import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
+import com.naruworks.core.port.CalendarEventExceptionReader;
+import com.naruworks.core.port.CalendarEventExceptionWriter;
 import com.naruworks.domain.model.CalendarEvent;
+import com.naruworks.domain.model.CalendarEventException;
+import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 import java.time.LocalDateTime;
@@ -27,6 +31,12 @@ class CalendarServiceTest {
 
     @Mock
     private CalendarEventWriter calendarEventWriter;
+
+    @Mock
+    private CalendarEventExceptionReader calendarEventExceptionReader;
+
+    @Mock
+    private CalendarEventExceptionWriter calendarEventExceptionWriter;
 
     @Test
     @DisplayName("반복 종료일이 있는 WEEKLY 일정은 저장할 수 있다")
@@ -92,11 +102,86 @@ class CalendarServiceTest {
         then(calendarEventWriter).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("반복 일정의 이번 회차 수정은 원본 대신 예외 일정을 저장한다")
+    void updateOccurrence_thisStoresOverrideException() {
+        CalendarEvent series = CalendarEvent.of(
+                10L,
+                1L,
+                "운동",
+                "저녁 러닝",
+                LocalDateTime.of(2026, 7, 3, 19, 0),
+                LocalDateTime.of(2026, 7, 3, 20, 0),
+                false,
+                "한강공원",
+                "#20b977",
+                CalendarEventRecurrenceRule.WEEKLY,
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+        CalendarEvent updatedEvent = event(CalendarEventRecurrenceRule.WEEKLY, null);
+        given(calendarEventReader.findEvent(1L, 10L)).willReturn(series);
+
+        service().updateOccurrence(
+                1L,
+                10L,
+                LocalDateTime.of(2026, 7, 10, 19, 0),
+                CalendarEventOccurrenceScope.THIS,
+                updatedEvent
+        );
+
+        ArgumentCaptor<CalendarEventException> exceptionCaptor =
+                ArgumentCaptor.forClass(CalendarEventException.class);
+        then(calendarEventExceptionWriter).should().save(exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue().calendarEventId()).isEqualTo(10L);
+        assertThat(exceptionCaptor.getValue().occurrenceStartAt())
+                .isEqualTo(LocalDateTime.of(2026, 7, 10, 19, 0));
+    }
+
+    @Test
+    @DisplayName("반복 일정의 이후 회차 수정은 기존 시리즈를 끝내고 새 시리즈를 만든다")
+    void updateOccurrence_thisAndFollowingSplitsSeries() {
+        CalendarEvent series = CalendarEvent.of(
+                10L,
+                1L,
+                "운동",
+                "저녁 러닝",
+                LocalDateTime.of(2026, 7, 3, 19, 0),
+                LocalDateTime.of(2026, 7, 3, 20, 0),
+                false,
+                "한강공원",
+                "#20b977",
+                CalendarEventRecurrenceRule.WEEKLY,
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+        CalendarEvent updatedEvent = event(CalendarEventRecurrenceRule.WEEKLY, null);
+        given(calendarEventReader.findEvent(1L, 10L)).willReturn(series);
+        given(calendarEventWriter.save(any(CalendarEvent.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        service().updateOccurrence(
+                1L,
+                10L,
+                LocalDateTime.of(2026, 7, 17, 19, 0),
+                CalendarEventOccurrenceScope.THIS_AND_FOLLOWING,
+                updatedEvent
+        );
+
+        ArgumentCaptor<CalendarEvent> shortenedSeriesCaptor = ArgumentCaptor.forClass(CalendarEvent.class);
+        then(calendarEventWriter).should().update(org.mockito.ArgumentMatchers.eq(1L), shortenedSeriesCaptor.capture());
+        assertThat(shortenedSeriesCaptor.getValue().getRecurrenceEndAt())
+                .isEqualTo(LocalDateTime.of(2026, 7, 17, 18, 59, 59, 999_999_999));
+        then(calendarEventWriter).should().save(any(CalendarEvent.class));
+    }
+
     private CalendarService service() {
         return new CalendarService(
                 calendarEventReader,
                 calendarEventWriter,
-                new CalendarEventRecurrenceExpander()
+                new CalendarEventRecurrenceExpander(),
+                calendarEventExceptionReader,
+                calendarEventExceptionWriter
         );
     }
 

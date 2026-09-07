@@ -20,6 +20,7 @@ public record CalendarEventResponse(
         LocalDateTime recurrenceEndAt,
         CalendarEventStatus status,
         String occurrenceKey,
+        LocalDateTime occurrenceStartAt,
         boolean originalOccurrence
 ) {
 
@@ -42,6 +43,7 @@ public record CalendarEventResponse(
                 event.getRecurrenceEndAt(),
                 event.getStatus(),
                 occurrence.occurrenceKey(),
+                occurrence.occurrenceStartAt(),
                 occurrence.originalOccurrence()
         );
     }

@@ -1,11 +1,13 @@
 package com.naruworks.api.controller;
 
 import com.naruworks.api.dto.request.CalendarEventCreateRequest;
+import com.naruworks.api.dto.request.CalendarEventOccurrenceUpdateRequest;
 import com.naruworks.api.dto.request.CalendarEventUpdateRequest;
 import com.naruworks.api.dto.response.CalendarEventResponse;
 import com.naruworks.api.security.CurrentMember;
 import com.naruworks.core.service.CalendarService;
 import com.naruworks.domain.model.Member;
+import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -66,6 +68,23 @@ public class CalendarEventController {
         );
     }
 
+    @PutMapping("/{id}/occurrence")
+    public CalendarEventResponse updateOccurrence(
+            @CurrentMember Member member,
+            @PathVariable Long id,
+            @Valid @RequestBody CalendarEventOccurrenceUpdateRequest request
+    ) {
+        return CalendarEventResponse.from(
+                calendarService.updateOccurrence(
+                        member.getId(),
+                        id,
+                        request.occurrenceStartAt(),
+                        request.scope(),
+                        request.toDomain()
+                )
+        );
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteEvent(
@@ -73,5 +92,16 @@ public class CalendarEventController {
             @PathVariable Long id
     ) {
         calendarService.deleteEvent(member.getId(), id);
+    }
+
+    @DeleteMapping("/{id}/occurrence")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteOccurrence(
+            @CurrentMember Member member,
+            @PathVariable Long id,
+            @RequestParam LocalDateTime occurrenceStartAt,
+            @RequestParam CalendarEventOccurrenceScope scope
+    ) {
+        calendarService.deleteOccurrence(member.getId(), id, occurrenceStartAt, scope);
     }
 }

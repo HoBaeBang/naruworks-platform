@@ -100,6 +100,20 @@ class CalendarEventRecurrenceExpanderTest {
                 );
     }
 
+    @Test
+    @DisplayName("반복 규칙에 없는 일시는 발생 일정으로 판단하지 않는다")
+    void isOccurrence_returnsFalseForDateOutsideWeeklyRule() {
+        CalendarEvent event = event(
+                CalendarEventRecurrenceRule.WEEKLY,
+                LocalDateTime.of(2026, 7, 3, 19, 0),
+                LocalDateTime.of(2026, 7, 3, 20, 0),
+                null
+        );
+
+        assertThat(expander.isOccurrence(event, LocalDateTime.of(2026, 7, 10, 19, 0))).isTrue();
+        assertThat(expander.isOccurrence(event, LocalDateTime.of(2026, 7, 11, 19, 0))).isFalse();
+    }
+
     private CalendarEvent event(
             CalendarEventRecurrenceRule recurrenceRule,
             LocalDateTime startAt,

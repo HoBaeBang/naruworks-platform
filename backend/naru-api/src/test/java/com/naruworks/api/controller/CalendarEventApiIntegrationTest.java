@@ -5,6 +5,7 @@ import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 import com.naruworks.domain.value.ReferralCode;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventEntity;
+import com.naruworks.infrastructure.persistence.calendar.CalendarEventExceptionJpaRepository;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventJpaRepository;
 import com.naruworks.infrastructure.persistence.member.MemberEntity;
 import com.naruworks.infrastructure.persistence.member.MemberJpaRepository;
@@ -48,8 +49,12 @@ class CalendarEventApiIntegrationTest {
     @Autowired
     private CalendarEventJpaRepository calendarEventJpaRepository;
 
+    @Autowired
+    private CalendarEventExceptionJpaRepository calendarEventExceptionJpaRepository;
+
     @BeforeEach
     void setUp() {
+        calendarEventExceptionJpaRepository.deleteAll();
         calendarEventJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
 
@@ -393,6 +398,51 @@ class CalendarEventApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("반복 일정의 이번 회차 수정 API는 원본을 유지하고 예외 일정을 저장한다")
+    void updateCalendarEventOccurrenceThis() throws Exception {
+        CalendarEventEntity event = saveWeeklyEvent();
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/calendar/events/{id}/occurrence", event.getId())
+                        .contentType("application/json")
+                        .content("""
+                            {
+                              "occurrenceStartAt": "2026-07-10T19:00:00",
+                              "scope": "THIS",
+                              "title": "이번 주 야간 운동",
+                              "description": "시간 변경",
+                              "startAt": "2026-07-10T21:00:00",
+                              "endAt": "2026-07-10T22:00:00",
+                              "allDay": false,
+                              "location": "실내 체육관",
+                              "color": "#57df9a",
+                              "recurrenceRule": "WEEKLY",
+                              "recurrenceEndAt": null
+                            }
+                            """)
+                        .with(memberAAuthentication()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("이번 주 야간 운동"));
+
+        assertThat(calendarEventJpaRepository.findById(event.getId())).isPresent();
+        assertThat(calendarEventExceptionJpaRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("반복 일정의 이번 회차 삭제 API는 취소 예외를 저장한다")
+    void deleteCalendarEventOccurrenceThis() throws Exception {
+        CalendarEventEntity event = saveWeeklyEvent();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/calendar/events/{id}/occurrence", event.getId())
+                        .param("occurrenceStartAt", "2026-07-10T19:00:00")
+                        .param("scope", "THIS")
+                        .with(memberAAuthentication()))
+                .andExpect(status().isNoContent());
+
+        assertThat(calendarEventJpaRepository.findById(event.getId())).isPresent();
+        assertThat(calendarEventExceptionJpaRepository.findAll()).hasSize(1);
+    }
+
+    @Test
     @DisplayName("캘린더 일정 삭제 API는 일정을 삭제하고 204를 반환한다")
     void deleteCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
@@ -429,5 +479,21 @@ class CalendarEventApiIntegrationTest {
         return oauth2Login().attributes(attributes ->
                 attributes.put("sub", MEMBER_A_PROVIDER_USER_ID)
         );
+    }
+
+    private CalendarEventEntity saveWeeklyEvent() {
+        return calendarEventJpaRepository.save(CalendarEventEntity.of(
+                memberAId,
+                "주간 운동",
+                "매주 운동",
+                LocalDateTime.of(2026, 7, 3, 19, 0),
+                LocalDateTime.of(2026, 7, 3, 20, 0),
+                false,
+                "한강공원",
+                "#20b977",
+                CalendarEventRecurrenceRule.WEEKLY,
+                null,
+                CalendarEventStatus.ACTIVE
+        ));
     }
 }

@@ -8,22 +8,19 @@ import java.time.LocalDateTime;
  */
 public record CalendarEventOccurrence(
         CalendarEvent event,
+        LocalDateTime occurrenceStartAt,
         boolean originalOccurrence
 ) {
 
     public static CalendarEventOccurrence single(CalendarEvent event) {
-        return new CalendarEventOccurrence(event, true);
+        return new CalendarEventOccurrence(event, event.getStartAt(), true);
     }
 
     public static CalendarEventOccurrence recurring(CalendarEvent event, boolean originalOccurrence) {
-        return new CalendarEventOccurrence(event, originalOccurrence);
+        return new CalendarEventOccurrence(event, event.getStartAt(), originalOccurrence);
     }
 
     public String occurrenceKey() {
-        return event.getId() + ":" + event.getStartAt();
-    }
-
-    public LocalDateTime occurrenceStartAt() {
-        return event.getStartAt();
+        return event.getId() + ":" + occurrenceStartAt;
     }
 }

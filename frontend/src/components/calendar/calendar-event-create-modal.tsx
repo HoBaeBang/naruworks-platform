@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createCalendarEvent } from "@/lib/calendar-api";
 import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
+import { CalendarEventAllDayToggle } from "@/components/calendar/calendar-event-all-day-toggle";
+import { CalendarEventColorPicker } from "@/components/calendar/calendar-event-color-picker";
 import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarEventCreateModal({
@@ -24,6 +26,7 @@ export function CalendarEventCreateModal({
   const [title, setTitle] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
+  const [allDay, setAllDay] = useState(false);
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#20b977");
@@ -46,9 +49,9 @@ export function CalendarEventCreateModal({
       await createCalendarEvent({
         title,
         description,
-        startAt: `${selectedDate}T${startTime}:00`,
-        endAt: `${selectedDate}T${endTime}:00`,
-        allDay: false,
+        startAt: allDay ? atStartOfDay(selectedDate) : `${selectedDate}T${startTime}:00`,
+        endAt: allDay ? atStartOfNextDay(selectedDate) : `${selectedDate}T${endTime}:00`,
+        allDay,
         location,
         color,
         recurrenceRule,
@@ -108,7 +111,13 @@ export function CalendarEventCreateModal({
             onRecurrenceEndDateChange={setRecurrenceEndDate}
           />
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-wrap items-end gap-3">
+          <CalendarEventAllDayToggle
+            checked={allDay}
+            onChange={setAllDay}
+            className="h-12 shrink-0"
+          />
+          {!allDay && <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-2">
               <span className="text-sm font-bold text-[var(--muted)]">
                 시작 시간
@@ -132,6 +141,7 @@ export function CalendarEventCreateModal({
                 className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
               />
             </label>
+          </div>}
           </div>
 
           <label className="flex flex-col gap-2">
@@ -156,15 +166,7 @@ export function CalendarEventCreateModal({
             />
           </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-[var(--muted)]">색상</span>
-            <input
-                type="color"
-                value={color}
-                onChange={(event) => setColor(event.target.value)}
-                className="h-12 w-20 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1"
-            />
-          </label>
+          <CalendarEventColorPicker color={color} onChange={setColor} />
 
           {errorMessage && (
               <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-500">
@@ -221,4 +223,15 @@ function confirmRecurrenceAdjustment(
   }
 
   return true;
+}
+
+function atStartOfDay(date: string) {
+  return `${date}T00:00:00`;
+}
+
+function atStartOfNextDay(date: string) {
+  const nextDay = new Date(`${date}T00:00:00`);
+  nextDay.setDate(nextDay.getDate() + 1);
+
+  return `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}T00:00:00`;
 }

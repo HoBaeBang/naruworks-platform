@@ -115,7 +115,7 @@ function getEventsForDay(events: CalendarEvent[], date: Date) {
             const startAt = new Date(event.startAt);
             const endAt = new Date(event.endAt);
 
-            return startAt <= endOfDay(date) && endAt >= startOfDay(date);
+            return startAt <= endOfDay(date) && endAt > startOfDay(date);
         })
         .sort((left, right) => {
             if (left.allDay !== right.allDay) {

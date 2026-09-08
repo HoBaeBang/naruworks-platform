@@ -330,6 +330,10 @@ function confirmRecurrenceAdjustment(
         window.alert("2월 29일 일정은 평년에는 2월 28일에 표시됩니다.");
     }
 
+    if (recurrenceRule === "LUNAR_YEARLY") {
+        window.alert("음력 기준으로 반복됩니다. 윤달은 같은 평달로, 음력 30일이 없는 달은 29일로 표시됩니다.");
+    }
+
     return true;
 }
 

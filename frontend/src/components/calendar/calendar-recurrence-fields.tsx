@@ -7,6 +7,7 @@ const recurrenceLabel: Record<RecurrenceRule, string> = {
   WEEKLY: "매주",
   MONTHLY: "매월",
   YEARLY: "매년",
+  LUNAR_YEARLY: "음력 매년",
 };
 
 export function CalendarRecurrenceFields({
@@ -51,6 +52,13 @@ export function CalendarRecurrenceFields({
             className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
           />
         </label>
+      )}
+
+      {recurrenceRule === "LUNAR_YEARLY" && (
+        <p className="sm:col-span-2 text-xs leading-5 text-[var(--muted)]">
+          선택한 날짜의 음력 월·일을 기준으로 반복합니다. 윤달은 같은 평달로,
+          음력 30일이 없는 달은 29일로 표시됩니다.
+        </p>
       )}
     </div>
   );

@@ -7,7 +7,7 @@ export type CalendarEvent = {
     allDay: boolean;
     location: string | null;
     color: string;
-    recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY";
+    recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY" | "LUNAR_YEARLY";
     recurrenceEndAt: string | null;
     status: "ACTIVE" | "CANCELLED";
     occurrenceKey: string;
@@ -23,7 +23,7 @@ export type CalendarEventCreateRequest = {
     allDay: boolean;
     location: string;
     color: string;
-    recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY";
+    recurrenceRule: "NONE" | "WEEKLY" | "MONTHLY" | "YEARLY" | "LUNAR_YEARLY";
     recurrenceEndAt: string | null;
 };
 

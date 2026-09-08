@@ -1,4 +1,6 @@
 import type { CalendarEvent } from "@/types/calendar";
+import { formatLunarDate, getCalendarDateTextClass, getCalendarDayMetadata, getCalendarWeekdayTextClass } from "@/lib/calendar-date-style";
+import type { CalendarDayMetadata } from "@/types/calendar-day-metadata";
 import Link from "next/link";
 
 type CalendarDay = {
@@ -11,11 +13,13 @@ export function CalendarMonthView({
                                       year,
                                       month,
                                       events,
+                                      dayMetadataByDate,
                                       selectedDate,
                                   }: {
     year: number;
     month: number;
     events: CalendarEvent[];
+    dayMetadataByDate: ReadonlyMap<string, CalendarDayMetadata>;
     selectedDate?: string;
 }) {
     const days = createMonthDays(year, month);
@@ -23,14 +27,15 @@ export function CalendarMonthView({
     return (
         <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
             <div className="grid grid-cols-7 border-b border-[var(--border)] pb-3 text-center text-sm font-bold text-[var(--muted)]">
-                {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
-                    <div key={day}>{day}</div>
+                {["일", "월", "화", "수", "목", "금", "토"].map((day, index) => (
+                    <div key={day} className={getCalendarWeekdayTextClass(index)}>{day}</div>
                 ))}
             </div>
 
             <div className="grid grid-cols-7">
                 {days.map((day) => {
                     const dayEvents = getEventsForDay(events, day.date);
+                    const metadata = getCalendarDayMetadata(dayMetadataByDate, day.date);
                     return (
                         <article
                             key={day.date.toISOString()}
@@ -50,14 +55,22 @@ export function CalendarMonthView({
                                 <span
                                   className={[
                                       "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
-                                      day.isToday
-                                          ? "bg-[var(--primary)] text-[#062b20]"
-                                          : "text-[var(--foreground)]",
+                                      day.isToday ? "bg-[var(--primary-soft)]" : "",
+                                      getCalendarDateTextClass(day.date, metadata),
                                   ].join(" ")}
                                 >
                                     {day.date.getDate()}
                                 </span>
+                                <span className="text-[10px] font-medium text-[var(--muted)]">
+                                    {formatLunarDate(metadata)}
+                                </span>
                             </div>
+
+                            {metadata?.holidayName && (
+                                <p className="pointer-events-none relative z-10 mt-1 truncate text-[10px] font-semibold text-[#d9363e]">
+                                    {metadata.holidayName}
+                                </p>
+                            )}
 
                             <div className="relative z-10 mt-2 flex flex-col gap-1">
                                 {dayEvents.slice(0, 3).map((event) => (

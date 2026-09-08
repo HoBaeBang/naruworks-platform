@@ -1,4 +1,6 @@
 import type { CalendarEvent } from "@/types/calendar";
+import { formatLunarDate, getCalendarDateTextClass, getCalendarDayMetadata, getCalendarWeekdayTextClass } from "@/lib/calendar-date-style";
+import type { CalendarDayMetadata } from "@/types/calendar-day-metadata";
 import Link from "next/link";
 
 const START_HOUR = 0;
@@ -9,10 +11,12 @@ export function CalendarTimeGrid({
   days,
   events,
   view,
+  dayMetadataByDate,
 }: {
   days: Date[];
   events: CalendarEvent[];
   view: "week" | "day";
+  dayMetadataByDate: ReadonlyMap<string, CalendarDayMetadata>;
 }) {
   const gridColumns = `3.5rem repeat(${days.length}, minmax(${days.length === 1 ? "16rem" : "7.5rem"}, 1fr))`;
 
@@ -20,11 +24,17 @@ export function CalendarTimeGrid({
     <section className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
       <div className="min-w-[22rem]" style={{ display: "grid", gridTemplateColumns: gridColumns }}>
         <div className="border-b border-[var(--border)]" />
-        {days.map((day) => (
+        {days.map((day) => {
+          const metadata = getCalendarDayMetadata(dayMetadataByDate, day);
+          return (
           <div key={day.toISOString()} className="flex min-h-16 items-center justify-between border-b border-l border-[var(--border)] px-3">
-            <div>
-              <p className="text-xs font-bold text-[var(--muted)]">{weekdayLabel(day)}</p>
-              <p className="mt-1 text-lg font-semibold">{day.getDate()}</p>
+            <div className="min-w-0">
+              <p className={`text-xs font-bold ${getCalendarWeekdayTextClass(day.getDay())}`}>{weekdayLabel(day)}</p>
+              <div className="mt-1 flex items-baseline gap-2">
+                <p className={`text-lg font-semibold ${getCalendarDateTextClass(day, metadata)}`}>{day.getDate()}</p>
+                <p className="text-[10px] font-medium text-[var(--muted)]">{formatLunarDate(metadata)}</p>
+              </div>
+              {metadata?.holidayName && <p className="truncate text-[10px] font-semibold text-[#d9363e]">{metadata.holidayName}</p>}
             </div>
             <Link
               href={`/calendar?view=${view}&date=${formatDate(day)}&mode=create`}
@@ -35,7 +45,8 @@ export function CalendarTimeGrid({
               +
             </Link>
           </div>
-        ))}
+          );
+        })}
 
         <div className="border-b border-[var(--border)] px-2 py-3 text-xs font-bold text-[var(--muted)]">종일</div>
         {days.map((day) => (

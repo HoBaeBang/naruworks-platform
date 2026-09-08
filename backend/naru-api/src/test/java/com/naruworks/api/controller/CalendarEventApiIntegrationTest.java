@@ -231,6 +231,36 @@ class CalendarEventApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("캘린더 일정 생성 API는 음력 연간 반복의 기준 음력 날짜를 저장한다")
+    void createCalendarEventWithLunarYearlyRecurrence() throws Exception {
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                              "title": "음력 생일",
+                              "description": "매년 음력 생일",
+                              "startAt": "2026-04-02T19:00:00",
+                              "endAt": "2026-04-02T20:00:00",
+                              "allDay": false,
+                              "location": "집",
+                              "color": "#20b977",
+                              "recurrenceRule": "LUNAR_YEARLY",
+                              "recurrenceEndAt": null
+                            }
+                            """)
+                        .with(memberAAuthentication()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.recurrenceRule").value("LUNAR_YEARLY"))
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        Number eventId = com.jayway.jsonpath.JsonPath.read(responseBody, "$.id");
+        CalendarEventEntity event = calendarEventJpaRepository.findById(eventId.longValue()).orElseThrow();
+        assertThat(event.getRecurrenceLunarMonth()).isNotNull();
+        assertThat(event.getRecurrenceLunarDay()).isNotNull();
+    }
+
+    @Test
     @DisplayName("캘린더 일정 생성 API는 반복하지 않는 일정의 반복 종료일을 거부한다")
     void createCalendarEventWithRecurrenceEndAtAndNoRecurrence() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/calendar/events")

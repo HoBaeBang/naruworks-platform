@@ -11,5 +11,8 @@ public enum CalendarEventRecurrenceRule {
     MONTHLY,
 
     /** 매년 같은 월일에 반복하는 일정 */
-    YEARLY
+    YEARLY,
+
+    /** 매년 같은 음력 월일에 반복하는 일정 */
+    LUNAR_YEARLY
 }

@@ -3,6 +3,7 @@ package com.naruworks.infrastructure.persistence.calendar;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
+import com.naruworks.domain.value.LunarDate;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -57,6 +58,14 @@ public class CalendarEventEntity {
     @Column(nullable = false, length = 30)
     private CalendarEventRecurrenceRule recurrenceRule;
 
+    /** 음력 연간 반복의 기준이 되는 평달 월 */
+    @Column(name = "recurrence_lunar_month")
+    private Integer recurrenceLunarMonth;
+
+    /** 음력 연간 반복의 기준이 되는 음력 일 */
+    @Column(name = "recurrence_lunar_day")
+    private Integer recurrenceLunarDay;
+
     /** 반복 일정 종료 일시 */
     private LocalDateTime recurrenceEndAt;
 
@@ -85,6 +94,11 @@ public class CalendarEventEntity {
                 location,
                 color,
                 recurrenceRule,
+                recurrenceLunarMonth == null ? null : LunarDate.of(
+                        recurrenceLunarMonth,
+                        recurrenceLunarDay,
+                        false
+                ),
                 recurrenceEndAt,
                 status
         );
@@ -103,6 +117,36 @@ public class CalendarEventEntity {
             LocalDateTime recurrenceEndAt,
             CalendarEventStatus status
     ) {
+        return of(
+                memberId,
+                title,
+                description,
+                startAt,
+                endAt,
+                allDay,
+                location,
+                color,
+                recurrenceRule,
+                null,
+                recurrenceEndAt,
+                status
+        );
+    }
+
+    public static CalendarEventEntity of(
+            Long memberId,
+            String title,
+            String description,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            boolean allDay,
+            String location,
+            String color,
+            CalendarEventRecurrenceRule recurrenceRule,
+            LunarDate recurrenceLunarDate,
+            LocalDateTime recurrenceEndAt,
+            CalendarEventStatus status
+    ) {
         CalendarEventEntity entity = new CalendarEventEntity();
         entity.memberId = memberId;
         entity.title = title;
@@ -113,6 +157,8 @@ public class CalendarEventEntity {
         entity.location = location;
         entity.color = color;
         entity.recurrenceRule = recurrenceRule;
+        entity.recurrenceLunarMonth = recurrenceLunarDate == null ? null : recurrenceLunarDate.month();
+        entity.recurrenceLunarDay = recurrenceLunarDate == null ? null : recurrenceLunarDate.day();
         entity.recurrenceEndAt = recurrenceEndAt;
         entity.status = status;
         entity.createdAt = LocalDateTime.now();
@@ -131,6 +177,7 @@ public class CalendarEventEntity {
                 event.getLocation(),
                 event.getColor(),
                 event.getRecurrenceRule(),
+                event.getRecurrenceLunarDate(),
                 event.getRecurrenceEndAt(),
                 event.getStatus()
         );
@@ -145,6 +192,12 @@ public class CalendarEventEntity {
         this.location = event.getLocation();
         this.color = event.getColor();
         this.recurrenceRule = event.getRecurrenceRule();
+        this.recurrenceLunarMonth = event.getRecurrenceLunarDate() == null
+                ? null
+                : event.getRecurrenceLunarDate().month();
+        this.recurrenceLunarDay = event.getRecurrenceLunarDate() == null
+                ? null
+                : event.getRecurrenceLunarDate().day();
         this.recurrenceEndAt = event.getRecurrenceEndAt();
         this.status = event.getStatus();
         this.updatedAt = LocalDateTime.now();

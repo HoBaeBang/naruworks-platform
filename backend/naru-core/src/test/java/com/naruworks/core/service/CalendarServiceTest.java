@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 
 import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
+import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.core.port.CalendarEventExceptionReader;
 import com.naruworks.core.port.CalendarEventExceptionWriter;
 import com.naruworks.domain.model.CalendarEvent;
@@ -15,6 +16,7 @@ import com.naruworks.domain.model.CalendarEventException;
 import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
+import com.naruworks.domain.value.LunarDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,9 @@ class CalendarServiceTest {
 
     @Mock
     private CalendarEventExceptionWriter calendarEventExceptionWriter;
+
+    @Mock
+    private LunarCalendarConverter lunarCalendarConverter;
 
     @Test
     @DisplayName("반복 종료일이 있는 WEEKLY 일정은 저장할 수 있다")
@@ -70,6 +75,21 @@ class CalendarServiceTest {
 
         assertThat(result.getRecurrenceRule()).isEqualTo(CalendarEventRecurrenceRule.MONTHLY);
         assertThat(result.getRecurrenceEndAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("음력 연간 일정은 윤달 시작일이어도 평달 기준 날짜를 저장한다")
+    void createEvent_lunarYearlyStoresRegularLunarDate() {
+        CalendarEvent event = event(CalendarEventRecurrenceRule.LUNAR_YEARLY, null);
+        given(lunarCalendarConverter.toLunarDate(event.getStartAt().toLocalDate()))
+                .willReturn(LunarDate.of(2, 15, true));
+        given(calendarEventWriter.save(any(CalendarEvent.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        CalendarEvent result = service().createEvent(1L, event);
+
+        assertThat(result.getRecurrenceLunarDate())
+                .isEqualTo(LunarDate.of(2, 15, false));
     }
 
     @Test
@@ -231,9 +251,10 @@ class CalendarServiceTest {
         return new CalendarService(
                 calendarEventReader,
                 calendarEventWriter,
-                new CalendarEventRecurrenceExpander(),
+                new CalendarEventRecurrenceExpander(lunarCalendarConverter),
                 calendarEventExceptionReader,
-                calendarEventExceptionWriter
+                calendarEventExceptionWriter,
+                lunarCalendarConverter
         );
     }
 

@@ -1,14 +1,17 @@
 package com.naruworks.core.service;
 
+import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventOccurrence;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
+import com.naruworks.domain.value.LunarDate;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,7 +19,10 @@ import org.springframework.stereotype.Component;
  * DB에 매 회차를 저장하지 않고, 화면 조회 시점에만 계산한다.
  */
 @Component
+@RequiredArgsConstructor
 public class CalendarEventRecurrenceExpander {
+
+    private final LunarCalendarConverter lunarCalendarConverter;
 
     /**
      * 일정이 조회 기간과 겹치는 모든 발생 회차를 만든다.
@@ -85,6 +91,9 @@ public class CalendarEventRecurrenceExpander {
                     event,
                     occurrenceStartAt.getYear() - event.getStartAt().getYear()
             ));
+            case LUNAR_YEARLY -> occurrenceStartAt.equals(
+                    occurrenceForLunarYear(event, occurrenceStartAt.getYear())
+            );
             case NONE -> false;
         };
     }
@@ -101,6 +110,10 @@ public class CalendarEventRecurrenceExpander {
                     ChronoUnit.MONTHS.between(YearMonth.from(event.getStartAt()), YearMonth.from(from)) - 1));
             case YEARLY -> occurrenceForYear(event, Math.max(0,
                     ChronoUnit.YEARS.between(event.getStartAt().toLocalDate(), from.toLocalDate()) - 1));
+            case LUNAR_YEARLY -> occurrenceForLunarYear(
+                    event,
+                    Math.max(event.getStartAt().getYear(), from.getYear() - 1)
+            );
             case NONE -> event.getStartAt();
         };
     }
@@ -113,6 +126,7 @@ public class CalendarEventRecurrenceExpander {
                     ChronoUnit.MONTHS.between(YearMonth.from(event.getStartAt()), YearMonth.from(occurrenceStartAt)) + 1);
             case YEARLY -> occurrenceForYear(event,
                     occurrenceStartAt.getYear() - event.getStartAt().getYear() + 1L);
+            case LUNAR_YEARLY -> occurrenceForLunarYear(event, occurrenceStartAt.getYear() + 1);
             case NONE -> throw new IllegalStateException("반복하지 않는 일정은 다음 발생 일시를 계산할 수 없습니다.");
         };
     }
@@ -136,6 +150,28 @@ public class CalendarEventRecurrenceExpander {
         LocalDate targetDate = event.getStartAt().toLocalDate().plusYears(yearsFromStart);
 
         return targetDate.atTime(event.getStartAt().toLocalTime());
+    }
+
+    /**
+     * 음력 연간 반복은 저장한 평달 월·일을 해당 연도의 양력 날짜로 변환한다.
+     * 첫 원본이 윤달 날짜여도 이후 연도에는 같은 평달을 기준으로 계산한다.
+     */
+    private LocalDateTime occurrenceForLunarYear(CalendarEvent event, int lunarYear) {
+        if (lunarYear == event.getStartAt().getYear()) {
+            return event.getStartAt();
+        }
+
+        LunarDate lunarDate = event.getRecurrenceLunarDate();
+        if (lunarDate == null) {
+            throw new IllegalStateException("음력 반복 일정의 기준 날짜가 없습니다.");
+        }
+
+        LocalDate solarDate = lunarCalendarConverter.toSolarDate(
+                lunarYear,
+                lunarDate.month(),
+                lunarDate.day()
+        );
+        return solarDate.atTime(event.getStartAt().toLocalTime());
     }
 
     /** 반복 종료일이 없거나, 현재 회차가 반복 종료일 이전 또는 같은지 확인한다. */
@@ -173,6 +209,7 @@ public class CalendarEventRecurrenceExpander {
                 event.getLocation(),
                 event.getColor(),
                 event.getRecurrenceRule(),
+                event.getRecurrenceLunarDate(),
                 event.getRecurrenceEndAt(),
                 event.getStatus()
         );

@@ -2,6 +2,7 @@ package com.naruworks.domain.model;
 
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
+import com.naruworks.domain.value.LunarDate;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class CalendarEvent {
     private final String location;
     private final String color;
     private final CalendarEventRecurrenceRule recurrenceRule;
+    private final LunarDate recurrenceLunarDate;
     private final LocalDateTime recurrenceEndAt;
     private final CalendarEventStatus status;
 
@@ -37,6 +39,38 @@ public class CalendarEvent {
             LocalDateTime recurrenceEndAt,
             CalendarEventStatus status
     ) {
+        return of(
+                id,
+                memberId,
+                title,
+                description,
+                startAt,
+                endAt,
+                allDay,
+                location,
+                color,
+                recurrenceRule,
+                null,
+                recurrenceEndAt,
+                status
+        );
+    }
+
+    public static CalendarEvent of(
+            Long id,
+            Long memberId,
+            String title,
+            String description,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            boolean allDay,
+            String location,
+            String color,
+            CalendarEventRecurrenceRule recurrenceRule,
+            LunarDate recurrenceLunarDate,
+            LocalDateTime recurrenceEndAt,
+            CalendarEventStatus status
+    ) {
         return CalendarEvent.builder()
                 .id(id)
                 .memberId(memberId)
@@ -48,6 +82,7 @@ public class CalendarEvent {
                 .location(location)
                 .color(color)
                 .recurrenceRule(recurrenceRule)
+                .recurrenceLunarDate(recurrenceLunarDate)
                 .recurrenceEndAt(recurrenceEndAt)
                 .status(status)
                 .build();

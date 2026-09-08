@@ -4,6 +4,7 @@ import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.core.port.CalendarEventExceptionReader;
 import com.naruworks.core.port.CalendarEventExceptionWriter;
+import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventException;
 import com.naruworks.domain.model.CalendarEventOccurrence;
@@ -11,6 +12,7 @@ import com.naruworks.domain.type.CalendarEventExceptionType;
 import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
+import com.naruworks.domain.value.LunarDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class CalendarService {
     private final CalendarEventRecurrenceExpander calendarEventRecurrenceExpander;
     private final CalendarEventExceptionReader calendarEventExceptionReader;
     private final CalendarEventExceptionWriter calendarEventExceptionWriter;
+    private final LunarCalendarConverter lunarCalendarConverter;
 
     /**
      * 회원의 일정 원본을 조회하고, 반복 발생 일정과 회차별 예외를 적용해 화면용 목록을 만든다.
@@ -74,6 +77,7 @@ public class CalendarService {
                 event.getLocation(),
                 event.getColor(),
                 event.getRecurrenceRule(),
+                recurrenceLunarDate(event),
                 event.getRecurrenceEndAt(),
                 CalendarEventStatus.ACTIVE
         );
@@ -100,6 +104,7 @@ public class CalendarService {
                 event.getLocation(),
                 event.getColor(),
                 event.getRecurrenceRule(),
+                recurrenceLunarDate(event),
                 event.getRecurrenceEndAt(),
                 CalendarEventStatus.ACTIVE
         );
@@ -263,6 +268,7 @@ public class CalendarService {
                 series.getLocation(),
                 series.getColor(),
                 series.getRecurrenceRule(),
+                series.getRecurrenceLunarDate(),
                 // 선택 회차는 포함하지 않도록 1 나노초 전으로 종료 시점을 설정한다.
                 occurrenceStartAt.minusNanos(1),
                 series.getStatus()
@@ -314,6 +320,7 @@ public class CalendarService {
                 exception.location(),
                 exception.color(),
                 event.getRecurrenceRule(),
+                event.getRecurrenceLunarDate(),
                 event.getRecurrenceEndAt(),
                 event.getStatus()
         );
@@ -340,6 +347,7 @@ public class CalendarService {
                 event.getLocation(),
                 event.getColor(),
                 series.getRecurrenceRule(),
+                series.getRecurrenceLunarDate(),
                 series.getRecurrenceEndAt(),
                 series.getStatus()
         );
@@ -348,5 +356,15 @@ public class CalendarService {
     /** 원본 일정 ID와 원래 회차 시작 시각으로 회차 예외를 식별하는 내부 키 */
     private String occurrenceKey(Long calendarEventId, LocalDateTime occurrenceStartAt) {
         return calendarEventId + ":" + occurrenceStartAt;
+    }
+
+    /** 음력 반복은 생성·수정 시 양력 시작일을 평달 기준의 음력 월·일로 고정한다. */
+    private LunarDate recurrenceLunarDate(CalendarEvent event) {
+        if (event.getRecurrenceRule() != CalendarEventRecurrenceRule.LUNAR_YEARLY) {
+            return null;
+        }
+
+        return lunarCalendarConverter.toLunarDate(event.getStartAt().toLocalDate())
+                .asRegularMonth();
     }
 }

@@ -1,7 +1,9 @@
 package com.naruworks.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
+import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventOccurrence;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
@@ -10,10 +12,23 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class CalendarEventRecurrenceExpanderTest {
 
-    private final CalendarEventRecurrenceExpander expander = new CalendarEventRecurrenceExpander();
+    @Mock
+    private LunarCalendarConverter lunarCalendarConverter;
+
+    private CalendarEventRecurrenceExpander expander;
+
+    @BeforeEach
+    void setUp() {
+        expander = new CalendarEventRecurrenceExpander(lunarCalendarConverter);
+    }
 
     @Test
     @DisplayName("WEEKLY 일정은 조회 기간에 포함되는 같은 요일의 발생 일정만 만든다")
@@ -112,6 +127,39 @@ class CalendarEventRecurrenceExpanderTest {
 
         assertThat(expander.isOccurrence(event, LocalDateTime.of(2026, 7, 10, 19, 0))).isTrue();
         assertThat(expander.isOccurrence(event, LocalDateTime.of(2026, 7, 11, 19, 0))).isFalse();
+    }
+
+    @Test
+    @DisplayName("음력 연간 일정은 다음 해 같은 평달의 음력 날짜로 발생한다")
+    void expand_lunarYearlyEventAtRegularLunarMonth() {
+        CalendarEvent event = CalendarEvent.of(
+                1L,
+                10L,
+                "음력 생일",
+                null,
+                LocalDateTime.of(2026, 4, 2, 9, 0),
+                LocalDateTime.of(2026, 4, 2, 10, 0),
+                false,
+                null,
+                "#20b977",
+                CalendarEventRecurrenceRule.LUNAR_YEARLY,
+                com.naruworks.domain.value.LunarDate.of(2, 15, false),
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+        given(lunarCalendarConverter.toSolarDate(2027, 2, 15))
+                .willReturn(java.time.LocalDate.of(2027, 3, 23));
+        given(lunarCalendarConverter.toSolarDate(2028, 2, 15))
+                .willReturn(java.time.LocalDate.of(2028, 3, 11));
+
+        List<CalendarEventOccurrence> occurrences = expander.expand(
+                event,
+                LocalDateTime.of(2027, 1, 1, 0, 0),
+                LocalDateTime.of(2028, 1, 1, 0, 0)
+        );
+
+        assertThat(occurrences).extracting(occurrence -> occurrence.event().getStartAt())
+                .containsExactly(LocalDateTime.of(2027, 3, 23, 9, 0));
     }
 
     private CalendarEvent event(

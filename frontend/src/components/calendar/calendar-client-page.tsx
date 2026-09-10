@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
+import { CalendarGoogleIntegration } from "@/components/calendar/calendar-google-integration";
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
@@ -97,6 +98,7 @@ export function CalendarClientPage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <CalendarGoogleIntegration justConnected={searchParams.get("google-calendar") === "connected"} />
             <CalendarViewTabs view={view} year={year} month={month} navigationDate={navigationDate} today={today} />
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)]">
               {rangeLabel(view, range.from, range.to)}

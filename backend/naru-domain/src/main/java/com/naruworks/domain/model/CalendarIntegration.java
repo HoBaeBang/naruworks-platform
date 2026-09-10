@@ -17,10 +17,7 @@ public class CalendarIntegration {
     private final String providerAccountId;
     private final String providerEmail;
     private final String encryptedRefreshToken;
-    private final String selectedCalendarId;
     private final CalendarIntegrationStatus status;
-    private final LocalDateTime lastSyncedAt;
-    private final String syncToken;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 

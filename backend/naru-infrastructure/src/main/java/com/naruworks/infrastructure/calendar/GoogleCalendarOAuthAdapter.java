@@ -1,6 +1,7 @@
 package com.naruworks.infrastructure.calendar;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.naruworks.core.model.GoogleCalendar;
 import com.naruworks.core.model.GoogleCalendarAccount;
 import com.naruworks.core.model.GoogleCalendarOAuthToken;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
@@ -19,6 +20,8 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     private static final String AUTHORIZATION_URI = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_URI = "https://oauth2.googleapis.com/token";
     private static final String USER_INFO_URI = "https://openidconnect.googleapis.com/v1/userinfo";
+    private static final String CALENDAR_LIST_URI =
+            "https://www.googleapis.com/calendar/v3/users/me/calendarList";
     private static final List<String> SCOPES = List.of(
             "openid",
             "email",
@@ -84,6 +87,52 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
         return new GoogleCalendarAccount(response.subject(), response.email());
     }
 
+    @Override
+    public String refreshAccessToken(String refreshToken) {
+        validateConfiguration();
+
+        LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("client_id", properties.getClientId());
+        form.add("client_secret", properties.getClientSecret());
+        form.add("refresh_token", refreshToken);
+        form.add("grant_type", "refresh_token");
+
+        GoogleTokenRefreshResponse response = restClient.post()
+                .uri(TOKEN_URI)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(GoogleTokenRefreshResponse.class);
+
+        if (response == null || response.accessToken() == null) {
+            throw new IllegalStateException("Google Calendar access token 갱신에 실패했습니다.");
+        }
+        return response.accessToken();
+    }
+
+    @Override
+    public List<GoogleCalendar> findCalendars(String accessToken) {
+        GoogleCalendarListResponse response = restClient.get()
+                .uri(CALENDAR_LIST_URI)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .retrieve()
+                .body(GoogleCalendarListResponse.class);
+
+        if (response == null || response.items() == null) {
+            return List.of();
+        }
+        return response.items().stream()
+                .filter(item -> item.id() != null && item.summary() != null)
+                .map(item -> new GoogleCalendar(
+                        item.id(),
+                        item.summaryOverride() == null || item.summaryOverride().isBlank()
+                                ? item.summary() : item.summaryOverride(),
+                        item.backgroundColor(),
+                        Boolean.TRUE.equals(item.primary())
+                ))
+                .toList();
+    }
+
     private void validateConfiguration() {
         if (properties.getClientId().isBlank()
                 || properties.getClientSecret().isBlank()
@@ -98,9 +147,26 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     ) {
     }
 
+    private record GoogleTokenRefreshResponse(
+            @JsonProperty("access_token") String accessToken
+    ) {
+    }
+
     private record GoogleUserInfoResponse(
             @JsonProperty("sub") String subject,
             String email
+    ) {
+    }
+
+    private record GoogleCalendarListResponse(List<GoogleCalendarListItem> items) {
+    }
+
+    private record GoogleCalendarListItem(
+            String id,
+            String summary,
+            @JsonProperty("summaryOverride") String summaryOverride,
+            @JsonProperty("backgroundColor") String backgroundColor,
+            Boolean primary
     ) {
     }
 }

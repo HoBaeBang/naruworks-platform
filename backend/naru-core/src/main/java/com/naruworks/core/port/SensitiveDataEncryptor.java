@@ -4,4 +4,6 @@ package com.naruworks.core.port;
 public interface SensitiveDataEncryptor {
 
     String encrypt(String plainText);
+
+    String decrypt(String encryptedText);
 }

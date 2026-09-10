@@ -44,6 +44,31 @@ public class AesGcmSensitiveDataEncryptor implements SensitiveDataEncryptor {
         }
     }
 
+    @Override
+    public String decrypt(String encryptedText) {
+        try {
+            byte[] combined = Base64.getDecoder().decode(encryptedText);
+            if (combined.length <= IV_LENGTH) {
+                throw new IllegalArgumentException("암호문 형식이 올바르지 않습니다.");
+            }
+
+            byte[] iv = new byte[IV_LENGTH];
+            byte[] encrypted = new byte[combined.length - IV_LENGTH];
+            System.arraycopy(combined, 0, iv, 0, IV_LENGTH);
+            System.arraycopy(combined, IV_LENGTH, encrypted, 0, encrypted.length);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(
+                    Cipher.DECRYPT_MODE,
+                    new SecretKeySpec(decodeKey(), "AES"),
+                    new GCMParameterSpec(GCM_TAG_LENGTH, iv)
+            );
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Google Calendar refresh token 복호화에 실패했습니다.", exception);
+        }
+    }
+
     private byte[] decodeKey() {
         try {
             byte[] key = Base64.getDecoder().decode(properties.getTokenEncryptionKey());

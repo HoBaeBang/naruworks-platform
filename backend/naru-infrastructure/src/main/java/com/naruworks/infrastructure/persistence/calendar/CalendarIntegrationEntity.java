@@ -55,22 +55,10 @@ public class CalendarIntegrationEntity {
     @Column(name = "encrypted_refresh_token", nullable = false, columnDefinition = "TEXT")
     private String encryptedRefreshToken;
 
-    /** 사용자가 선택한 제공자 캘린더 식별자 */
-    @Column(name = "selected_calendar_id", length = 500)
-    private String selectedCalendarId;
-
     /** 현재 연결 상태 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private CalendarIntegrationStatus status;
-
-    /** 마지막으로 외부 일정을 동기화한 시각 */
-    @Column(name = "last_synced_at")
-    private LocalDateTime lastSyncedAt;
-
-    /** Google 증분 동기화에 사용할 다음 sync token */
-    @Column(name = "sync_token", columnDefinition = "TEXT")
-    private String syncToken;
 
     /** 연결 생성 시각 */
     @Column(name = "created_at", nullable = false)
@@ -88,10 +76,7 @@ public class CalendarIntegrationEntity {
         entity.providerAccountId = integration.getProviderAccountId();
         entity.providerEmail = integration.getProviderEmail();
         entity.encryptedRefreshToken = integration.getEncryptedRefreshToken();
-        entity.selectedCalendarId = integration.getSelectedCalendarId();
         entity.status = integration.getStatus();
-        entity.lastSyncedAt = integration.getLastSyncedAt();
-        entity.syncToken = integration.getSyncToken();
         entity.createdAt = integration.getCreatedAt();
         entity.updatedAt = integration.getUpdatedAt();
         return entity;
@@ -105,10 +90,7 @@ public class CalendarIntegrationEntity {
                 .providerAccountId(providerAccountId)
                 .providerEmail(providerEmail)
                 .encryptedRefreshToken(encryptedRefreshToken)
-                .selectedCalendarId(selectedCalendarId)
                 .status(status)
-                .lastSyncedAt(lastSyncedAt)
-                .syncToken(syncToken)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();

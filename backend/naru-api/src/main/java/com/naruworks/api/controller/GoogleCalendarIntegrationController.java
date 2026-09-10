@@ -1,6 +1,8 @@
 package com.naruworks.api.controller;
 
 import com.naruworks.api.dto.response.GoogleCalendarIntegrationResponse;
+import com.naruworks.api.dto.request.GoogleCalendarSelectionUpdateRequest;
+import com.naruworks.api.dto.response.GoogleCalendarSelectionResponse;
 import com.naruworks.api.security.AuthSessionAttribute;
 import com.naruworks.api.security.CurrentMember;
 import com.naruworks.core.service.CalendarIntegrationService;
@@ -8,17 +10,22 @@ import com.naruworks.domain.model.Member;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/calendar/integrations/google")
@@ -66,6 +73,28 @@ public class GoogleCalendarIntegrationController {
         return GoogleCalendarIntegrationResponse.from(
                 calendarIntegrationService.findGoogleIntegration(member.getId())
         );
+    }
+
+    /** 연결된 Google 계정이 제공하는 캘린더 목록과 현재 표시 선택 상태를 조회한다. */
+    @GetMapping("/calendars")
+    public List<GoogleCalendarSelectionResponse> getGoogleCalendars(@CurrentMember Member member) {
+        return calendarIntegrationService.findGoogleCalendars(member.getId()).stream()
+                .map(GoogleCalendarSelectionResponse::from)
+                .toList();
+    }
+
+    /** NaruWorks 캘린더에 표시할 Google 캘린더를 여러 개 저장한다. */
+    @PutMapping("/calendars")
+    public List<GoogleCalendarSelectionResponse> updateGoogleCalendarSelections(
+            @CurrentMember Member member,
+            @Valid @RequestBody GoogleCalendarSelectionUpdateRequest request
+    ) {
+        return calendarIntegrationService.updateGoogleCalendarSelections(
+                        member.getId(),
+                        Set.copyOf(request.calendarIds())
+                ).stream()
+                .map(GoogleCalendarSelectionResponse::from)
+                .toList();
     }
 
     private String createState() {

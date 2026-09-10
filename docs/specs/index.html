@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NaruWorks 설계 문서</title>
+  <style>
+    :root { --bg:#f8fbf8; --ink:#15201d; --muted:#597066; --mint:#20b977; --deep:#087a5f; --soft:#e1faf1; --line:#d8e7df; --card:#fff; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font-family:Arial,sans-serif; line-height:1.6; }
+    main { width:min(100% - 36px,1080px); margin:auto; padding:68px 0; } .eyebrow { color:var(--deep); font-size:.75rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { max-width:720px; margin:12px 0; font-size:clamp(2.5rem,6vw,4.8rem); line-height:1.04; letter-spacing:0; } .lead { max-width:680px; color:var(--muted); font-size:1.14rem; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:42px 0; } .card { display:block; min-height:190px; padding:24px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:inherit; text-decoration:none; transition:.18s ease; }
+    .card:hover { border-color:var(--mint); transform:translateY(-2px); } .card h2 { margin:42px 0 8px; font-size:1.4rem; } .card p { color:var(--muted); margin:0; } .number { color:var(--deep); font-weight:800; font-size:.8rem; }
+    section { margin-top:58px; } h2 { font-size:1.7rem; } table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; } th,td { padding:14px 16px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { background:var(--soft); font-size:.8rem; color:var(--deep); } td { color:var(--muted); } code { background:var(--soft); color:var(--deep); padding:2px 5px; border-radius:3px; } footer { margin-top:64px; color:var(--muted); font-size:.84rem; }
+    @media(max-width:700px){main{width:min(100% - 28px,1080px);padding:42px 0}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">NaruWorks · Design Specification</div>
+  <h1>서비스가 커져도 길을 잃지 않는 설계 기준</h1>
+  <p class="lead">이 폴더는 기능 구현 전에 확인하는 API 계약, 데이터 모델, 기능 경계를 모은 프로젝트 기준 문서입니다. 실제 코드와 Flyway migration이 바뀌면 같은 작업 단위에서 함께 갱신합니다.</p>
+  <div class="grid">
+    <a class="card" href="erd.html"><div class="number">01 · DATA</div><h2>ERD와 데이터 사전</h2><p>회원, 일정, 반복 예외, 날짜 메타데이터, 외부 캘린더 연결의 컬럼·기본값·인덱스를 확인합니다.</p></a>
+    <a class="card" href="erd-relations.md"><div class="number">02 · RELATIONS</div><h2>관계 ERD (Mermaid)</h2><p>모든 현재 테이블의 FK 관계, 카디널리티, 삭제 정책과 복합 제약조건을 확인합니다.</p></a>
+    <a class="card" href="api.html"><div class="number">03 · API</div><h2>API 계약</h2><p>공개 endpoint, 인증 요구사항, 요청·응답의 책임 경계를 확인합니다.</p></a>
+    <a class="card" href="features.html"><div class="number">04 · FEATURES</div><h2>기능 설계</h2><p>현재 완성된 기능과 다음 기능의 사용자 흐름, 보류한 범위를 구분합니다.</p></a>
+    <a class="card" href="overview.html"><div class="number">05 · OVERVIEW</div><h2>서비스 개요</h2><p>NaruWorks 전체 서비스와 공통 사용자 원칙을 설명합니다.</p></a>
+    <a class="card" href="sequences.html"><div class="number">06 · SEQUENCES</div><h2>시퀀스 다이어그램</h2><p>가입, Google 연결, 반복 일정 변경의 흐름을 봅니다.</p></a>
+    <a class="card" href="../프로젝트_운영_메모리.md"><div class="number">07 · MEMORY</div><h2>운영 메모리</h2><p>프로젝트 정체성, 기술 선택, 장기 결정 사항은 Markdown 운영 메모리에서 관리합니다.</p></a>
+  </div>
+  <section><div class="eyebrow">Document Rules</div><h2>문서 운영 원칙</h2>
+    <table><thead><tr><th>문서</th><th>언제 갱신하는가</th><th>기준 소스</th></tr></thead><tbody>
+      <tr><td>ERD</td><td>테이블·컬럼·관계·제약조건 변경 시</td><td>Flyway migration, JPA Entity</td></tr>
+      <tr><td>API 계약</td><td>Controller endpoint 또는 DTO 계약 변경 시</td><td>Controller, Request/Response DTO, SecurityConfig</td></tr>
+      <tr><td>기능 설계</td><td>사용자 흐름·정책·범위가 바뀔 때</td><td>Service, frontend 화면, roadmap</td></tr>
+    </tbody></table>
+  </section>
+  <footer>기준일: 2026-09-10 · HTML은 설계 탐색용, 코드와 테스트는 실제 동작의 최종 기준입니다.</footer>
+</main></body></html>

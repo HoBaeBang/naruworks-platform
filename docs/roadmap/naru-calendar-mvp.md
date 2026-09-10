@@ -477,6 +477,23 @@ Step 5
 = 양방향 동기화 검토
 ```
 
+### Step 5-1: Google Calendar 연결 기반
+
+```text
+완료
+= Google Calendar 읽기 권한 전용 OAuth client를 NaruWorks 로그인 client와 분리
+= OAuth state를 HttpSession에서 검증
+= authorization code를 refresh token으로 교환
+= refresh token AES-256-GCM 암호화 저장
+= 회원별 Google Calendar 연결 상태 조회
+
+다음
+= Google Calendar 목록 조회와 선택
+= 선택한 캘린더의 읽기 전용 일정 가져오기
+= 외부 일정 전용 저장소와 Calendar 화면 병합
+= nextSyncToken 기반 증분 동기화
+```
+
 ## 이후 확장 후보
 
 1단계 이후에는 아래 순서로 확장한다.

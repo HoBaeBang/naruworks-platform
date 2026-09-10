@@ -5,6 +5,9 @@
 .env.*
 !.env.example
 
+# Local interactive change explanations generated for study and review.
+docs/change-explanations/
+
 # Logs
 *.log
 logs/

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
+import { CalendarExternalEventDetailModal } from "@/components/calendar/calendar-external-event-detail-modal";
 import { CalendarGoogleIntegration } from "@/components/calendar/calendar-google-integration";
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
@@ -119,7 +120,8 @@ export function CalendarClientPage() {
         {!isLoading && !error && view === "year" && <CalendarYearView year={year} events={events} dayMetadataByDate={dayMetadataByDate} />}
 
         {selectedDate && mode === "create" && !error && <CalendarEventCreateModal selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
-        {selectedDate && mode === "edit" && selectedEvent && !error && <CalendarEventEditModal event={selectedEvent} selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
+        {selectedDate && mode === "edit" && selectedEvent && !selectedEvent.readOnly && !error && <CalendarEventEditModal event={selectedEvent} selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
+        {selectedDate && mode === "detail" && selectedEvent?.readOnly && !error && <CalendarExternalEventDetailModal event={selectedEvent} closeHref={calendarHref} />}
       </section>
     </main>
   );

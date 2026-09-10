@@ -13,6 +13,8 @@ export type CalendarEvent = {
     occurrenceKey: string;
     occurrenceStartAt: string;
     originalOccurrence: boolean;
+    source: "NARU" | "GOOGLE";
+    readOnly: boolean;
 };
 
 export type CalendarEventCreateRequest = {

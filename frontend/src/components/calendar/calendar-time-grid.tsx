@@ -114,7 +114,7 @@ function EventLink({
 }) {
   return (
     <Link
-      href={`/calendar?view=${view}&date=${formatDate(day)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=edit`}
+      href={`/calendar?view=${view}&date=${formatDate(day)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
       className={[
         allDay
           ? "mb-1 block truncate rounded-md px-2 py-1 text-xs font-semibold text-[#062b20]"

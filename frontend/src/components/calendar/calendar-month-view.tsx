@@ -76,7 +76,7 @@ export function CalendarMonthView({
                                 {dayEvents.slice(0, 3).map((event) => (
                                     <Link
                                         key={event.occurrenceKey}
-                                        href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=edit`}
+                                        href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
                                         className={[
                                             "flex min-w-0 flex-col items-start rounded-md px-2 py-1 text-xs font-semibold transition",
                                             event.allDay
@@ -86,7 +86,7 @@ export function CalendarMonthView({
                                         style={event.allDay
                                             ? { backgroundColor: event.color }
                                             : { borderColor: event.color }}
-                                        title={event.recurrenceRule === "NONE" ? event.title : `${event.title} (반복 일정)`}
+                                        title={event.readOnly ? `${event.title} (Google Calendar)` : event.recurrenceRule === "NONE" ? event.title : `${event.title} (반복 일정)`}
                                     >
                                         {!event.allDay && (
                                             <span className="text-[10px] font-medium leading-4 text-[var(--muted)]">

@@ -488,10 +488,10 @@ Step 5
 = 회원별 Google Calendar 연결 상태 조회
 = refresh token으로 access token을 갱신해 Google Calendar 목록 조회
 = 여러 Google Calendar의 표시 선택 상태 저장
+= 선택한 Google 캘린더의 일정 읽기 전용 가져오기
+= 외부 일정 전용 저장소와 Calendar 화면 병합
 
 다음
-= 선택한 캘린더의 읽기 전용 일정 가져오기
-= 외부 일정 전용 저장소와 Calendar 화면 병합
 = nextSyncToken 기반 증분 동기화
 ```
 

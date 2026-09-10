@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Google Calendar 이벤트 읽기와 안전한 저장</title>
+  <style>
+    :root { --paper:#eae7d9; --panel:#f2f0e6; --panel-2:#e1ddcd; --ink:#1c1d18; --body:#3a3c34; --muted:#6d7168; --rule:#cfcaba; --green:#234c38; --green-soft:#3d6b52; --rust:#a24b2f; --gold:#9a7b1f; --blue:#2f5d78; --plum:#6d3a52; --radius:4px; --serif:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif; --hair:1px solid var(--rule); }
+    * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; background:var(--paper); color:var(--body); font-family:var(--serif); line-height:1.72; }
+    main { width:min(100% - 32px, 900px); margin:auto; padding:64px 0 88px; } .kicker,.label { color:var(--green); font-size:.72rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; } h1,h2,h3 { color:var(--ink); line-height:1.18; } h1 { max-width:760px; margin:12px 0 20px; font-size:clamp(2.5rem,7vw,5rem); } h1 em { color:var(--green); } h2 { margin:56px 0 18px; font-size:2rem; } h3 { margin:28px 0 10px; font-size:1.25rem; } p,li { max-width:68ch; } a { color:var(--green); text-decoration-thickness:1px; text-underline-offset:3px; } .lead { color:var(--body); font-size:1.16rem; } .toc,.panel,.callout,pre,.quiz { background:var(--panel); border:var(--hair); border-radius:var(--radius); } .toc { margin:34px 0; padding:20px 24px; } .toc ol { margin:10px 0 0; padding-left:22px; } .rule { width:110px; margin:42px auto; border:0; border-top:var(--hair); } .callout { margin:22px 0; padding:16px 20px; border-left:4px solid var(--blue); } .callout.warning { border-left-color:var(--rust); } .callout strong { color:var(--ink); } pre { overflow:auto; padding:18px; color:var(--ink); font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre-wrap; } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; } .flow { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:24px 0; } .step { position:relative; min-height:115px; padding:16px 14px; background:var(--panel); border:var(--hair); border-radius:var(--radius); cursor:pointer; } .step::before { content:""; display:block; width:12px; height:12px; margin-bottom:10px; border-radius:50%; background:var(--green); } .step.active { outline:2px solid var(--green); outline-offset:2px; } .step small { color:var(--muted); } .flow-note { min-height:50px; color:var(--blue); font-weight:700; } .compare { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; } .compare article { padding:18px; border:var(--hair); border-radius:var(--radius); background:var(--panel); } .old { border-top:4px solid var(--rust)!important; } .new { border-top:4px solid var(--green)!important; } .toggle { display:flex; gap:8px; margin:16px 0; } button { border:var(--hair); border-radius:var(--radius); background:var(--panel); color:var(--ink); padding:8px 12px; font:inherit; cursor:pointer; } button:hover,button:focus-visible { outline:2px solid var(--green); outline-offset:2px; } button.active { background:var(--green); color:var(--paper); } .hidden { display:none; } table { width:100%; border-collapse:collapse; margin:20px 0; background:var(--panel); border:var(--hair); } th,td { padding:10px; border-bottom:var(--hair); text-align:left; vertical-align:top; } th { color:var(--green); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; } .quiz { margin:18px 0; padding:20px; } .quiz h3 { margin-top:0; } .options { display:grid; gap:8px; } .option { text-align:left; } .feedback { display:none; margin:12px 0 0; padding:12px; border-left:4px solid var(--blue); background:var(--panel-2); } .feedback.show { display:block; } .correct { border-color:var(--green); color:var(--green); } .incorrect { border-color:var(--rust); color:var(--rust); } footer { margin-top:64px; color:var(--muted); font-size:.82rem; letter-spacing:.08em; } @media (max-width:640px) { main { width:min(100% - 24px,900px); padding-top:42px; } .flow,.compare { grid-template-columns:1fr; } h1 { font-size:2.65rem; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="kicker">NARUWORKS · CHANGE EXPLANATION · 2026-09-11</div>
+  <h1><em>읽어 온</em> Google 일정이<br>안전하게 화면에 나타나기까지</h1>
+  <p class="lead">선택한 Google Calendar 이벤트를 읽기 전용으로 병합하고, 잘못된 URI와 동시 저장 충돌을 바로잡은 변경을 설명합니다.</p>
+  <nav class="toc" aria-label="목차"><div class="label">Contents</div><ol><li><a href="#background">Background</a></li><li><a href="#intuition">Intuition</a></li><li><a href="#code">Code</a></li><li><a href="#quiz">Quiz</a></li></ol></nav>
+
+  <section id="background"><div class="label">01 · Background</div><h2>연결 정보와 일정 원본은 다른 데이터다</h2>
+    <p>앞 단계에서 회원은 자신의 Google 계정을 연결하고, 그 안의 캘린더를 여러 개 선택할 수 있게 됐다. 하지만 <code>calendar_integrations</code>에는 OAuth 연결과 암호화된 refresh token만 있고, 실제 Google 일정은 아직 Naru Calendar 화면에 없었다.</p>
+    <div class="callout"><strong>핵심 경계.</strong> NaruWorks 내부 일정은 사용자가 생성·수정·삭제한다. Google 일정은 현재 단방향으로 읽기만 한다. 따라서 두 데이터를 같은 <code>calendar_events</code> 테이블에 섞으면 누가 수정 권한을 갖는지 흐려진다.</div>
+    <p>새 <code>external_calendar_events</code> 테이블은 Google에서 읽은 값의 저장본이다. 외부 API가 잠시 실패해도 마지막 저장 결과를 표시할 수 있고, API 응답의 <code>source=GOOGLE</code>, <code>readOnly=true</code>로 프론트가 수정 UI를 열지 않는다.</p>
+  </section>
+
+  <section id="intuition"><div class="label">02 · Intuition</div><h2>한 번의 화면 조회가 두 종류의 일정을 합친다</h2>
+    <p><code>GET /api/calendar/events?from=&amp;to=</code>가 호출되면 내부 일정 발생 회차와 외부 Google 일정을 시작 시각 순으로 병합한다. 아래 단계를 눌러 데이터 이동을 따라가 볼 수 있다.</p>
+    <div class="flow" id="flow"><button class="step active" data-note="Calendar 화면은 조회 기간을 backend로 보낸다."><strong>1. Calendar UI</strong><br><small>from, to</small></button><button class="step" data-note="refresh token을 복호화해 짧은 access token을 갱신한다."><strong>2. Backend</strong><br><small>선택 캘린더만 대상</small></button><button class="step" data-note="Google Events API는 단일 발생 일정(singleEvents)을 반환한다."><strong>3. Google API</strong><br><small>읽기 전용</small></button><button class="step" data-note="provider_event_id 기준 upsert 후 내부 일정과 정렬해 반환한다."><strong>4. PostgreSQL</strong><br><small>외부 저장본</small></button></div>
+    <p id="flow-note" class="flow-note">Calendar 화면은 조회 기간을 backend로 보낸다.</p>
+    <div class="toggle"><button class="active" data-mode="old">이전 방식</button><button data-mode="new">현재 방식</button></div>
+    <div class="compare"><article class="old" id="old"><div class="label">Before</div><h3>조회 후 INSERT</h3><p>동시에 두 요청이 “기존 행 없음”을 확인하면 두 INSERT가 경쟁한다. 뒤늦은 요청은 unique 제약 위반으로 실패한다.</p></article><article class="new hidden" id="new"><div class="label">After</div><h3>DB 원자 upsert</h3><p><code>ON CONFLICT ... DO UPDATE</code>가 존재 여부 판단과 저장을 한 SQL 문장으로 처리한다. 동일 이벤트는 하나의 행으로 수렴한다.</p></article></div>
+  </section>
+
+  <section id="code"><div class="label">03 · Code</div><h2>실행 흐름대로 읽기</h2>
+    <h3>1. Google Events 요청은 절대 URI와 RFC 3339 시간을 쓴다</h3>
+    <p><a href="../../backend/naru-infrastructure/src/main/java/com/naruworks/infrastructure/calendar/GoogleCalendarOAuthAdapter.java">GoogleCalendarOAuthAdapter.java</a>는 이메일 같은 calendar ID를 URL 경로에 넣고, 조회 범위를 한국 시간대의 초 단위 timestamp로 보낸다. 처음에는 완전한 URL을 상대 경로 API에 넣어 <code>https:/...</code>가 됐고, 이후 초 없는 timestamp가 400을 유발했다.</p>
+    <pre><code>https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events
+?timeMin=2026-09-01T00%3A00%3A00%2B09%3A00
+&amp;timeMax=2026-10-01T00%3A00%3A00%2B09%3A00
+&amp;singleEvents=true&amp;orderBy=startTime</code></pre>
+    <h3>2. core는 선택된 캘린더만 읽고, 실패하면 저장본을 유지한다</h3>
+    <p><a href="../../backend/naru-core/src/main/java/com/naruworks/core/service/ExternalCalendarEventService.java">ExternalCalendarEventService.java</a>는 enabled 상태의 캘린더만 순회한다. Google 호출이 실패해도 내부 일정 조회를 막지 않고, 기존 외부 저장본을 반환한다. 이는 외부 의존성이 개인 일정 서비스 전체를 멈추게 하지 않기 위한 정책이다.</p>
+    <h3>3. PostgreSQL이 중복 경쟁을 끝낸다</h3>
+    <p><a href="../../backend/naru-infrastructure/src/main/java/com/naruworks/infrastructure/persistence/calendar/ExternalCalendarEventJpaRepository.java">ExternalCalendarEventJpaRepository.java</a>의 native query는 복합 unique key를 upsert 기준으로 쓴다. 애플리케이션 메모리에서 먼저 읽고 판단하는 것보다 DB의 제약조건을 진실의 원천으로 삼는 방식이다.</p>
+    <pre><code>INSERT INTO external_calendar_events (...)
+VALUES (...)
+ON CONFLICT (calendar_integration_calendar_id, provider_event_id)
+DO UPDATE SET
+  title = EXCLUDED.title,
+  start_at = EXCLUDED.start_at,
+  end_at = EXCLUDED.end_at,
+  updated_at = EXCLUDED.updated_at</code></pre>
+    <h3>4. 프론트는 출처로 편집 권한을 결정한다</h3>
+    <table><thead><tr><th>응답 값</th><th>내부 일정</th><th>Google 일정</th></tr></thead><tbody><tr><td><code>source</code></td><td>NARU</td><td>GOOGLE</td></tr><tr><td><code>readOnly</code></td><td>false</td><td>true</td></tr><tr><td>클릭 동작</td><td>수정/삭제 모달</td><td>읽기 전용 상세</td></tr></tbody></table>
+    <div class="callout warning"><strong>아직 하지 않는 것.</strong> 자동 주기 동기화, <code>nextSyncToken</code> 기반 증분 조회, Google 쪽 수정·삭제는 다음 단계다. 현재는 화면 조회 시 현재 기간을 읽는 단방향 기능이다.</div>
+  </section>
+
+  <section id="quiz"><div class="label">04 · Quiz</div><h2>짧게 확인하기</h2><p>각 선택지를 누르면 바로 이유가 나온다.</p><div id="quizzes"></div></section>
+  <footer>BACKGROUND · INTUITION · CODE · QUIZ · 기준 코드와 테스트: 2026-09-11</footer>
+</main>
+<script>
+(() => {
+  const steps=[...document.querySelectorAll('.step')], note=document.querySelector('#flow-note');
+  steps.forEach(step=>step.addEventListener('click',()=>{steps.forEach(x=>x.classList.remove('active'));step.classList.add('active');note.textContent=step.dataset.note;}));
+  const old=document.querySelector('#old'), newer=document.querySelector('#new');
+  document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('active'));button.classList.add('active');const showNew=button.dataset.mode==='new';old.classList.toggle('hidden',showNew);newer.classList.toggle('hidden',!showNew);}));
+  const questions=[
+    {q:'Google 일정에 readOnly 값이 필요한 가장 직접적인 이유는?',a:['외부 일정을 더 빠르게 정렬하기 위해','수정·삭제 UI를 열지 않게 하기 위해','Google access token을 브라우저에 전달하기 위해','반복 일정을 내부 일정으로 바꾸기 위해'],c:1,e:'Google 일정은 현재 읽기 전용이다. readOnly=true를 이용해 프론트가 내부 수정 모달 대신 상세 화면을 연다.'},
+    {q:'동시에 같은 Google 이벤트를 읽을 때 unique 충돌이 난 이유는?',a:['두 요청이 모두 기존 행이 없다고 판단한 뒤 INSERT했기 때문에','Google이 provider_event_id를 매번 바꿨기 때문에','Calendar 화면이 refresh token을 삭제했기 때문에','Flyway가 테이블을 두 번 만들었기 때문에'],c:0,e:'조회와 INSERT가 분리돼 있으면 두 요청 사이에 경쟁 조건이 생긴다. DB upsert가 이 판단과 저장을 원자적으로 묶는다.'},
+    {q:'external_calendar_events를 별도 테이블에 두는 가장 중요한 설계 이유는?',a:['Google 색상을 내부 색상보다 크게 표시하기 위해','회원마다 다른 데이터베이스를 만들기 위해','내부 수정 가능 일정과 외부 읽기 전용 원본의 책임을 분리하기 위해','Google 이벤트를 모든 사용자에게 공유하기 위해'],c:2,e:'두 종류의 일정은 소유권과 수정 권한이 다르다. 분리된 모델이 그 경계를 명확하게 보존한다.'},
+    {q:'Google Events API 요청에서 timeMin에 초 단위를 고정한 이유는?',a:['PostgreSQL의 TIMESTAMP 컬럼 길이를 맞추기 위해','Google API가 RFC 3339 timestamp를 요구하기 때문에','프론트에서 월간 보기만 지원하기 때문에','refresh token의 만료 시간을 늘리기 위해'],c:1,e:'Google Events API는 시간대가 포함된 RFC 3339 형식을 요구한다. 초까지 포함해 400 Bad Request를 피한다.'},
+    {q:'Google API 호출이 실패했을 때 현재 서비스의 동작은?',a:['내부 일정 조회도 500으로 실패한다','Google 연결을 자동 해제한다','마지막 저장된 외부 일정과 내부 일정을 계속 반환한다','모든 external_calendar_events를 삭제한다'],c:2,e:'외부 의존성 장애가 개인 일정 조회를 막지 않도록, 동기화 실패는 경고로 남기고 저장본을 계속 사용한다.'}
+  ];
+  const root=document.querySelector('#quizzes');
+  questions.forEach((item,index)=>{const card=document.createElement('article');card.className='quiz';card.innerHTML=`<h3>${index+1}. ${item.q}</h3><div class="options"></div><p class="feedback"></p>`;const options=card.querySelector('.options'),feedback=card.querySelector('.feedback');item.a.forEach((answer,i)=>{const button=document.createElement('button');button.className='option';button.textContent=answer;button.addEventListener('click',()=>{if(card.dataset.done)return;card.dataset.done='true';const correct=i===item.c;button.classList.add(correct?'correct':'incorrect');feedback.className='feedback show';feedback.textContent=(correct?'정답. ':'다시 생각해봐. ')+item.e;});options.append(button);});root.append(card);});
+})();
+</script>
+</body>
+</html>

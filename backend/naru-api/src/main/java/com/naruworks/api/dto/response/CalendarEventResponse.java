@@ -2,6 +2,7 @@ package com.naruworks.api.dto.response;
 
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventOccurrence;
+import com.naruworks.domain.model.ExternalCalendarEvent;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
 
@@ -21,7 +22,9 @@ public record CalendarEventResponse(
         CalendarEventStatus status,
         String occurrenceKey,
         LocalDateTime occurrenceStartAt,
-        boolean originalOccurrence
+        boolean originalOccurrence,
+        String source,
+        boolean readOnly
 ) {
 
     public static CalendarEventResponse from(CalendarEvent event) {
@@ -44,7 +47,30 @@ public record CalendarEventResponse(
                 event.getStatus(),
                 occurrence.occurrenceKey(),
                 occurrence.occurrenceStartAt(),
-                occurrence.originalOccurrence()
+                occurrence.originalOccurrence(),
+                "NARU",
+                false
+        );
+    }
+
+    public static CalendarEventResponse from(ExternalCalendarEvent event) {
+        return new CalendarEventResponse(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.isAllDay(),
+                event.getLocation(),
+                event.getColor(),
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE,
+                "google:" + event.getId(),
+                event.getStartAt(),
+                true,
+                "GOOGLE",
+                true
         );
     }
 }

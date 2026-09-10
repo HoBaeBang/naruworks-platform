@@ -6,6 +6,7 @@ import com.naruworks.api.dto.request.CalendarEventUpdateRequest;
 import com.naruworks.api.dto.response.CalendarEventResponse;
 import com.naruworks.api.security.CurrentMember;
 import com.naruworks.core.service.CalendarService;
+import com.naruworks.core.service.ExternalCalendarEventService;
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Comparator;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ import java.util.List;
 public class CalendarEventController {
 
     private final CalendarService calendarService;
+    private final ExternalCalendarEventService externalCalendarEventService;
 
     @GetMapping
     public List<CalendarEventResponse> getEvents(
@@ -30,9 +33,18 @@ public class CalendarEventController {
             @RequestParam LocalDateTime from,
             @RequestParam LocalDateTime to
     ) {
-        return calendarService.findEvents(member.getId(), from, to)
+        List<CalendarEventResponse> naruEvents = calendarService.findEvents(member.getId(), from, to)
                 .stream()
                 .map(CalendarEventResponse::from)
+                .toList();
+        List<CalendarEventResponse> googleEvents = externalCalendarEventService
+                .synchronizeAndFindEvents(member.getId(), from, to)
+                .stream()
+                .map(CalendarEventResponse::from)
+                .toList();
+
+        return java.util.stream.Stream.concat(naruEvents.stream(), googleEvents.stream())
+                .sorted(Comparator.comparing(CalendarEventResponse::startAt))
                 .toList();
     }
 

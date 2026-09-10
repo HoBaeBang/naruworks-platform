@@ -128,6 +128,8 @@ class CalendarEventApiIntegrationTest {
                 .andExpect(jsonPath("$[0].color").value("#20b977"))
                 .andExpect(jsonPath("$[0].recurrenceRule").value("NONE"))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$[0].source").value("NARU"))
+                .andExpect(jsonPath("$[0].readOnly").value(false))
                 .andExpect(jsonPath("$[1].title").value("7월 말 일정"))
                 .andExpect(jsonPath("$[1].startAt").value("2026-07-31T23:00:00"))
                 .andExpect(jsonPath("$[1].location").value("카페"))

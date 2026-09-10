@@ -4,7 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.naruworks.core.model.GoogleCalendar;
 import com.naruworks.core.model.GoogleCalendarAccount;
 import com.naruworks.core.model.GoogleCalendarOAuthToken;
+import com.naruworks.core.model.GoogleCalendarEvent;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -22,6 +31,10 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     private static final String USER_INFO_URI = "https://openidconnect.googleapis.com/v1/userinfo";
     private static final String CALENDAR_LIST_URI =
             "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+    private static final String EVENTS_URI = "https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events";
+    private static final ZoneId KOREA_TIME_ZONE = ZoneId.of("Asia/Seoul");
+    private static final DateTimeFormatter GOOGLE_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
     private static final List<String> SCOPES = List.of(
             "openid",
             "email",
@@ -133,6 +146,44 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
                 .toList();
     }
 
+    @Override
+    public List<GoogleCalendarEvent> findEvents(
+            String accessToken,
+            String calendarId,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        GoogleCalendarEventsResponse response = restClient.get()
+                .uri(createEventsUri(calendarId, from, to))
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .retrieve()
+                .body(GoogleCalendarEventsResponse.class);
+
+        if (response == null || response.items() == null) {
+            return List.of();
+        }
+        return response.items().stream()
+                .filter(item -> item.id() != null && item.start() != null && item.end() != null)
+                .map(this::toGoogleCalendarEvent)
+                .toList();
+    }
+
+    static URI createEventsUri(String calendarId, LocalDateTime from, LocalDateTime to) {
+        String baseUri = UriComponentsBuilder.fromUriString(EVENTS_URI)
+                .buildAndExpand(calendarId)
+                .encode()
+                .toUriString();
+        String timeMin = URLEncoder.encode(
+                GOOGLE_DATE_TIME_FORMATTER.format(from.atZone(KOREA_TIME_ZONE)), StandardCharsets.UTF_8
+        );
+        String timeMax = URLEncoder.encode(
+                GOOGLE_DATE_TIME_FORMATTER.format(to.atZone(KOREA_TIME_ZONE)), StandardCharsets.UTF_8
+        );
+        return URI.create(baseUri + "?timeMin=" + timeMin
+                + "&timeMax=" + timeMax
+                + "&singleEvents=true&orderBy=startTime");
+    }
+
     private void validateConfiguration() {
         if (properties.getClientId().isBlank()
                 || properties.getClientSecret().isBlank()
@@ -168,5 +219,45 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
             @JsonProperty("backgroundColor") String backgroundColor,
             Boolean primary
     ) {
+    }
+
+    private GoogleCalendarEvent toGoogleCalendarEvent(GoogleCalendarEventItem item) {
+        boolean allDay = item.start().date() != null;
+        return new GoogleCalendarEvent(
+                item.id(),
+                item.summary() == null || item.summary().isBlank() ? "제목 없음" : item.summary(),
+                item.description(),
+                toLocalDateTime(item.start()),
+                toLocalDateTime(item.end()),
+                allDay,
+                item.location(),
+                item.colorId(),
+                item.updated() == null ? null : OffsetDateTime.parse(item.updated()).toLocalDateTime()
+        );
+    }
+
+    private LocalDateTime toLocalDateTime(GoogleCalendarEventDateTime value) {
+        if (value.dateTime() != null) {
+            return OffsetDateTime.parse(value.dateTime()).toLocalDateTime();
+        }
+        return LocalDate.parse(value.date()).atStartOfDay();
+    }
+
+    private record GoogleCalendarEventsResponse(List<GoogleCalendarEventItem> items) {
+    }
+
+    private record GoogleCalendarEventItem(
+            String id,
+            String summary,
+            String description,
+            String location,
+            @JsonProperty("colorId") String colorId,
+            String updated,
+            GoogleCalendarEventDateTime start,
+            GoogleCalendarEventDateTime end
+    ) {
+    }
+
+    private record GoogleCalendarEventDateTime(String date, @JsonProperty("dateTime") String dateTime) {
     }
 }

@@ -200,7 +200,8 @@ public class CalendarEventRecurrenceExpander {
     ) {
         return CalendarEvent.of(
                 event.getId(),
-                event.getMemberId(),
+                event.getCalendarId(),
+                event.getCreatedByMemberId(),
                 event.getTitle(),
                 event.getDescription(),
                 startAt,

@@ -24,6 +24,7 @@ export function CalendarGoogleIntegration({
   const [isCalendarLoading, setIsCalendarLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [calendarError, setCalendarError] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -106,8 +107,13 @@ export function CalendarGoogleIntegration({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
-      <div className="flex min-h-11 items-center gap-3">
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+      <button
+        type="button"
+        onClick={() => setIsExpanded((current) => !current)}
+        aria-expanded={isExpanded}
+        className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left"
+      >
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-[var(--foreground)]">Google Calendar</p>
           {isLoading && <p className="mt-0.5 text-xs text-[var(--muted)]">연결 상태 확인 중</p>}
@@ -124,20 +130,35 @@ export function CalendarGoogleIntegration({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.location.assign(getGoogleCalendarAuthorizationUrl())}
-          className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-[var(--primary-soft)] px-3 text-xs font-bold text-[var(--primary-strong)] transition hover:bg-[var(--mint-highlight)]"
-        >
-          {isConnected ? "다시 연결" : "연결"}
-        </button>
-      </div>
+        <span aria-hidden="true" className="text-sm text-[var(--muted)]">{isExpanded ? "⌃" : "⌄"}</span>
+      </button>
 
-      {!isLoading && isConnected && (
-        <div className="mt-2 border-t border-[var(--border)] pt-2">
+      {isExpanded && !isLoading && !isConnected && !hasError && (
+        <div className="border-t border-[var(--border)] px-3 py-3">
+          <button
+            type="button"
+            onClick={() => window.location.assign(getGoogleCalendarAuthorizationUrl())}
+            className="inline-flex h-9 items-center justify-center rounded-md bg-[var(--primary-soft)] px-3 text-xs font-bold text-[var(--primary-strong)] transition hover:bg-[var(--mint-highlight)]"
+          >
+            Google Calendar 연결
+          </button>
+        </div>
+      )}
+
+      {isExpanded && !isLoading && isConnected && (
+        <div className="border-t border-[var(--border)] px-3 py-3">
           {isCalendarLoading && <p className="text-xs text-[var(--muted)]">캘린더 목록을 불러오는 중</p>}
           {!isCalendarLoading && calendarError && (
-            <p className="text-xs text-[var(--muted)]">캘린더 목록 또는 선택을 확인하지 못했습니다.</p>
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-[var(--muted)]">캘린더 목록 또는 선택을 확인하지 못했습니다.</p>
+              <button
+                type="button"
+                onClick={() => window.location.assign(getGoogleCalendarAuthorizationUrl())}
+                className="text-xs font-bold text-[var(--primary-strong)] underline underline-offset-4"
+              >
+                연결 복구
+              </button>
+            </div>
           )}
           {!isCalendarLoading && !calendarError && calendars.length === 0 && (
             <p className="text-xs text-[var(--muted)]">표시할 Google Calendar가 없습니다.</p>

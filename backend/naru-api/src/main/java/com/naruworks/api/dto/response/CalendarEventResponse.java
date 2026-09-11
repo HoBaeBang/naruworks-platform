@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 public record CalendarEventResponse(
         Long id,
+        Long calendarId,
         String title,
         String description,
         LocalDateTime startAt,
@@ -32,9 +33,14 @@ public record CalendarEventResponse(
     }
 
     public static CalendarEventResponse from(CalendarEventOccurrence occurrence) {
+        return from(occurrence, false);
+    }
+
+    public static CalendarEventResponse from(CalendarEventOccurrence occurrence, boolean readOnly) {
         CalendarEvent event = occurrence.event();
         return new CalendarEventResponse(
                 event.getId(),
+                event.getCalendarId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),
@@ -49,13 +55,14 @@ public record CalendarEventResponse(
                 occurrence.occurrenceStartAt(),
                 occurrence.originalOccurrence(),
                 "NARU",
-                false
+                readOnly
         );
     }
 
     public static CalendarEventResponse from(ExternalCalendarEvent event) {
         return new CalendarEventResponse(
                 event.getId(),
+                null,
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),

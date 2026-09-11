@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record CalendarEventCreateRequest(
+        Long calendarId,
         @NotBlank
         String title,
         String description,
@@ -27,6 +28,7 @@ public record CalendarEventCreateRequest(
     public CalendarEvent toDomain() {
         return CalendarEvent.of(
                 null,
+                calendarId,
                 null,
                 title,
                 description,

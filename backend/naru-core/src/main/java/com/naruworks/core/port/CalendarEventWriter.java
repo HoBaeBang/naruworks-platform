@@ -6,7 +6,7 @@ public interface CalendarEventWriter {
 
     CalendarEvent save(CalendarEvent event);
 
-    CalendarEvent update(Long memberId, CalendarEvent event);
+    CalendarEvent update(CalendarEvent event);
 
-    void delete(Long memberId, Long id);
+    void delete(Long id);
 }

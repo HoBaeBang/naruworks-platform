@@ -6,12 +6,13 @@ import { useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
 import { CalendarExternalEventDetailModal } from "@/components/calendar/calendar-external-event-detail-modal";
-import { CalendarGoogleIntegration } from "@/components/calendar/calendar-google-integration";
+import { CalendarSidebar } from "@/components/calendar/calendar-sidebar";
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { CalendarYearView } from "@/components/calendar/calendar-year-view";
 import { CalendarApiError, getCalendarEvents } from "@/lib/calendar-api";
+import type { CalendarMembership } from "@/lib/calendars-api";
 import { getCalendarDayMetadata } from "@/lib/calendar-day-metadata-api";
 import { getLoginUrl } from "@/lib/auth-url";
 import type { CalendarEvent } from "@/types/calendar";
@@ -44,6 +45,7 @@ export function CalendarClientPage() {
   const [error, setError] = useState<CalendarApiError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarMembership | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -86,6 +88,9 @@ export function CalendarClientPage() {
   const selectedEvent = selectedOccurrenceKey
     ? events.find((event) => event.occurrenceKey === selectedOccurrenceKey)
     : undefined;
+  const visibleEvents = selectedCalendar === null
+    ? events
+    : events.filter((event) => event.source === "GOOGLE" || event.calendarId === selectedCalendar.id);
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-6 py-8 text-[var(--foreground)] sm:px-8 lg:px-10">
@@ -99,7 +104,6 @@ export function CalendarClientPage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <CalendarGoogleIntegration justConnected={searchParams.get("google-calendar") === "connected"} />
             <CalendarViewTabs view={view} year={year} month={month} navigationDate={navigationDate} today={today} />
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)]">
               {rangeLabel(view, range.from, range.to)}
@@ -112,14 +116,25 @@ export function CalendarClientPage() {
           </div>
         </header>
 
-        {isLoading && <CalendarMessage message="일정을 불러오는 중입니다." />}
-        {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
-        {!isLoading && !error && view === "month" && <CalendarMonthView year={year} month={month} events={events} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />}
-        {!isLoading && !error && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={events} dayMetadataByDate={dayMetadataByDate} />}
-        {!isLoading && !error && view === "day" && <CalendarDayView date={navigationDate} events={events} dayMetadataByDate={dayMetadataByDate} />}
-        {!isLoading && !error && view === "year" && <CalendarYearView year={year} events={events} dayMetadataByDate={dayMetadataByDate} />}
+        <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
+          <aside className="self-start lg:sticky lg:top-6">
+            <CalendarSidebar
+              justConnected={searchParams.get("google-calendar") === "connected"}
+              selectedCalendar={selectedCalendar}
+              onCalendarSelected={setSelectedCalendar}
+            />
+          </aside>
+          <div>
+            {isLoading && <CalendarMessage message="일정을 불러오는 중입니다." />}
+            {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
+            {!isLoading && !error && view === "month" && <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />}
+            {!isLoading && !error && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {!isLoading && !error && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {!isLoading && !error && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+          </div>
+        </div>
 
-        {selectedDate && mode === "create" && !error && <CalendarEventCreateModal selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
+        {selectedDate && mode === "create" && !error && <CalendarEventCreateModal selectedDate={selectedDate} calendarId={selectedCalendar?.id} canEdit={selectedCalendar?.role !== "VIEWER"} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
         {selectedDate && mode === "edit" && selectedEvent && !selectedEvent.readOnly && !error && <CalendarEventEditModal event={selectedEvent} selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
         {selectedDate && mode === "detail" && selectedEvent?.readOnly && !error && <CalendarExternalEventDetailModal event={selectedEvent} closeHref={calendarHref} />}
       </section>

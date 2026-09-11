@@ -16,6 +16,8 @@ public interface MemberReader {
 
     Optional<Member> findById(Long memberId);
 
+    Optional<Member> findApprovedByEmail(String email);
+
     List<Member> findAllByIdIn(Collection<Long> memberIds);
 
     List<Member> findAllByOrderByCreatedAtDesc();

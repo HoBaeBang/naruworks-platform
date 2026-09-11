@@ -1,5 +1,6 @@
 export type CalendarEvent = {
     id: number;
+    calendarId: number | null;
     title: string;
     description: string | null;
     startAt: string;
@@ -18,6 +19,7 @@ export type CalendarEvent = {
 };
 
 export type CalendarEventCreateRequest = {
+    calendarId?: number;
     title: string;
     description: string;
     startAt: string;

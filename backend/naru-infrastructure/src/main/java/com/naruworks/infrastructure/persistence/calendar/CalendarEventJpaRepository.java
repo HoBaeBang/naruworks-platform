@@ -15,7 +15,7 @@ public interface CalendarEventJpaRepository extends JpaRepository<CalendarEventE
     @Query("""
             select event
             from CalendarEventEntity event
-            where event.memberId = :memberId
+            where event.calendarId in :calendarIds
               and event.status = :status
               and (
                     (event.recurrenceRule = :none
@@ -28,12 +28,12 @@ public interface CalendarEventJpaRepository extends JpaRepository<CalendarEventE
             order by event.startAt asc
             """)
     List<CalendarEventEntity> findDisplayCandidates(
-            @Param("memberId") Long memberId,
+            @Param("calendarIds") List<Long> calendarIds,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("none") CalendarEventRecurrenceRule none,
             @Param("status") CalendarEventStatus status
     );
 
-    Optional<CalendarEventEntity> findByIdAndMemberId(Long id, Long memberId);
+    Optional<CalendarEventEntity> findById(Long id);
 }

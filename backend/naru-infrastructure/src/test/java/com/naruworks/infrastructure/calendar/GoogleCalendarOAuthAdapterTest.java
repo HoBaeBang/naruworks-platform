@@ -24,4 +24,17 @@ class GoogleCalendarOAuthAdapterTest {
         assertThat(uri.getRawQuery()).contains("timeMin=2026-09-01T00%3A00%3A00%2B09%3A00");
         assertThat(uri.getRawQuery()).contains("timeMax=2026-10-01T00%3A00%3A00%2B09%3A00");
     }
+
+    @Test
+    @DisplayName("Google Events API 다음 페이지 요청은 pageToken을 인코딩해 전달한다")
+    void createEventsUriWithPageToken() {
+        URI uri = GoogleCalendarOAuthAdapter.createEventsUri(
+                "primary",
+                LocalDateTime.of(2026, 9, 1, 0, 0),
+                LocalDateTime.of(2026, 10, 1, 0, 0),
+                "next page/+token"
+        );
+
+        assertThat(uri.getRawQuery()).contains("pageToken=next+page%2F%2Btoken");
+    }
 }

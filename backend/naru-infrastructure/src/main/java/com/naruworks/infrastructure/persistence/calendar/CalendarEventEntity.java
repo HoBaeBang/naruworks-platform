@@ -21,9 +21,13 @@ public class CalendarEventEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 일정을 소유한 회원의 내부 식별자 */
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    /** 일정이 속한 개인 또는 공유 캘린더 식별자 */
+    @Column(name = "calendar_id", nullable = false)
+    private Long calendarId;
+
+    /** 일정을 최초 생성한 회원의 내부 식별자 */
+    @Column(name = "created_by_member_id", nullable = false)
+    private Long createdByMemberId;
 
     /** 일정 제목 */
     @Column(nullable = false, length = 100)
@@ -85,7 +89,8 @@ public class CalendarEventEntity {
     public CalendarEvent toDomain() {
         return CalendarEvent.of(
                 id,
-                memberId,
+                calendarId,
+                createdByMemberId,
                 title,
                 description,
                 startAt,
@@ -117,8 +122,27 @@ public class CalendarEventEntity {
             LocalDateTime recurrenceEndAt,
             CalendarEventStatus status
     ) {
+        return of(memberId, memberId, title, description, startAt, endAt, allDay, location, color,
+                recurrenceRule, recurrenceEndAt, status);
+    }
+
+    public static CalendarEventEntity of(
+            Long calendarId,
+            Long createdByMemberId,
+            String title,
+            String description,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            boolean allDay,
+            String location,
+            String color,
+            CalendarEventRecurrenceRule recurrenceRule,
+            LocalDateTime recurrenceEndAt,
+            CalendarEventStatus status
+    ) {
         return of(
-                memberId,
+                calendarId,
+                createdByMemberId,
                 title,
                 description,
                 startAt,
@@ -134,7 +158,8 @@ public class CalendarEventEntity {
     }
 
     public static CalendarEventEntity of(
-            Long memberId,
+            Long calendarId,
+            Long createdByMemberId,
             String title,
             String description,
             LocalDateTime startAt,
@@ -148,7 +173,8 @@ public class CalendarEventEntity {
             CalendarEventStatus status
     ) {
         CalendarEventEntity entity = new CalendarEventEntity();
-        entity.memberId = memberId;
+        entity.calendarId = calendarId;
+        entity.createdByMemberId = createdByMemberId;
         entity.title = title;
         entity.description = description;
         entity.startAt = startAt;
@@ -168,7 +194,8 @@ public class CalendarEventEntity {
 
     public static CalendarEventEntity from(CalendarEvent event) {
         return CalendarEventEntity.of(
-                event.getMemberId(),
+                event.getCalendarId(),
+                event.getCreatedByMemberId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),

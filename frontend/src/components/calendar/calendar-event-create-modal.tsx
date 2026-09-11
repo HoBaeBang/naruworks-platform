@@ -11,10 +11,14 @@ import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarEventCreateModal({
   selectedDate,
+  calendarId,
+  canEdit,
   closeHref,
   onEventChanged,
 }: {
   selectedDate: string;
+  calendarId?: number;
+  canEdit: boolean;
   closeHref: string;
   onEventChanged?: () => Promise<void> | void;
 }) {
@@ -34,6 +38,11 @@ export function CalendarEventCreateModal({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!canEdit) {
+      setErrorMessage("이 캘린더는 보기 전용입니다.");
+      return;
+    }
+
     if (!confirmRecurrenceAdjustment(recurrenceRule, selectedDate)) {
       return;
     }
@@ -43,6 +52,7 @@ export function CalendarEventCreateModal({
 
     try {
       await createCalendarEvent({
+        calendarId,
         title,
         description,
         startAt: allDay ? atStartOfDay(selectedDate) : `${selectedDate}T${startTime}:00`,
@@ -164,6 +174,8 @@ export function CalendarEventCreateModal({
 
           <CalendarEventColorPicker color={color} onChange={setColor} />
 
+          {!canEdit && <p className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)]">이 캘린더는 보기 전용입니다.</p>}
+
           {errorMessage && (
               <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-500">
                 {errorMessage}
@@ -179,7 +191,7 @@ export function CalendarEventCreateModal({
             </Link>
             <button
                 type="submit"
-                disabled={isSaving}
+                disabled={isSaving || !canEdit}
                 className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-bold text-[#062b20] shadow-[0_14px_32px_rgba(32,185,119,0.20)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "저장 중" : "저장"}

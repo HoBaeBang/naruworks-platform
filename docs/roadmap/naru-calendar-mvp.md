@@ -490,9 +490,25 @@ Step 5
 = 여러 Google Calendar의 표시 선택 상태 저장
 = 선택한 Google 캘린더의 일정 읽기 전용 가져오기
 = 외부 일정 전용 저장소와 Calendar 화면 병합
+= Google Events API 페이지네이션으로 조회 범위의 모든 일정 읽기
 
 다음
 = nextSyncToken 기반 증분 동기화
+
+### Step 6: 여러 캘린더와 공유
+
+```text
+진행 중
+= calendars와 calendar_members 데이터 모델 도입
+= 기존 회원별 일정은 기본 개인 캘린더로 이관
+= OWNER / EDITOR / VIEWER 권한으로 캘린더 경계에서 조회·편집 제어
+= 공유 캘린더 생성과 승인 회원 이메일 초대 API
+= Calendar 화면 왼쪽에서 개인·공유 캘린더 선택
+
+원칙
+= Google 외부 일정은 OAuth 연결 회원의 읽기 전용 일정이며 공유 대상에 자동 포함하지 않음
+= OWNER만 공유 회원을 추가할 수 있음
+```
 ```
 
 ## 이후 확장 후보
@@ -510,5 +526,5 @@ Step 5
 여러 캘린더 구분
 Google Calendar OAuth 연동
 Google Calendar 양방향 동기화
-공유/초대
+공유/초대 권한 변경·제거
 ```

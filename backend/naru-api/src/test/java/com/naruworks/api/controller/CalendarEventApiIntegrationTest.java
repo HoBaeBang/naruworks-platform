@@ -1,5 +1,7 @@
 package com.naruworks.api.controller;
 
+import com.naruworks.domain.model.Calendar;
+import com.naruworks.domain.model.CalendarMember;
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
 import com.naruworks.domain.type.CalendarEventStatus;
@@ -7,6 +9,10 @@ import com.naruworks.domain.value.ReferralCode;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventEntity;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventExceptionJpaRepository;
 import com.naruworks.infrastructure.persistence.calendar.CalendarEventJpaRepository;
+import com.naruworks.infrastructure.persistence.calendar.CalendarEntity;
+import com.naruworks.infrastructure.persistence.calendar.CalendarJpaRepository;
+import com.naruworks.infrastructure.persistence.calendar.CalendarMemberEntity;
+import com.naruworks.infrastructure.persistence.calendar.CalendarMemberJpaRepository;
 import com.naruworks.infrastructure.persistence.member.MemberEntity;
 import com.naruworks.infrastructure.persistence.member.MemberJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +49,8 @@ class CalendarEventApiIntegrationTest {
 
     private Long memberAId;
 
+    private Long calendarId;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,10 +60,18 @@ class CalendarEventApiIntegrationTest {
     @Autowired
     private CalendarEventExceptionJpaRepository calendarEventExceptionJpaRepository;
 
+    @Autowired
+    private CalendarJpaRepository calendarJpaRepository;
+
+    @Autowired
+    private CalendarMemberJpaRepository calendarMemberJpaRepository;
+
     @BeforeEach
     void setUp() {
         calendarEventExceptionJpaRepository.deleteAll();
         calendarEventJpaRepository.deleteAll();
+        calendarMemberJpaRepository.deleteAll();
+        calendarJpaRepository.deleteAll();
         memberJpaRepository.deleteAll();
 
         Member memberA = Member.createApprovedInitialAdminGoogleMember(
@@ -68,8 +84,11 @@ class CalendarEventApiIntegrationTest {
         );
 
         memberAId = memberJpaRepository.save(MemberEntity.from(memberA)).getId();
+        calendarId = calendarJpaRepository.save(CalendarEntity.from(Calendar.personal(memberAId))).getId();
+        calendarMemberJpaRepository.save(CalendarMemberEntity.from(CalendarMember.owner(calendarId, memberAId)));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "7월 첫 일정",
                 "조회 기간 안에 들어오는 일정",
@@ -84,6 +103,7 @@ class CalendarEventApiIntegrationTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "7월 말 일정",
                 "조회 종료일 이후까지 이어지는 일정",
@@ -98,6 +118,7 @@ class CalendarEventApiIntegrationTest {
         ));
 
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "조회 범위 밖 일정",
                 "조회 기간과 겹치지 않는 일정",
@@ -140,6 +161,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 목록 API는 조회 기간에 포함된 반복 일정 발생 건을 반환한다")
     void getCalendarEventOccurrences() throws Exception {
         calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "주간 운동",
                 "매주 금요일 러닝",
@@ -334,6 +356,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 단건 조회 API는 id에 해당하는 일정을 반환한다")
     void getCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "단건 조회 일정",
                 "단건 조회 테스트",
@@ -369,6 +392,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 수정 API는 일정을 수정하고 수정된 일정을 반환한다")
     void updateCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "수정 전 일정",
                 "수정 전 설명",
@@ -478,6 +502,7 @@ class CalendarEventApiIntegrationTest {
     @DisplayName("캘린더 일정 삭제 API는 일정을 삭제하고 204를 반환한다")
     void deleteCalendarEvent() throws Exception {
         CalendarEventEntity event = calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "삭제할 일정",
                 "삭제 테스트",
@@ -515,6 +540,7 @@ class CalendarEventApiIntegrationTest {
 
     private CalendarEventEntity saveWeeklyEvent() {
         return calendarEventJpaRepository.save(CalendarEventEntity.of(
+                calendarId,
                 memberAId,
                 "주간 운동",
                 "매주 운동",

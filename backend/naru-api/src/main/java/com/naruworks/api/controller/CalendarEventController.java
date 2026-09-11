@@ -35,7 +35,10 @@ public class CalendarEventController {
     ) {
         List<CalendarEventResponse> naruEvents = calendarService.findEvents(member.getId(), from, to)
                 .stream()
-                .map(CalendarEventResponse::from)
+                .map(occurrence -> CalendarEventResponse.from(
+                        occurrence,
+                        !calendarService.canEditEvent(member.getId(), occurrence.event())
+                ))
                 .toList();
         List<CalendarEventResponse> googleEvents = externalCalendarEventService
                 .synchronizeAndFindEvents(member.getId(), from, to)

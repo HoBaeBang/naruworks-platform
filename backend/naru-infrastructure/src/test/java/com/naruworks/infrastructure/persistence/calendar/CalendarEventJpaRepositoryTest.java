@@ -104,7 +104,7 @@ class CalendarEventJpaRepositoryTest {
 
         List<CalendarEventEntity> events =
                 calendarEventJpaRepository.findDisplayCandidates(
-                        MEMBER_A_ID,
+                        List.of(MEMBER_A_ID),
                         from,
                         to,
                         CalendarEventRecurrenceRule.NONE,

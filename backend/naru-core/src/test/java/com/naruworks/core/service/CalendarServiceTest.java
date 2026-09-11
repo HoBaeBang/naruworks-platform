@@ -11,6 +11,14 @@ import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.core.port.CalendarEventExceptionReader;
 import com.naruworks.core.port.CalendarEventExceptionWriter;
+import com.naruworks.core.port.CalendarReader;
+import com.naruworks.core.port.CalendarWriter;
+import com.naruworks.core.port.CalendarMemberReader;
+import com.naruworks.core.port.CalendarMemberWriter;
+import com.naruworks.domain.model.Calendar;
+import com.naruworks.domain.model.CalendarMember;
+import com.naruworks.domain.type.CalendarMemberRole;
+import com.naruworks.domain.type.CalendarType;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventException;
 import com.naruworks.domain.type.CalendarEventOccurrenceScope;
@@ -42,6 +50,18 @@ class CalendarServiceTest {
 
     @Mock
     private LunarCalendarConverter lunarCalendarConverter;
+
+    @Mock
+    private CalendarReader calendarReader;
+
+    @Mock
+    private CalendarWriter calendarWriter;
+
+    @Mock
+    private CalendarMemberReader calendarMemberReader;
+
+    @Mock
+    private CalendarMemberWriter calendarMemberWriter;
 
     @Test
     @DisplayName("반복 종료일이 있는 WEEKLY 일정은 저장할 수 있다")
@@ -192,7 +212,9 @@ class CalendarServiceTest {
                 CalendarEventStatus.ACTIVE
         );
         CalendarEvent updatedEvent = event(CalendarEventRecurrenceRule.WEEKLY, null);
-        given(calendarEventReader.findEvent(1L, 10L)).willReturn(series);
+        given(calendarEventReader.findEvent(10L)).willReturn(series);
+        given(calendarMemberReader.findByCalendarIdAndMemberId(1L, 1L))
+                .willReturn(java.util.Optional.of(new CalendarMember(1L, 1L, 1L, CalendarMemberRole.OWNER, null)));
 
         service().updateOccurrence(
                 1L,
@@ -228,7 +250,9 @@ class CalendarServiceTest {
                 CalendarEventStatus.ACTIVE
         );
         CalendarEvent updatedEvent = event(CalendarEventRecurrenceRule.WEEKLY, null);
-        given(calendarEventReader.findEvent(1L, 10L)).willReturn(series);
+        given(calendarEventReader.findEvent(10L)).willReturn(series);
+        given(calendarMemberReader.findByCalendarIdAndMemberId(1L, 1L))
+                .willReturn(java.util.Optional.of(new CalendarMember(1L, 1L, 1L, CalendarMemberRole.OWNER, null)));
         given(calendarEventWriter.save(any(CalendarEvent.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
@@ -241,20 +265,35 @@ class CalendarServiceTest {
         );
 
         ArgumentCaptor<CalendarEvent> shortenedSeriesCaptor = ArgumentCaptor.forClass(CalendarEvent.class);
-        then(calendarEventWriter).should().update(org.mockito.ArgumentMatchers.eq(1L), shortenedSeriesCaptor.capture());
+        then(calendarEventWriter).should().update(shortenedSeriesCaptor.capture());
         assertThat(shortenedSeriesCaptor.getValue().getRecurrenceEndAt())
                 .isEqualTo(LocalDateTime.of(2026, 7, 17, 18, 59, 59, 999_999_999));
         then(calendarEventWriter).should().save(any(CalendarEvent.class));
     }
 
     private CalendarService service() {
+        Calendar personalCalendar = Calendar.builder()
+                .id(1L)
+                .ownerMemberId(1L)
+                .name("내 캘린더")
+                .type(CalendarType.PERSONAL)
+                .build();
+        org.mockito.Mockito.lenient().when(calendarReader.findPersonalByOwnerMemberId(1L))
+                .thenReturn(java.util.Optional.of(personalCalendar));
+        org.mockito.Mockito.lenient().when(calendarMemberReader.findByCalendarIdAndMemberId(1L, 1L))
+                .thenReturn(java.util.Optional.of(new CalendarMember(1L, 1L, 1L, CalendarMemberRole.OWNER, null)));
+
         return new CalendarService(
                 calendarEventReader,
                 calendarEventWriter,
                 new CalendarEventRecurrenceExpander(lunarCalendarConverter),
                 calendarEventExceptionReader,
                 calendarEventExceptionWriter,
-                lunarCalendarConverter
+                lunarCalendarConverter,
+                calendarReader,
+                calendarWriter,
+                calendarMemberReader,
+                calendarMemberWriter
         );
     }
 

@@ -4,10 +4,16 @@ import com.naruworks.core.port.CalendarEventReader;
 import com.naruworks.core.port.CalendarEventWriter;
 import com.naruworks.core.port.CalendarEventExceptionReader;
 import com.naruworks.core.port.CalendarEventExceptionWriter;
+import com.naruworks.core.port.CalendarMemberReader;
+import com.naruworks.core.port.CalendarMemberWriter;
+import com.naruworks.core.port.CalendarReader;
+import com.naruworks.core.port.CalendarWriter;
 import com.naruworks.core.port.LunarCalendarConverter;
 import com.naruworks.domain.model.CalendarEvent;
 import com.naruworks.domain.model.CalendarEventException;
 import com.naruworks.domain.model.CalendarEventOccurrence;
+import com.naruworks.domain.model.Calendar;
+import com.naruworks.domain.model.CalendarMember;
 import com.naruworks.domain.type.CalendarEventExceptionType;
 import com.naruworks.domain.type.CalendarEventOccurrenceScope;
 import com.naruworks.domain.type.CalendarEventRecurrenceRule;
@@ -33,6 +39,10 @@ public class CalendarService {
     private final CalendarEventExceptionReader calendarEventExceptionReader;
     private final CalendarEventExceptionWriter calendarEventExceptionWriter;
     private final LunarCalendarConverter lunarCalendarConverter;
+    private final CalendarReader calendarReader;
+    private final CalendarWriter calendarWriter;
+    private final CalendarMemberReader calendarMemberReader;
+    private final CalendarMemberWriter calendarMemberWriter;
 
     /**
      * 회원의 일정 원본을 조회하고, 반복 발생 일정과 회차별 예외를 적용해 화면용 목록을 만든다.
@@ -42,7 +52,7 @@ public class CalendarService {
             LocalDateTime from,
             LocalDateTime to
     ) {
-        List<CalendarEvent> events = calendarEventReader.findEvents(memberId, from, to);
+        List<CalendarEvent> events = calendarEventReader.findEvents(findAccessibleCalendarIds(memberId), from, to);
         // 반복 원본 ID와 원래 발생 시작 시각을 키로 사용해 각 회차의 예외를 빠르게 찾는다.
         Map<String, CalendarEventException> exceptionsByOccurrence = calendarEventExceptionReader
                 .findAllByCalendarEventIds(events.stream().map(CalendarEvent::getId).toList())
@@ -66,8 +76,14 @@ public class CalendarService {
     public CalendarEvent createEvent(Long memberId, CalendarEvent event) {
         validateEvent(event);
 
+        Long calendarId = event.getCalendarId() == null
+                ? findOrCreatePersonalCalendar(memberId).getId()
+                : event.getCalendarId();
+        requireEditableCalendar(calendarId, memberId);
+
         CalendarEvent newEvent = CalendarEvent.of(
                 null,
+                calendarId,
                 memberId,
                 event.getTitle(),
                 event.getDescription(),
@@ -93,9 +109,13 @@ public class CalendarService {
     ) {
         validateEvent(event);
 
+        CalendarEvent currentEvent = calendarEventReader.findEvent(id);
+        requireEditableCalendar(currentEvent.getCalendarId(), memberId);
+
         CalendarEvent updateEvent = CalendarEvent.of(
                 id,
-                memberId,
+                currentEvent.getCalendarId(),
+                currentEvent.getCreatedByMemberId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),
@@ -109,19 +129,30 @@ public class CalendarService {
                 CalendarEventStatus.ACTIVE
         );
 
-        return calendarEventWriter.update(memberId, updateEvent);
+        return calendarEventWriter.update(updateEvent);
     }
 
     /** 회원이 소유한 일정 원본 한 건을 조회한다. */
     public CalendarEvent findEvent(Long memberId, Long id) {
-        return calendarEventReader.findEvent(memberId, id);
+        CalendarEvent event = calendarEventReader.findEvent(id);
+        requireViewableCalendar(event.getCalendarId(), memberId);
+        return event;
+    }
+
+    /** 일정이 속한 캘린더에서 로그인 회원이 편집 권한을 가지는지 확인한다. */
+    public boolean canEditEvent(Long memberId, CalendarEvent event) {
+        return calendarMemberReader.findByCalendarIdAndMemberId(event.getCalendarId(), memberId)
+                .map(CalendarMember::canEdit)
+                .orElse(false);
     }
 
     /** 일정 원본과 그 원본에 연결된 모든 회차 예외를 삭제한다. */
     @Transactional
     public void deleteEvent(Long memberId, Long id) {
+        CalendarEvent event = findEvent(memberId, id);
+        requireEditableCalendar(event.getCalendarId(), memberId);
         calendarEventExceptionWriter.deleteAllByCalendarEventId(id);
-        calendarEventWriter.delete(memberId, id);
+        calendarEventWriter.delete(id);
     }
 
     /**
@@ -136,7 +167,8 @@ public class CalendarService {
             CalendarEventOccurrenceScope scope,
             CalendarEvent event
     ) {
-        CalendarEvent series = calendarEventReader.findEvent(memberId, id);
+        CalendarEvent series = findEvent(memberId, id);
+        requireEditableCalendar(series.getCalendarId(), memberId);
         validateRecurringSeries(series);
         validateOccurrence(series, occurrenceStartAt);
         validateEvent(event);
@@ -159,7 +191,8 @@ public class CalendarService {
             LocalDateTime occurrenceStartAt,
             CalendarEventOccurrenceScope scope
     ) {
-        CalendarEvent series = calendarEventReader.findEvent(memberId, id);
+        CalendarEvent series = findEvent(memberId, id);
+        requireEditableCalendar(series.getCalendarId(), memberId);
         validateRecurringSeries(series);
         validateOccurrence(series, occurrenceStartAt);
 
@@ -259,7 +292,8 @@ public class CalendarService {
 
         CalendarEvent shortenedSeries = CalendarEvent.of(
                 series.getId(),
-                memberId,
+                series.getCalendarId(),
+                series.getCreatedByMemberId(),
                 series.getTitle(),
                 series.getDescription(),
                 series.getStartAt(),
@@ -274,7 +308,7 @@ public class CalendarService {
                 series.getStatus()
         );
 
-        calendarEventWriter.update(memberId, shortenedSeries);
+        calendarEventWriter.update(shortenedSeries);
     }
 
     /** 반복 회차 전용 API가 단일 일정에 적용되지 않도록 막는다. */
@@ -311,7 +345,8 @@ public class CalendarService {
         CalendarEvent event = occurrence.event();
         CalendarEvent overriddenEvent = CalendarEvent.of(
                 event.getId(),
-                event.getMemberId(),
+                event.getCalendarId(),
+                event.getCreatedByMemberId(),
                 exception.title(),
                 exception.description(),
                 exception.startAt(),
@@ -338,7 +373,8 @@ public class CalendarService {
     private CalendarEvent eventWithSeriesIdentity(CalendarEvent series, CalendarEvent event) {
         return CalendarEvent.of(
                 series.getId(),
-                series.getMemberId(),
+                series.getCalendarId(),
+                series.getCreatedByMemberId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getStartAt(),
@@ -366,5 +402,40 @@ public class CalendarService {
 
         return lunarCalendarConverter.toLunarDate(event.getStartAt().toLocalDate())
                 .asRegularMonth();
+    }
+
+    private Calendar findOrCreatePersonalCalendar(Long memberId) {
+        return calendarReader.findPersonalByOwnerMemberId(memberId)
+                .orElseGet(() -> {
+                    Calendar calendar = calendarWriter.save(Calendar.personal(memberId));
+                    calendarMemberWriter.save(CalendarMember.owner(calendar.getId(), memberId));
+                    return calendar;
+                });
+    }
+
+    private List<Long> findAccessibleCalendarIds(Long memberId) {
+        findOrCreatePersonalCalendar(memberId);
+        return calendarMemberReader.findAllByMemberId(memberId).stream()
+                .map(CalendarMember::calendarId)
+                .distinct()
+                .toList();
+    }
+
+    private void requireViewableCalendar(Long calendarId, Long memberId) {
+        calendarMemberReader.findByCalendarIdAndMemberId(calendarId, memberId)
+                .orElseThrow(() -> new com.naruworks.core.exception.AuthorizationException(
+                        "접근 권한이 없는 캘린더입니다."
+                ));
+    }
+
+    private void requireEditableCalendar(Long calendarId, Long memberId) {
+        CalendarMember calendarMember = calendarMemberReader
+                .findByCalendarIdAndMemberId(calendarId, memberId)
+                .orElseThrow(() -> new com.naruworks.core.exception.AuthorizationException(
+                        "수정 권한이 없는 캘린더입니다."
+                ));
+        if (!calendarMember.canEdit()) {
+            throw new com.naruworks.core.exception.AuthorizationException("수정 권한이 없는 캘린더입니다.");
+        }
     }
 }

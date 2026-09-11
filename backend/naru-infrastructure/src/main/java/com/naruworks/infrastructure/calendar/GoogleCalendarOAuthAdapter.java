@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -153,22 +154,40 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
             LocalDateTime from,
             LocalDateTime to
     ) {
-        GoogleCalendarEventsResponse response = restClient.get()
-                .uri(createEventsUri(calendarId, from, to))
-                .headers(headers -> headers.setBearerAuth(accessToken))
-                .retrieve()
-                .body(GoogleCalendarEventsResponse.class);
+        List<GoogleCalendarEvent> events = new ArrayList<>();
+        String pageToken = null;
+        do {
+            GoogleCalendarEventsResponse response = restClient.get()
+                    .uri(createEventsUri(calendarId, from, to, pageToken))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(GoogleCalendarEventsResponse.class);
 
-        if (response == null || response.items() == null) {
-            return List.of();
-        }
-        return response.items().stream()
-                .filter(item -> item.id() != null && item.start() != null && item.end() != null)
-                .map(this::toGoogleCalendarEvent)
-                .toList();
+            if (response == null) {
+                break;
+            }
+            if (response.items() != null) {
+                events.addAll(response.items().stream()
+                        .filter(item -> item.id() != null && item.start() != null && item.end() != null)
+                        .map(this::toGoogleCalendarEvent)
+                        .toList());
+            }
+            pageToken = response.nextPageToken();
+        } while (pageToken != null && !pageToken.isBlank());
+
+        return events;
     }
 
     static URI createEventsUri(String calendarId, LocalDateTime from, LocalDateTime to) {
+        return createEventsUri(calendarId, from, to, null);
+    }
+
+    static URI createEventsUri(
+            String calendarId,
+            LocalDateTime from,
+            LocalDateTime to,
+            String pageToken
+    ) {
         String baseUri = UriComponentsBuilder.fromUriString(EVENTS_URI)
                 .buildAndExpand(calendarId)
                 .encode()
@@ -179,9 +198,13 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
         String timeMax = URLEncoder.encode(
                 GOOGLE_DATE_TIME_FORMATTER.format(to.atZone(KOREA_TIME_ZONE)), StandardCharsets.UTF_8
         );
+        String pageTokenQuery = pageToken == null || pageToken.isBlank()
+                ? ""
+                : "&pageToken=" + URLEncoder.encode(pageToken, StandardCharsets.UTF_8);
         return URI.create(baseUri + "?timeMin=" + timeMin
                 + "&timeMax=" + timeMax
-                + "&singleEvents=true&orderBy=startTime");
+                + "&singleEvents=true&orderBy=startTime"
+                + pageTokenQuery);
     }
 
     private void validateConfiguration() {
@@ -243,7 +266,10 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
         return LocalDate.parse(value.date()).atStartOfDay();
     }
 
-    private record GoogleCalendarEventsResponse(List<GoogleCalendarEventItem> items) {
+    private record GoogleCalendarEventsResponse(
+            List<GoogleCalendarEventItem> items,
+            @JsonProperty("nextPageToken") String nextPageToken
+    ) {
     }
 
     private record GoogleCalendarEventItem(

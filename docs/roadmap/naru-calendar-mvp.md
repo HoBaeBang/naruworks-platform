@@ -493,6 +493,8 @@ Step 5
 = Google Events API 페이지네이션으로 조회 범위의 모든 일정 읽기
 
 다음
+= Google 계정 다중 연결
+= 계정별 하위 캘린더 접힘 UI와 표시 선택
 = nextSyncToken 기반 증분 동기화
 
 ### Step 6: 여러 캘린더와 공유
@@ -508,6 +510,17 @@ Step 5
 원칙
 = Google 외부 일정은 OAuth 연결 회원의 읽기 전용 일정이며 공유 대상에 자동 포함하지 않음
 = OWNER만 공유 회원을 추가할 수 있음
+```
+
+### Step 6-1: Google 계정 다중 연결
+
+```text
+진행 예정
+= 회원은 여러 Google 계정을 연결할 수 있다.
+= 같은 provider_account_id는 기존 연결의 재연결로 처리한다.
+= Google 계정은 왼쪽 패널의 상위 접힘 그룹이고, 실제 일정 선택은 계정 안의 Google Calendar 단위다.
+= Naru 내부 개인·공유 캘린더와 Google 하위 캘린더는 화면에서 함께 보이되 데이터 소유와 권한 모델은 분리한다.
+= 선택된 모든 연결 계정의 Google Calendar를 조회·동기화한다.
 ```
 ```
 

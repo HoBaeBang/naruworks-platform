@@ -69,28 +69,33 @@ public class GoogleCalendarIntegrationController {
     }
 
     @GetMapping
-    public GoogleCalendarIntegrationResponse getGoogleIntegration(@CurrentMember Member member) {
-        return GoogleCalendarIntegrationResponse.from(
-                calendarIntegrationService.findGoogleIntegration(member.getId())
-        );
+    public List<GoogleCalendarIntegrationResponse> getGoogleIntegrations(@CurrentMember Member member) {
+        return calendarIntegrationService.findGoogleIntegrations(member.getId()).stream()
+                .map(GoogleCalendarIntegrationResponse::from)
+                .toList();
     }
 
     /** 연결된 Google 계정이 제공하는 캘린더 목록과 현재 표시 선택 상태를 조회한다. */
-    @GetMapping("/calendars")
-    public List<GoogleCalendarSelectionResponse> getGoogleCalendars(@CurrentMember Member member) {
-        return calendarIntegrationService.findGoogleCalendars(member.getId()).stream()
+    @GetMapping("/accounts/{integrationId}/calendars")
+    public List<GoogleCalendarSelectionResponse> getGoogleCalendars(
+            @CurrentMember Member member,
+            @org.springframework.web.bind.annotation.PathVariable Long integrationId
+    ) {
+        return calendarIntegrationService.findGoogleCalendars(member.getId(), integrationId).stream()
                 .map(GoogleCalendarSelectionResponse::from)
                 .toList();
     }
 
     /** NaruWorks 캘린더에 표시할 Google 캘린더를 여러 개 저장한다. */
-    @PutMapping("/calendars")
+    @PutMapping("/accounts/{integrationId}/calendars")
     public List<GoogleCalendarSelectionResponse> updateGoogleCalendarSelections(
             @CurrentMember Member member,
+            @org.springframework.web.bind.annotation.PathVariable Long integrationId,
             @Valid @RequestBody GoogleCalendarSelectionUpdateRequest request
     ) {
         return calendarIntegrationService.updateGoogleCalendarSelections(
                         member.getId(),
+                        integrationId,
                         Set.copyOf(request.calendarIds())
                 ).stream()
                 .map(GoogleCalendarSelectionResponse::from)

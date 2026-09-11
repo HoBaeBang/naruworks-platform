@@ -57,7 +57,8 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
                 .queryParam("response_type", "code")
                 .queryParam("scope", String.join(" ", SCOPES))
                 .queryParam("access_type", "offline")
-                .queryParam("prompt", "consent")
+                // 다중 연결에서는 현재 Google 로그인 계정을 자동 재사용하지 않도록 계정 선택을 요청한다.
+                .queryParam("prompt", "consent select_account")
                 .queryParam("state", state)
                 .encode()
                 .toUriString();

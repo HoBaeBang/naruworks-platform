@@ -8,6 +8,7 @@
   --primary-soft: #e1faf1;
   --mint-highlight: #a8f5df;
   --surface: rgba(255, 255, 255, 0.8);
+  --surface-raised: #ffffff;
   --border: rgba(21, 32, 29, 0.1);
   --muted: rgba(21, 32, 29, 0.68);
 }
@@ -21,6 +22,7 @@
     --primary-soft: rgba(109, 238, 194, 0.15);
     --mint-highlight: #a8f5df;
     --surface: rgba(255, 255, 255, 0.056);
+    --surface-raised: #1b2622;
     --border: rgba(239, 248, 242, 0.1);
     --muted: rgba(239, 248, 242, 0.68);
   }

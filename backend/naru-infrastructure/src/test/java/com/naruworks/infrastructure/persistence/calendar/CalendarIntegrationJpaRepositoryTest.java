@@ -35,8 +35,8 @@ class CalendarIntegrationJpaRepositoryTest {
     private MemberJpaRepository memberJpaRepository;
 
     @Test
-    @DisplayName("회원과 제공자 기준으로 외부 캘린더 연결 정보를 조회한다")
-    void findByMemberIdAndProvider() {
+    @DisplayName("회원과 제공자 기준으로 여러 외부 캘린더 연결 정보를 조회한다")
+    void findAllByMemberIdAndProvider() {
         LocalDateTime now = LocalDateTime.of(2026, 9, 10, 10, 0);
         Long memberId = memberJpaRepository.save(MemberEntity.from(
                 Member.createApprovedInitialAdminGoogleMember(
@@ -57,14 +57,14 @@ class CalendarIntegrationJpaRepositoryTest {
         );
         calendarIntegrationJpaRepository.save(CalendarIntegrationEntity.from(integration));
 
-        var found = calendarIntegrationJpaRepository.findByMemberIdAndProvider(
+        var found = calendarIntegrationJpaRepository.findAllByMemberIdAndProviderOrderByProviderEmailAsc(
                 memberId,
                 CalendarIntegrationProvider.GOOGLE
         );
 
-        assertThat(found).isPresent();
-        assertThat(found.get().getProviderEmail()).isEqualTo("calendar@example.com");
-        assertThat(found.get().getEncryptedRefreshToken()).isEqualTo("encrypted-refresh-token");
+        assertThat(found).hasSize(1);
+        assertThat(found.getFirst().getProviderEmail()).isEqualTo("calendar@example.com");
+        assertThat(found.getFirst().getEncryptedRefreshToken()).isEqualTo("encrypted-refresh-token");
     }
 
     @Test

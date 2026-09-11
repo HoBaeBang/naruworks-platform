@@ -5,8 +5,8 @@ import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarExternalEventDetailModal({ event, closeHref }: { event: CalendarEvent; closeHref: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/30 p-4 sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-labelledby="external-event-title">
-      <section className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end bg-black/45 p-4 backdrop-blur-sm sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-labelledby="external-event-title">
+      <section className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-6 shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-[var(--primary-strong)]">Google Calendar</p>

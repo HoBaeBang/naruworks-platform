@@ -1,6 +1,7 @@
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081";
 
 export type GoogleCalendarIntegration = {
+  id: number;
   connected: boolean;
   email: string | null;
   status: "CONNECTED" | "REVOKED" | "FAILED" | null;
@@ -15,7 +16,7 @@ export type GoogleCalendarSelection = {
   enabled: boolean;
 };
 
-export async function getGoogleCalendarIntegration(): Promise<GoogleCalendarIntegration> {
+export async function getGoogleCalendarIntegrations(): Promise<GoogleCalendarIntegration[]> {
   const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google`, {
     cache: "no-store",
     credentials: "include",
@@ -25,15 +26,15 @@ export async function getGoogleCalendarIntegration(): Promise<GoogleCalendarInte
     throw new Error("Google Calendar 연결 정보를 불러오지 못했습니다.");
   }
 
-  return response.json() as Promise<GoogleCalendarIntegration>;
+  return response.json() as Promise<GoogleCalendarIntegration[]>;
 }
 
 export function getGoogleCalendarAuthorizationUrl(): string {
   return `${apiBaseUrl}/api/calendar/integrations/google/authorize`;
 }
 
-export async function getGoogleCalendarSelections(): Promise<GoogleCalendarSelection[]> {
-  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/calendars`, {
+export async function getGoogleCalendarSelections(integrationId: number): Promise<GoogleCalendarSelection[]> {
+  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/accounts/${integrationId}/calendars`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -46,9 +47,10 @@ export async function getGoogleCalendarSelections(): Promise<GoogleCalendarSelec
 }
 
 export async function updateGoogleCalendarSelections(
+  integrationId: number,
   calendarIds: string[],
 ): Promise<GoogleCalendarSelection[]> {
-  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/calendars`, {
+  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/accounts/${integrationId}/calendars`, {
     method: "PUT",
     credentials: "include",
     headers: {

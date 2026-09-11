@@ -62,9 +62,10 @@ class CalendarIntegrationServiceTest {
         given(googleCalendarOAuthClient.findAccount("access-token"))
                 .willReturn(new GoogleCalendarAccount("google-account-id", "calendar@example.com"));
         given(sensitiveDataEncryptor.encrypt("refresh-token")).willReturn("encrypted-token");
-        given(calendarIntegrationReader.findByMemberIdAndProvider(
+        given(calendarIntegrationReader.findByMemberIdAndProviderAndProviderAccountId(
                 1L,
-                CalendarIntegrationProvider.GOOGLE
+                CalendarIntegrationProvider.GOOGLE,
+                "google-account-id"
         )).willReturn(Optional.empty());
         given(calendarIntegrationWriter.save(any(CalendarIntegration.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
@@ -79,6 +80,38 @@ class CalendarIntegrationServiceTest {
         assertThat(captor.getValue().getEncryptedRefreshToken()).isEqualTo("encrypted-token");
         assertThat(captor.getValue().getStatus()).isEqualTo(CalendarIntegrationStatus.CONNECTED);
         assertThat(result.getCreatedAt()).isEqualTo(captor.getValue().getCreatedAt());
+    }
+
+    @Test
+    @DisplayName("서로 다른 Google 계정은 회원의 별도 연결로 저장한다")
+    void connectGoogleCalendar_savesDistinctAccounts() {
+        given(googleCalendarOAuthClient.exchangeAuthorizationCode("personal-code"))
+                .willReturn(new GoogleCalendarOAuthToken("personal-access", "personal-refresh"));
+        given(googleCalendarOAuthClient.exchangeAuthorizationCode("work-code"))
+                .willReturn(new GoogleCalendarOAuthToken("work-access", "work-refresh"));
+        given(googleCalendarOAuthClient.findAccount("personal-access"))
+                .willReturn(new GoogleCalendarAccount("personal-account", "personal@example.com"));
+        given(googleCalendarOAuthClient.findAccount("work-access"))
+                .willReturn(new GoogleCalendarAccount("work-account", "work@example.com"));
+        given(sensitiveDataEncryptor.encrypt("personal-refresh")).willReturn("personal-encrypted");
+        given(sensitiveDataEncryptor.encrypt("work-refresh")).willReturn("work-encrypted");
+        given(calendarIntegrationReader.findByMemberIdAndProviderAndProviderAccountId(
+                1L, CalendarIntegrationProvider.GOOGLE, "personal-account"
+        )).willReturn(Optional.empty());
+        given(calendarIntegrationReader.findByMemberIdAndProviderAndProviderAccountId(
+                1L, CalendarIntegrationProvider.GOOGLE, "work-account"
+        )).willReturn(Optional.empty());
+        given(calendarIntegrationWriter.save(any(CalendarIntegration.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        service().connectGoogleCalendar(1L, "personal-code");
+        service().connectGoogleCalendar(1L, "work-code");
+
+        ArgumentCaptor<CalendarIntegration> integrations = ArgumentCaptor.forClass(CalendarIntegration.class);
+        then(calendarIntegrationWriter).should(org.mockito.Mockito.times(2)).save(integrations.capture());
+        assertThat(integrations.getAllValues())
+                .extracting(CalendarIntegration::getProviderAccountId)
+                .containsExactly("personal-account", "work-account");
     }
 
     @Test
@@ -99,7 +132,7 @@ class CalendarIntegrationServiceTest {
     @DisplayName("Google Calendar 목록 조회는 암호화된 refresh token으로 access token을 갱신하고 선택 상태를 합친다")
     void findGoogleCalendars() {
         CalendarIntegration integration = connectedIntegration();
-        given(calendarIntegrationReader.findByMemberIdAndProvider(1L, CalendarIntegrationProvider.GOOGLE))
+        given(calendarIntegrationReader.findByIdAndMemberId(10L, 1L))
                 .willReturn(Optional.of(integration));
         given(calendarIntegrationCalendarReader.findAllByCalendarIntegrationId(10L))
                 .willReturn(List.of(CalendarIntegrationCalendar.create(
@@ -112,7 +145,7 @@ class CalendarIntegrationServiceTest {
                 new GoogleCalendar("family", "가족", "#4285F4", false)
         ));
 
-        var result = service().findGoogleCalendars(1L);
+        var result = service().findGoogleCalendars(1L, 10L);
 
         assertThat(result).extracting(item -> item.calendarId() + ":" + item.enabled())
                 .containsExactly("primary:false", "family:true");
@@ -123,14 +156,14 @@ class CalendarIntegrationServiceTest {
     @Test
     @DisplayName("Google Calendar 선택 저장은 Google 계정에 존재하는 캘린더만 허용한다")
     void updateGoogleCalendarSelections_rejectsUnknownCalendar() {
-        given(calendarIntegrationReader.findByMemberIdAndProvider(1L, CalendarIntegrationProvider.GOOGLE))
+        given(calendarIntegrationReader.findByIdAndMemberId(10L, 1L))
                 .willReturn(Optional.of(connectedIntegration()));
         given(sensitiveDataEncryptor.decrypt("encrypted-refresh-token")).willReturn("refresh-token");
         given(googleCalendarOAuthClient.refreshAccessToken("refresh-token")).willReturn("access-token");
         given(googleCalendarOAuthClient.findCalendars("access-token"))
                 .willReturn(List.of(new GoogleCalendar("primary", "개인", "#20b977", true)));
 
-        assertThatThrownBy(() -> service().updateGoogleCalendarSelections(1L, Set.of("unknown")))
+        assertThatThrownBy(() -> service().updateGoogleCalendarSelections(1L, 10L, Set.of("unknown")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Google 계정에 없는 캘린더는 선택할 수 없습니다.");
 
@@ -141,7 +174,7 @@ class CalendarIntegrationServiceTest {
     @SuppressWarnings("unchecked")
     @DisplayName("Google Calendar 선택 저장은 선택 여부를 캘린더별 설정으로 저장한다")
     void updateGoogleCalendarSelections() {
-        given(calendarIntegrationReader.findByMemberIdAndProvider(1L, CalendarIntegrationProvider.GOOGLE))
+        given(calendarIntegrationReader.findByIdAndMemberId(10L, 1L))
                 .willReturn(Optional.of(connectedIntegration()));
         given(sensitiveDataEncryptor.decrypt("encrypted-refresh-token")).willReturn("refresh-token");
         given(googleCalendarOAuthClient.refreshAccessToken("refresh-token")).willReturn("access-token");
@@ -152,7 +185,7 @@ class CalendarIntegrationServiceTest {
         given(calendarIntegrationCalendarReader.findAllByCalendarIntegrationId(10L)).willReturn(List.of());
         given(calendarIntegrationCalendarWriter.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service().updateGoogleCalendarSelections(1L, Set.of("primary"));
+        var result = service().updateGoogleCalendarSelections(1L, 10L, Set.of("primary"));
 
         ArgumentCaptor<List<CalendarIntegrationCalendar>> captor = ArgumentCaptor.forClass(List.class);
         then(calendarIntegrationCalendarWriter).should().saveAll(captor.capture());

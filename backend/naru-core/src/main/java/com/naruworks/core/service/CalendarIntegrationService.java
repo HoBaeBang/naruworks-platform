@@ -54,7 +54,11 @@ public class CalendarIntegrationService {
         LocalDateTime now = LocalDateTime.now(clock);
 
         CalendarIntegration integration = calendarIntegrationReader
-                .findByMemberIdAndProvider(memberId, CalendarIntegrationProvider.GOOGLE)
+                .findByMemberIdAndProviderAndProviderAccountId(
+                        memberId,
+                        CalendarIntegrationProvider.GOOGLE,
+                        account.providerAccountId()
+                )
                 .map(existing -> existing.reconnect(
                         account.providerAccountId(),
                         account.email(),
@@ -73,8 +77,8 @@ public class CalendarIntegrationService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<CalendarIntegration> findGoogleIntegration(Long memberId) {
-        return calendarIntegrationReader.findByMemberIdAndProvider(
+    public List<CalendarIntegration> findGoogleIntegrations(Long memberId) {
+        return calendarIntegrationReader.findAllByMemberIdAndProvider(
                 memberId,
                 CalendarIntegrationProvider.GOOGLE
         );
@@ -82,8 +86,8 @@ public class CalendarIntegrationService {
 
     /** 연결된 Google 계정의 캘린더 목록과 현재 NaruWorks 표시 선택 상태를 반환한다. */
     @Transactional(readOnly = true)
-    public List<GoogleCalendarSelection> findGoogleCalendars(Long memberId) {
-        CalendarIntegration integration = findConnectedGoogleIntegration(memberId);
+    public List<GoogleCalendarSelection> findGoogleCalendars(Long memberId, Long integrationId) {
+        CalendarIntegration integration = findConnectedGoogleIntegration(memberId, integrationId);
         Map<String, CalendarIntegrationCalendar> selectionsByCalendarId = calendarIntegrationCalendarReader
                 .findAllByCalendarIntegrationId(integration.getId())
                 .stream()
@@ -101,9 +105,10 @@ public class CalendarIntegrationService {
     @Transactional
     public List<GoogleCalendarSelection> updateGoogleCalendarSelections(
             Long memberId,
+            Long integrationId,
             Set<String> requestedCalendarIds
     ) {
-        CalendarIntegration integration = findConnectedGoogleIntegration(memberId);
+        CalendarIntegration integration = findConnectedGoogleIntegration(memberId, integrationId);
         List<GoogleCalendar> googleCalendars = readGoogleCalendars(integration);
         Set<String> availableCalendarIds = googleCalendars.stream()
                 .map(GoogleCalendar::calendarId)
@@ -144,8 +149,8 @@ public class CalendarIntegrationService {
                 .toList();
     }
 
-    private CalendarIntegration findConnectedGoogleIntegration(Long memberId) {
-        return findGoogleIntegration(memberId)
+    private CalendarIntegration findConnectedGoogleIntegration(Long memberId, Long integrationId) {
+        return calendarIntegrationReader.findByIdAndMemberId(integrationId, memberId)
                 .filter(integration -> integration.getStatus()
                         == com.naruworks.domain.type.CalendarIntegrationStatus.CONNECTED)
                 .orElseThrow(() -> new NotFoundException("연결된 Google Calendar 계정을 찾을 수 없습니다."));

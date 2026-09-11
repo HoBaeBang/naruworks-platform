@@ -21,7 +21,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,8 +63,8 @@ class ExternalCalendarEventServiceTest {
                 false, "회의실", null, LocalDateTime.of(2026, 9, 1, 12, 0)
         );
 
-        given(calendarIntegrationReader.findByMemberIdAndProvider(1L, CalendarIntegrationProvider.GOOGLE))
-                .willReturn(Optional.of(integration));
+        given(calendarIntegrationReader.findAllByMemberIdAndProvider(1L, CalendarIntegrationProvider.GOOGLE))
+                .willReturn(List.of(integration));
         given(calendarIntegrationCalendarReader.findAllByCalendarIntegrationId(10L))
                 .willReturn(List.of(selected, unselected));
         given(sensitiveDataEncryptor.decrypt("encrypted-refresh-token")).willReturn("refresh-token");

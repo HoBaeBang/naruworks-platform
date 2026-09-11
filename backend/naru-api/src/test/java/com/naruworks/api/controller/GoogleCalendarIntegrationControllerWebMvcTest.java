@@ -15,7 +15,6 @@ import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.CalendarIntegrationStatus;
 import com.naruworks.domain.value.ReferralCode;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,8 +53,8 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
     }
 
     @Test
-    @DisplayName("Google Calendar 연결 상태 API는 OAuth token 없이 연결 상태만 반환한다")
-    void getGoogleIntegration() throws Exception {
+    @DisplayName("Google Calendar 연결 목록 API는 OAuth token 없이 계정 상태만 반환한다")
+    void getGoogleIntegrations() throws Exception {
         CalendarIntegration integration = CalendarIntegration.connectGoogle(
                 1L,
                 "google-calendar-account",
@@ -63,25 +62,25 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
                 "encrypted-refresh-token",
                 LocalDateTime.of(2026, 9, 10, 10, 0)
         );
-        given(calendarIntegrationService.findGoogleIntegration(1L))
-                .willReturn(Optional.of(integration));
+        given(calendarIntegrationService.findGoogleIntegrations(1L))
+                .willReturn(List.of(integration));
 
         mockMvc.perform(get("/api/calendar/integrations/google"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.connected").value(true))
-                .andExpect(jsonPath("$.email").value("calendar@example.com"))
-                .andExpect(jsonPath("$.status").value(CalendarIntegrationStatus.CONNECTED.name()))
-                .andExpect(jsonPath("$.encryptedRefreshToken").doesNotExist());
+                .andExpect(jsonPath("$[0].connected").value(true))
+                .andExpect(jsonPath("$[0].email").value("calendar@example.com"))
+                .andExpect(jsonPath("$[0].status").value(CalendarIntegrationStatus.CONNECTED.name()))
+                .andExpect(jsonPath("$[0].encryptedRefreshToken").doesNotExist());
     }
 
     @Test
     @DisplayName("Google Calendar 목록 API는 선택 상태를 함께 반환한다")
     void getGoogleCalendars() throws Exception {
-        given(calendarIntegrationService.findGoogleCalendars(1L)).willReturn(List.of(
+        given(calendarIntegrationService.findGoogleCalendars(1L, 10L)).willReturn(List.of(
                 new GoogleCalendarSelection("primary", "개인", "#20b977", true, true)
         ));
 
-        mockMvc.perform(get("/api/calendar/integrations/google/calendars"))
+        mockMvc.perform(get("/api/calendar/integrations/google/accounts/{integrationId}/calendars", 10L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].calendarId").value("primary"))
                 .andExpect(jsonPath("$[0].enabled").value(true));
@@ -90,12 +89,12 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
     @Test
     @DisplayName("Google Calendar 선택 저장 API는 선택한 캘린더 ID를 서비스에 전달한다")
     void updateGoogleCalendarSelections() throws Exception {
-        given(calendarIntegrationService.updateGoogleCalendarSelections(1L, Set.of("primary")))
+        given(calendarIntegrationService.updateGoogleCalendarSelections(1L, 10L, Set.of("primary")))
                 .willReturn(List.of(new GoogleCalendarSelection(
                         "primary", "개인", "#20b977", true, true
                 )));
 
-        mockMvc.perform(put("/api/calendar/integrations/google/calendars")
+        mockMvc.perform(put("/api/calendar/integrations/google/accounts/{integrationId}/calendars", 10L)
                         .contentType("application/json")
                         .content("""
                                 {"calendarIds": ["primary"]}

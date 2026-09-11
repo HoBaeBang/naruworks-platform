@@ -42,9 +42,10 @@ public class ExternalCalendarEventService {
             LocalDateTime from,
             LocalDateTime to
     ) {
-        calendarIntegrationReader.findByMemberIdAndProvider(memberId, CalendarIntegrationProvider.GOOGLE)
+        calendarIntegrationReader.findAllByMemberIdAndProvider(memberId, CalendarIntegrationProvider.GOOGLE)
+                .stream()
                 .filter(integration -> integration.getStatus() == CalendarIntegrationStatus.CONNECTED)
-                .ifPresent(integration -> synchronize(integration, from, to));
+                .forEach(integration -> synchronize(integration, from, to));
 
         return externalCalendarEventReader.findAllDisplayEvents(memberId, from, to);
     }

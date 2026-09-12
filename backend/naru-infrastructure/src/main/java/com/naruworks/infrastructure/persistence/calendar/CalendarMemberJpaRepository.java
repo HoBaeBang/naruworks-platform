@@ -8,5 +8,9 @@ public interface CalendarMemberJpaRepository extends JpaRepository<CalendarMembe
 
     List<CalendarMemberEntity> findAllByMemberId(Long memberId);
 
+    List<CalendarMemberEntity> findAllByCalendarId(Long calendarId);
+
     Optional<CalendarMemberEntity> findByCalendarIdAndMemberId(Long calendarId, Long memberId);
+
+    void deleteByCalendarIdAndMemberId(Long calendarId, Long memberId);
 }

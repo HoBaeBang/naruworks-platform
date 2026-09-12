@@ -111,10 +111,14 @@ public class CalendarService {
 
         CalendarEvent currentEvent = calendarEventReader.findEvent(id);
         requireEditableCalendar(currentEvent.getCalendarId(), memberId);
+        Long targetCalendarId = event.getCalendarId() == null
+                ? currentEvent.getCalendarId()
+                : event.getCalendarId();
+        requireEditableCalendar(targetCalendarId, memberId);
 
         CalendarEvent updateEvent = CalendarEvent.of(
                 id,
-                currentEvent.getCalendarId(),
+                targetCalendarId,
                 currentEvent.getCreatedByMemberId(),
                 event.getTitle(),
                 event.getDescription(),
@@ -172,6 +176,12 @@ public class CalendarService {
         validateRecurringSeries(series);
         validateOccurrence(series, occurrenceStartAt);
         validateEvent(event);
+
+        if (scope == CalendarEventOccurrenceScope.THIS
+                && event.getCalendarId() != null
+                && !event.getCalendarId().equals(series.getCalendarId())) {
+            throw new IllegalArgumentException("반복 일정 한 회차는 다른 캘린더로 이동할 수 없습니다.");
+        }
 
         return switch (scope) {
             case THIS -> updateThisOccurrence(series, occurrenceStartAt, event);
@@ -405,7 +415,7 @@ public class CalendarService {
     }
 
     private Calendar findOrCreatePersonalCalendar(Long memberId) {
-        return calendarReader.findPersonalByOwnerMemberId(memberId)
+        return calendarReader.findDefaultByOwnerMemberId(memberId)
                 .orElseGet(() -> {
                     Calendar calendar = calendarWriter.save(Calendar.personal(memberId));
                     calendarMemberWriter.save(CalendarMember.owner(calendar.getId(), memberId));

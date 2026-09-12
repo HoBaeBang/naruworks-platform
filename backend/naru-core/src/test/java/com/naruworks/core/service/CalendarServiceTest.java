@@ -170,6 +170,32 @@ class CalendarServiceTest {
     }
 
     @Test
+    @DisplayName("종일 기간 일정은 종료일 다음 날 자정까지 저장할 수 있다")
+    void createEvent_allDayMultiDayEventAtMidnight() {
+        CalendarEvent allDayEvent = CalendarEvent.of(
+                null,
+                null,
+                "여름 휴가",
+                "제주 여행",
+                LocalDateTime.of(2026, 7, 14, 0, 0),
+                LocalDateTime.of(2026, 7, 18, 0, 0),
+                true,
+                "제주",
+                "#20b977",
+                CalendarEventRecurrenceRule.NONE,
+                null,
+                CalendarEventStatus.ACTIVE
+        );
+        given(calendarEventWriter.save(any(CalendarEvent.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        CalendarEvent result = service().createEvent(1L, allDayEvent);
+
+        assertThat(result.getStartAt()).isEqualTo(LocalDateTime.of(2026, 7, 14, 0, 0));
+        assertThat(result.getEndAt()).isEqualTo(LocalDateTime.of(2026, 7, 18, 0, 0));
+    }
+
+    @Test
     @DisplayName("종일 일정은 자정이 아닌 시각으로 저장할 수 없다")
     void createEvent_allDayEventWithNonMidnightTime() {
         CalendarEvent allDayEvent = CalendarEvent.of(
@@ -271,6 +297,32 @@ class CalendarServiceTest {
         then(calendarEventWriter).should().save(any(CalendarEvent.class));
     }
 
+    @Test
+    @DisplayName("일정 수정은 편집 권한이 있는 다른 캘린더로 이동할 수 있다")
+    void updateEvent_movesEventToEditableCalendar() {
+        CalendarEvent currentEvent = CalendarEvent.of(
+                10L, 1L, "운동", "저녁 러닝",
+                LocalDateTime.of(2026, 7, 24, 19, 0),
+                LocalDateTime.of(2026, 7, 24, 20, 0), false, "한강공원", "#20b977",
+                CalendarEventRecurrenceRule.NONE, null, CalendarEventStatus.ACTIVE
+        );
+        CalendarEvent changedEvent = CalendarEvent.of(
+                10L, 2L, "운동", "저녁 러닝",
+                LocalDateTime.of(2026, 7, 24, 19, 0),
+                LocalDateTime.of(2026, 7, 24, 20, 0), false, "한강공원", "#3b82f6",
+                CalendarEventRecurrenceRule.NONE, null, CalendarEventStatus.ACTIVE
+        );
+        given(calendarEventReader.findEvent(10L)).willReturn(currentEvent);
+        given(calendarMemberReader.findByCalendarIdAndMemberId(2L, 1L))
+                .willReturn(java.util.Optional.of(new CalendarMember(2L, 2L, 1L, CalendarMemberRole.EDITOR, null)));
+
+        service().updateEvent(1L, 10L, changedEvent);
+
+        ArgumentCaptor<CalendarEvent> updatedEvent = ArgumentCaptor.forClass(CalendarEvent.class);
+        then(calendarEventWriter).should().update(updatedEvent.capture());
+        assertThat(updatedEvent.getValue().getCalendarId()).isEqualTo(2L);
+    }
+
     private CalendarService service() {
         Calendar personalCalendar = Calendar.builder()
                 .id(1L)
@@ -278,7 +330,7 @@ class CalendarServiceTest {
                 .name("내 캘린더")
                 .type(CalendarType.PERSONAL)
                 .build();
-        org.mockito.Mockito.lenient().when(calendarReader.findPersonalByOwnerMemberId(1L))
+        org.mockito.Mockito.lenient().when(calendarReader.findDefaultByOwnerMemberId(1L))
                 .thenReturn(java.util.Optional.of(personalCalendar));
         org.mockito.Mockito.lenient().when(calendarMemberReader.findByCalendarIdAndMemberId(1L, 1L))
                 .thenReturn(java.util.Optional.of(new CalendarMember(1L, 1L, 1L, CalendarMemberRole.OWNER, null)));

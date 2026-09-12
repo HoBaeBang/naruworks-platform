@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record CalendarEventUpdateRequest(
+        Long calendarId,
+
         @NotBlank
         String title,
 
@@ -36,7 +38,7 @@ public record CalendarEventUpdateRequest(
     public CalendarEvent toDomain(Long id) {
         return CalendarEvent.of(
                 id,
-                null,
+                calendarId,
                 title,
                 description,
                 startAt,

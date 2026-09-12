@@ -15,6 +15,8 @@ public record CalendarEventOccurrenceUpdateRequest(
         @NotNull
         CalendarEventOccurrenceScope scope,
 
+        Long calendarId,
+
         @NotBlank
         String title,
 
@@ -42,7 +44,7 @@ public record CalendarEventOccurrenceUpdateRequest(
     public CalendarEvent toDomain() {
         return CalendarEvent.of(
                 null,
-                null,
+                calendarId,
                 title,
                 description,
                 startAt,

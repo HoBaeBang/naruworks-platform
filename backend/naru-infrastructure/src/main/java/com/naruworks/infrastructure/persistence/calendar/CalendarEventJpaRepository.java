@@ -36,4 +36,6 @@ public interface CalendarEventJpaRepository extends JpaRepository<CalendarEventE
     );
 
     Optional<CalendarEventEntity> findById(Long id);
+
+    void deleteAllByCalendarId(Long calendarId);
 }

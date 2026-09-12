@@ -65,6 +65,11 @@ public class CalendarEventPersistenceAdapter implements CalendarEventReader, Cal
         calendarEventJpaRepository.delete(entity);
     }
 
+    @Override
+    public void deleteAllByCalendarId(Long calendarId) {
+        calendarEventJpaRepository.deleteAllByCalendarId(calendarId);
+    }
+
     private CalendarEventEntity getEvent(Long id) {
         return calendarEventJpaRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("일정을 찾을 수 없습니다."));

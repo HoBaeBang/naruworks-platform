@@ -14,6 +14,8 @@ public class Calendar {
     private final Long ownerMemberId;
     private final String name;
     private final CalendarType type;
+    private final String displayColor;
+    private final boolean defaultCalendar;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
@@ -22,14 +24,18 @@ public class Calendar {
                 .ownerMemberId(memberId)
                 .name("내 캘린더")
                 .type(CalendarType.PERSONAL)
+                .displayColor("#20b977")
+                .defaultCalendar(true)
                 .build();
     }
 
-    public static Calendar shared(Long ownerMemberId, String name) {
+    public static Calendar create(Long ownerMemberId, String name, CalendarType type, String displayColor) {
         return Calendar.builder()
                 .ownerMemberId(ownerMemberId)
                 .name(name)
-                .type(CalendarType.SHARED)
+                .type(type)
+                .displayColor(displayColor)
+                .defaultCalendar(false)
                 .build();
     }
 }

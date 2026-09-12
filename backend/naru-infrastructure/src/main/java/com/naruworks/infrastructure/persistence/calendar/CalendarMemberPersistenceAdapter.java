@@ -22,6 +22,13 @@ public class CalendarMemberPersistenceAdapter implements CalendarMemberReader, C
     }
 
     @Override
+    public List<CalendarMember> findAllByCalendarId(Long calendarId) {
+        return calendarMemberJpaRepository.findAllByCalendarId(calendarId).stream()
+                .map(CalendarMemberEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<CalendarMember> findByCalendarIdAndMemberId(Long calendarId, Long memberId) {
         return calendarMemberJpaRepository.findByCalendarIdAndMemberId(calendarId, memberId)
                 .map(CalendarMemberEntity::toDomain);
@@ -30,5 +37,10 @@ public class CalendarMemberPersistenceAdapter implements CalendarMemberReader, C
     @Override
     public CalendarMember save(CalendarMember calendarMember) {
         return calendarMemberJpaRepository.save(CalendarMemberEntity.from(calendarMember)).toDomain();
+    }
+
+    @Override
+    public void deleteByCalendarIdAndMemberId(Long calendarId, Long memberId) {
+        calendarMemberJpaRepository.deleteByCalendarIdAndMemberId(calendarId, memberId);
     }
 }

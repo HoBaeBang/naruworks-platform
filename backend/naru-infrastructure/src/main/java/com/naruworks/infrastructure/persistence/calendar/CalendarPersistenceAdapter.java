@@ -3,8 +3,8 @@ package com.naruworks.infrastructure.persistence.calendar;
 import com.naruworks.core.port.CalendarReader;
 import com.naruworks.core.port.CalendarWriter;
 import com.naruworks.domain.model.Calendar;
-import com.naruworks.domain.type.CalendarType;
 import java.util.Optional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -15,8 +15,8 @@ public class CalendarPersistenceAdapter implements CalendarReader, CalendarWrite
     private final CalendarJpaRepository calendarJpaRepository;
 
     @Override
-    public Optional<Calendar> findPersonalByOwnerMemberId(Long memberId) {
-        return calendarJpaRepository.findByOwnerMemberIdAndType(memberId, CalendarType.PERSONAL)
+    public Optional<Calendar> findDefaultByOwnerMemberId(Long memberId) {
+        return calendarJpaRepository.findByOwnerMemberIdAndDefaultCalendarTrue(memberId)
                 .map(CalendarEntity::toDomain);
     }
 
@@ -26,7 +26,19 @@ public class CalendarPersistenceAdapter implements CalendarReader, CalendarWrite
     }
 
     @Override
+    public List<Calendar> findAllByOwnerMemberId(Long memberId) {
+        return calendarJpaRepository.findAllByOwnerMemberId(memberId).stream()
+                .map(CalendarEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Calendar save(Calendar calendar) {
         return calendarJpaRepository.save(CalendarEntity.from(calendar)).toDomain();
+    }
+
+    @Override
+    public void delete(Long calendarId) {
+        calendarJpaRepository.deleteById(calendarId);
     }
 }

@@ -5,4 +5,6 @@ import com.naruworks.domain.model.CalendarMember;
 public interface CalendarMemberWriter {
 
     CalendarMember save(CalendarMember calendarMember);
+
+    void deleteByCalendarIdAndMemberId(Long calendarId, Long memberId);
 }

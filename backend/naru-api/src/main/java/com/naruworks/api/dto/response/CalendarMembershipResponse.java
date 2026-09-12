@@ -9,7 +9,9 @@ public record CalendarMembershipResponse(
         String name,
         CalendarType type,
         Long ownerMemberId,
-        CalendarMemberRole role
+        CalendarMemberRole role,
+        String displayColor,
+        boolean defaultCalendar
 ) {
     public static CalendarMembershipResponse from(CalendarMembership membership) {
         return new CalendarMembershipResponse(
@@ -17,7 +19,9 @@ public record CalendarMembershipResponse(
                 membership.calendar().getName(),
                 membership.calendar().getType(),
                 membership.calendar().getOwnerMemberId(),
-                membership.role()
+                membership.role(),
+                membership.calendar().getDisplayColor(),
+                membership.calendar().isDefaultCalendar()
         );
     }
 }

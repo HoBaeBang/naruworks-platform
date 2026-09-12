@@ -39,6 +39,14 @@ public class CalendarEntity {
     @Column(name = "calendar_type", nullable = false, length = 30)
     private CalendarType type;
 
+    /** 캘린더를 구분해 표시할 기본 색상 */
+    @Column(name = "display_color", nullable = false, length = 20)
+    private String displayColor;
+
+    /** 회원의 새 일정 생성 기본 대상 여부 */
+    @Column(name = "is_default", nullable = false)
+    private boolean defaultCalendar;
+
     /** 캘린더 생성 시각 */
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -53,6 +61,8 @@ public class CalendarEntity {
         entity.ownerMemberId = calendar.getOwnerMemberId();
         entity.name = calendar.getName();
         entity.type = calendar.getType();
+        entity.displayColor = calendar.getDisplayColor();
+        entity.defaultCalendar = calendar.isDefaultCalendar();
         entity.createdAt = calendar.getCreatedAt() == null ? LocalDateTime.now() : calendar.getCreatedAt();
         entity.updatedAt = calendar.getUpdatedAt() == null ? LocalDateTime.now() : calendar.getUpdatedAt();
         return entity;
@@ -64,6 +74,8 @@ public class CalendarEntity {
                 .ownerMemberId(ownerMemberId)
                 .name(name)
                 .type(type)
+                .displayColor(displayColor)
+                .defaultCalendar(defaultCalendar)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();

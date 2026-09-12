@@ -8,5 +8,7 @@ public interface CalendarMemberReader {
 
     List<CalendarMember> findAllByMemberId(Long memberId);
 
+    List<CalendarMember> findAllByCalendarId(Long calendarId);
+
     Optional<CalendarMember> findByCalendarIdAndMemberId(Long calendarId, Long memberId);
 }

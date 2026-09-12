@@ -9,4 +9,6 @@ public interface CalendarEventWriter {
     CalendarEvent update(CalendarEvent event);
 
     void delete(Long id);
+
+    void deleteAllByCalendarId(Long calendarId);
 }

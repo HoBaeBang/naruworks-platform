@@ -5,4 +5,6 @@ import com.naruworks.domain.model.Calendar;
 public interface CalendarWriter {
 
     Calendar save(Calendar calendar);
+
+    void delete(Long calendarId);
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
 import { CalendarExternalEventDetailModal } from "@/components/calendar/calendar-external-event-detail-modal";
 import { CalendarSidebar } from "@/components/calendar/calendar-sidebar";
+import { CalendarInvitationJoinModal } from "@/components/calendar/calendar-invitation-join-modal";
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
@@ -33,6 +34,7 @@ export function CalendarClientPage() {
   const mode = searchParams.get("mode");
   const selectedDate = mode ? searchParams.get("date") ?? undefined : undefined;
   const selectedOccurrenceKey = searchParams.get("occurrenceKey");
+  const invitationToken = searchParams.get("invite");
   const range = getViewRange(view, year, month, navigationDate);
   const rangeFrom = toDateTime(range.from);
   const rangeTo = toDateTime(range.to);
@@ -44,14 +46,19 @@ export function CalendarClientPage() {
   const [dayMetadata, setDayMetadata] = useState<CalendarDayMetadata[]>([]);
   const [error, setError] = useState<CalendarApiError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedEventsRef = useRef(false);
+  const [hasLoadedEvents, setHasLoadedEvents] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarMembership | null>(null);
+  const [activeCalendar, setActiveCalendar] = useState<CalendarMembership | null>(null);
+  const [visibleCalendarIds, setVisibleCalendarIds] = useState<Set<number>>(new Set());
+  const [calendars, setCalendars] = useState<CalendarMembership[]>([]);
 
   useEffect(() => {
     let isActive = true;
 
     async function loadEvents() {
-      setIsLoading(true);
+      const isInitialLoad = !hasLoadedEventsRef.current;
+      if (isInitialLoad) setIsLoading(true);
       setError(null);
 
       try {
@@ -62,6 +69,8 @@ export function CalendarClientPage() {
         if (isActive) {
           setEvents(eventResult);
           setDayMetadata(metadataResult);
+          hasLoadedEventsRef.current = true;
+          setHasLoadedEvents(true);
         }
       } catch (cause) {
         if (isActive) {
@@ -69,7 +78,7 @@ export function CalendarClientPage() {
         }
       } finally {
         if (isActive) {
-          setIsLoading(false);
+          if (isInitialLoad) setIsLoading(false);
         }
       }
     }
@@ -88,9 +97,11 @@ export function CalendarClientPage() {
   const selectedEvent = selectedOccurrenceKey
     ? events.find((event) => event.occurrenceKey === selectedOccurrenceKey)
     : undefined;
-  const visibleEvents = selectedCalendar === null
-    ? events
-    : events.filter((event) => event.source === "GOOGLE" || event.calendarId === selectedCalendar.id);
+  const visibleEvents = events.filter(
+    (event) => event.source === "GOOGLE"
+      || (event.calendarId !== null && visibleCalendarIds.has(event.calendarId)),
+  );
+  const canRenderCalendar = !isLoading && (!error || hasLoadedEvents);
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-6 py-8 text-[var(--foreground)] sm:px-8 lg:px-10">
@@ -120,23 +131,27 @@ export function CalendarClientPage() {
           <aside className="self-start lg:sticky lg:top-6">
             <CalendarSidebar
               justConnected={searchParams.get("google-calendar") === "connected"}
-              selectedCalendar={selectedCalendar}
-              onCalendarSelected={setSelectedCalendar}
+              activeCalendar={activeCalendar}
+              visibleCalendarIds={visibleCalendarIds}
+              onActiveCalendarChange={setActiveCalendar}
+              onVisibleCalendarIdsChange={setVisibleCalendarIds}
+              onCalendarsChanged={setCalendars}
             />
           </aside>
           <div>
             {isLoading && <CalendarMessage message="일정을 불러오는 중입니다." />}
             {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
-            {!isLoading && !error && view === "month" && <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />}
-            {!isLoading && !error && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
-            {!isLoading && !error && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
-            {!isLoading && !error && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {canRenderCalendar && view === "month" && <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />}
+            {canRenderCalendar && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {canRenderCalendar && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {canRenderCalendar && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
           </div>
         </div>
 
-        {selectedDate && mode === "create" && !error && <CalendarEventCreateModal selectedDate={selectedDate} calendarId={selectedCalendar?.id} canEdit={selectedCalendar?.role !== "VIEWER"} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
-        {selectedDate && mode === "edit" && selectedEvent && !selectedEvent.readOnly && !error && <CalendarEventEditModal event={selectedEvent} selectedDate={selectedDate} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
+        {selectedDate && mode === "create" && !error && <CalendarEventCreateModal selectedDate={selectedDate} calendars={calendars} initialCalendarId={activeCalendar?.id} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
+        {selectedDate && mode === "edit" && selectedEvent && !selectedEvent.readOnly && !error && <CalendarEventEditModal event={selectedEvent} calendars={calendars} closeHref={calendarHref} onEventChanged={() => setReloadToken((token) => token + 1)} />}
         {selectedDate && mode === "detail" && selectedEvent?.readOnly && !error && <CalendarExternalEventDetailModal event={selectedEvent} closeHref={calendarHref} />}
+        {invitationToken && <CalendarInvitationJoinModal token={invitationToken} closeHref={calendarHref} />}
       </section>
     </main>
   );

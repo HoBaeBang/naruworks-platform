@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "@/types/calendar";
+import { NaruSelect } from "@/components/ui/naru-select";
 
 type RecurrenceRule = CalendarEvent["recurrenceRule"];
 
@@ -25,19 +26,12 @@ export function CalendarRecurrenceFields({
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-[var(--muted)]">반복</span>
-        <select
+        <NaruSelect
           value={recurrenceRule}
-          onChange={(event) =>
-            onRecurrenceRuleChange(event.target.value as RecurrenceRule)
-          }
-          className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
-        >
-          {Object.entries(recurrenceLabel).map(([rule, label]) => (
-            <option key={rule} value={rule}>
-              {label}
-            </option>
-          ))}
-        </select>
+          options={Object.entries(recurrenceLabel).map(([rule, label]) => ({ value: rule, label }))}
+          onChange={(value) => onRecurrenceRuleChange(value as RecurrenceRule)}
+          ariaLabel="반복 설정"
+        />
       </label>
 
       {recurrenceRule !== "NONE" && (
@@ -49,7 +43,7 @@ export function CalendarRecurrenceFields({
             type="date"
             value={recurrenceEndDate}
             onChange={(event) => onRecurrenceEndDateChange(event.target.value)}
-            className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
+            className="naru-native-control h-12 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-4 text-[var(--foreground)] outline-none transition focus:border-[var(--primary)]"
           />
         </label>
       )}

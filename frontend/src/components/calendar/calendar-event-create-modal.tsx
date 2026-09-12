@@ -7,29 +7,36 @@ import { createCalendarEvent } from "@/lib/calendar-api";
 import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
 import { CalendarEventAllDayToggle } from "@/components/calendar/calendar-event-all-day-toggle";
 import { CalendarEventColorPicker } from "@/components/calendar/calendar-event-color-picker";
+import type { CalendarMembership } from "@/lib/calendars-api";
+import { NaruSelect } from "@/components/ui/naru-select";
 import type { CalendarEvent } from "@/types/calendar";
 
 export function CalendarEventCreateModal({
   selectedDate,
-  calendarId,
-  canEdit,
+  calendars,
+  initialCalendarId,
   closeHref,
   onEventChanged,
 }: {
   selectedDate: string;
-  calendarId?: number;
-  canEdit: boolean;
+  calendars: CalendarMembership[];
+  initialCalendarId?: number;
   closeHref: string;
   onEventChanged?: () => Promise<void> | void;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
+  const [startDate, setStartDate] = useState(selectedDate);
+  const [endDate, setEndDate] = useState(selectedDate);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [allDay, setAllDay] = useState(false);
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState("#20b977");
+  const [color, setColor] = useState(
+    calendars.find((calendar) => calendar.id === initialCalendarId)?.displayColor ?? "#20b977",
+  );
+  const [calendarId, setCalendarId] = useState<number | undefined>(initialCalendarId);
   const [recurrenceRule, setRecurrenceRule] = useState<CalendarEvent["recurrenceRule"]>("NONE");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -38,12 +45,19 @@ export function CalendarEventCreateModal({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!canEdit) {
+    const targetCalendar = calendars.find((calendar) => calendar.id === calendarId);
+    if (!targetCalendar || targetCalendar.role === "VIEWER") {
       setErrorMessage("이 캘린더는 보기 전용입니다.");
       return;
     }
 
-    if (!confirmRecurrenceAdjustment(recurrenceRule, selectedDate)) {
+    const period = createEventPeriod(allDay, startDate, endDate, startTime, endTime);
+    if (!period) {
+      setErrorMessage("종료 일시를 시작 일시보다 늦게 설정해주세요.");
+      return;
+    }
+
+    if (!confirmRecurrenceAdjustment(recurrenceRule, startDate)) {
       return;
     }
 
@@ -55,8 +69,8 @@ export function CalendarEventCreateModal({
         calendarId,
         title,
         description,
-        startAt: allDay ? atStartOfDay(selectedDate) : `${selectedDate}T${startTime}:00`,
-        endAt: allDay ? atStartOfNextDay(selectedDate) : `${selectedDate}T${endTime}:00`,
+        startAt: period.startAt,
+        endAt: period.endAt,
         allDay,
         location,
         color,
@@ -81,7 +95,7 @@ export function CalendarEventCreateModal({
             <p className="text-sm font-bold text-[var(--primary-strong)]">
               새 일정
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">{selectedDate}</h2>
+            <h2 className="mt-2 text-2xl font-semibold">기간 일정</h2>
           </div>
 
           <Link
@@ -105,6 +119,18 @@ export function CalendarEventCreateModal({
             />
           </label>
 
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-bold text-[var(--muted)]">저장할 캘린더</span>
+            <NaruSelect value={String(calendarId ?? "")} onChange={(value) => {
+              const nextCalendar = calendars.find((calendar) => calendar.id === Number(value));
+              setCalendarId(nextCalendar?.id);
+              if (nextCalendar) setColor(nextCalendar.displayColor);
+            }} ariaLabel="저장할 캘린더" options={[
+              { value: "", label: "캘린더를 선택하세요", disabled: true },
+              ...calendars.map((calendar) => ({ value: String(calendar.id), label: `${calendar.name}${calendar.role === "VIEWER" ? " (보기 전용)" : ""}`, disabled: calendar.role === "VIEWER" })),
+            ]} />
+          </label>
+
           <CalendarRecurrenceFields
             recurrenceRule={recurrenceRule}
             recurrenceEndDate={recurrenceEndDate}
@@ -123,30 +149,13 @@ export function CalendarEventCreateModal({
             onChange={setAllDay}
             className="h-12 shrink-0"
           />
+          {allDay && <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
+            <DateField label="시작일" value={startDate} onChange={setStartDate} />
+            <DateField label="종료일" value={endDate} onChange={setEndDate} />
+          </div>}
           {!allDay && <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-[var(--muted)]">
-                시작 시간
-              </span>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(event) => setStartTime(event.target.value)}
-                className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-[var(--muted)]">
-                종료 시간
-              </span>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
-                className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition focus:border-[var(--primary)]"
-              />
-            </label>
+            <DateTimeField label="시작 일시" date={startDate} time={startTime} onDateChange={setStartDate} onTimeChange={setStartTime} />
+            <DateTimeField label="종료 일시" date={endDate} time={endTime} onDateChange={setEndDate} onTimeChange={setEndTime} />
           </div>}
           </div>
 
@@ -174,8 +183,6 @@ export function CalendarEventCreateModal({
 
           <CalendarEventColorPicker color={color} onChange={setColor} />
 
-          {!canEdit && <p className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)]">이 캘린더는 보기 전용입니다.</p>}
-
           {errorMessage && (
               <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-500">
                 {errorMessage}
@@ -191,7 +198,7 @@ export function CalendarEventCreateModal({
             </Link>
             <button
                 type="submit"
-                disabled={isSaving || !canEdit}
+                disabled={isSaving || !calendarId || calendars.find((calendar) => calendar.id === calendarId)?.role === "VIEWER"}
                 className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-bold text-[#062b20] shadow-[0_14px_32px_rgba(32,185,119,0.20)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "저장 중" : "저장"}
@@ -237,8 +244,19 @@ function confirmRecurrenceAdjustment(
   return true;
 }
 
-function atStartOfDay(date: string) {
-  return `${date}T00:00:00`;
+function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <label className="flex flex-col gap-2"><span className="text-sm font-bold text-[var(--muted)]">{label}</span><input type="date" value={value} onChange={(event) => onChange(event.target.value)} className="naru-native-control h-12 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-[var(--foreground)] outline-none transition focus:border-[var(--primary)]" /></label>;
+}
+
+function DateTimeField({ label, date, time, onDateChange, onTimeChange }: { label: string; date: string; time: string; onDateChange: (value: string) => void; onTimeChange: (value: string) => void }) {
+  return <div className="flex min-w-0 flex-col gap-2"><span className="text-sm font-bold text-[var(--muted)]">{label}</span><div className="grid grid-cols-[minmax(0,1fr)_6.25rem] gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"><input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} className="naru-native-control h-9 min-w-0 border-0 bg-transparent px-2 text-sm text-[var(--foreground)] outline-none" /><div className="border-l border-[var(--border)] pl-1"><input type="time" step={600} value={time} onChange={(event) => onTimeChange(event.target.value)} className="naru-native-control h-9 w-full min-w-0 border-0 bg-transparent px-2 text-sm text-[var(--foreground)] outline-none" /></div></div></div>;
+}
+
+function createEventPeriod(allDay: boolean, startDate: string, endDate: string, startTime: string, endTime: string) {
+  const startAt = allDay ? `${startDate}T00:00:00` : `${startDate}T${startTime}:00`;
+  const endAt = allDay ? atStartOfNextDay(endDate) : `${endDate}T${endTime}:00`;
+
+  return startAt < endAt ? { startAt, endAt } : null;
 }
 
 function atStartOfNextDay(date: string) {

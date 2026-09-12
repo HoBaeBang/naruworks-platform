@@ -73,14 +73,17 @@ export function CalendarMonthView({
                             )}
 
                             <div className="relative z-10 mt-2 flex flex-col gap-1">
-                                {dayEvents.slice(0, 3).map((event) => (
+                                {dayEvents.slice(0, 3).map((event) => {
+                                    const segment = getMonthEventSegment(event, day.date);
+
+                                    return (
                                     <Link
                                         key={event.occurrenceKey}
                                         href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
                                         className={[
-                                            "flex min-w-0 flex-col items-start rounded-md px-2 py-1 text-xs font-semibold transition",
+                                            "flex min-w-0 flex-col items-start px-2 py-1 text-xs font-semibold transition",
                                             event.allDay
-                                                ? "text-[#062b20]"
+                                                ? allDaySegmentClass(segment)
                                                 : "border bg-[var(--surface)] text-[var(--foreground)]",
                                         ].join(" ")}
                                         style={event.allDay
@@ -93,9 +96,10 @@ export function CalendarMonthView({
                                                 {formatTimeRange(event)}
                                             </span>
                                         )}
-                                        <span className="w-full truncate">{event.title}</span>
+                                        {(segment === "single" || segment === "start") && <span className="w-full truncate">{event.title}</span>}
                                     </Link>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </article>
                     );
@@ -103,6 +107,31 @@ export function CalendarMonthView({
             </div>
         </section>
     );
+}
+
+type MonthEventSegment = "single" | "start" | "middle" | "end";
+
+function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegment {
+    if (!event.allDay) {
+        return "single";
+    }
+
+    const startDate = startOfDay(new Date(event.startAt));
+    const inclusiveEndDate = startOfDay(new Date(event.endAt));
+    inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
+    const currentDate = startOfDay(date);
+
+    if (isSameDate(startDate, inclusiveEndDate)) return "single";
+    if (isSameDate(currentDate, startDate)) return "start";
+    if (isSameDate(currentDate, inclusiveEndDate)) return "end";
+    return "middle";
+}
+
+function allDaySegmentClass(segment: MonthEventSegment) {
+    if (segment === "start") return "-mx-2 rounded-l-md rounded-r-none text-[#062b20]";
+    if (segment === "middle") return "-mx-2 rounded-none text-transparent";
+    if (segment === "end") return "-mx-2 rounded-l-none rounded-r-md text-transparent";
+    return "rounded-md text-[#062b20]";
 }
 
 function createMonthDays(year: number, month: number): CalendarDay[] {

@@ -35,3 +35,24 @@ body {
     var(--background);
   color: var(--foreground);
 }
+
+.naru-native-control {
+  color: var(--foreground);
+  color-scheme: light;
+}
+
+.naru-native-control option {
+  background: var(--surface-raised);
+  color: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  .naru-native-control {
+    color-scheme: dark;
+  }
+}
+
+.naru-native-control::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.78;
+}

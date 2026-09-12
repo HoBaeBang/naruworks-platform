@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getGoogleCalendarAuthorizationUrl,
   getGoogleCalendarIntegrations,
@@ -10,15 +10,20 @@ import {
   type GoogleCalendarSelection,
 } from "@/lib/google-calendar-integration-api";
 
-type Props = { justConnected: boolean };
+type Props = { justConnected: boolean; reservedColors: string[] };
 
-export function CalendarGoogleIntegration({ justConnected }: Props) {
+export function CalendarGoogleIntegration({ justConnected, reservedColors }: Props) {
   const [integrations, setIntegrations] = useState<GoogleCalendarIntegration[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [calendarsByAccount, setCalendarsByAccount] = useState<Record<number, GoogleCalendarSelection[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [hasIntegrationLoadError, setHasIntegrationLoadError] = useState(false);
   const [errorAccountId, setErrorAccountId] = useState<number | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const accountColors = useMemo(
+    () => createAccountDisplayColors(integrations, reservedColors),
+    [integrations, reservedColors],
+  );
 
   useEffect(() => {
     let active = true;
@@ -34,6 +39,12 @@ export function CalendarGoogleIntegration({ justConnected }: Props) {
           }
         }));
         if (active) setCalendarsByAccount(Object.fromEntries(selections));
+      })
+      .catch(() => {
+        if (active) {
+          setIntegrations([]);
+          setHasIntegrationLoadError(true);
+        }
       })
       .finally(() => { if (active) setIsLoading(false); });
     return () => { active = false; };
@@ -89,10 +100,12 @@ export function CalendarGoogleIntegration({ justConnected }: Props) {
         <button type="button" onClick={() => window.location.assign(getGoogleCalendarAuthorizationUrl())} className="text-xs font-bold text-[var(--primary-strong)]">+ 연결</button>
       </div>
       {isLoading && <p className="border-t border-[var(--border)] px-3 py-3 text-xs text-[var(--muted)]">연결 상태 확인 중</p>}
-      {!isLoading && integrations.length === 0 && <p className="border-t border-[var(--border)] px-3 py-3 text-xs text-[var(--muted)]">연결된 Google 계정이 없습니다.</p>}
+      {!isLoading && hasIntegrationLoadError && <p className="border-t border-[var(--border)] px-3 py-3 text-xs text-[var(--muted)]">연결 정보를 확인하지 못했습니다.</p>}
+      {!isLoading && !hasIntegrationLoadError && integrations.length === 0 && <p className="border-t border-[var(--border)] px-3 py-3 text-xs text-[var(--muted)]">연결된 Google 계정이 없습니다.</p>}
       {!isLoading && integrations.map((integration) => <AccountGroup
         key={integration.id}
         integration={integration}
+        accountColor={accountColors.get(integration.id)}
         calendars={calendarsByAccount[integration.id]}
         isExpanded={expandedId === integration.id}
         hasError={errorAccountId === integration.id}
@@ -106,8 +119,9 @@ export function CalendarGoogleIntegration({ justConnected }: Props) {
   );
 }
 
-function AccountGroup({ integration, calendars, isExpanded, hasError, isSaving, onToggle, onToggleCalendar, onSave }: {
+function AccountGroup({ integration, accountColor, calendars, isExpanded, hasError, isSaving, onToggle, onToggleCalendar, onSave }: {
   integration: GoogleCalendarIntegration;
+  accountColor: string | undefined;
   calendars: GoogleCalendarSelection[] | undefined;
   isExpanded: boolean;
   hasError: boolean;
@@ -116,12 +130,10 @@ function AccountGroup({ integration, calendars, isExpanded, hasError, isSaving, 
   onToggleCalendar: (calendarId: string) => void;
   onSave: () => void;
 }) {
-  const color = accountColor(integration, calendars);
-
   return <div className="border-t border-[var(--border)]">
     <button type="button" onClick={onToggle} aria-expanded={isExpanded} className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
       <span aria-hidden="true" className="text-xs text-[var(--muted)]">{isExpanded ? "⌃" : "⌄"}</span>
-      {color && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
+      {accountColor && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: accountColor }} />}
       <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[var(--foreground)]">{integration.email ?? "Google 계정"}</span>
       {!integration.connected && <span className="text-[10px] text-[#d9363e]">연결 필요</span>}
     </button>
@@ -134,12 +146,30 @@ function AccountGroup({ integration, calendars, isExpanded, hasError, isSaving, 
   </div>;
 }
 
-function accountColor(
-  integration: GoogleCalendarIntegration,
-  calendars: GoogleCalendarSelection[] | undefined,
-) {
-  const enabledCalendars = calendars?.filter((calendar) => calendar.enabled) ?? [];
+const GOOGLE_ACCOUNT_DISPLAY_COLORS = [
+  "#06b6d4",
+  "#ec4899",
+  "#a855f7",
+  "#84cc16",
+  "#f59e0b",
+  "#ef4444",
+  "#6366f1",
+  "#0f766e",
+];
 
-  return enabledCalendars.find((calendar) => calendar.primary)?.color
-    ?? enabledCalendars.find((calendar) => calendar.name === integration.email)?.color;
+function createAccountDisplayColors(
+  integrations: GoogleCalendarIntegration[],
+  reservedColors: string[],
+) {
+  const usedColors = new Set(reservedColors.map((color) => color.toLowerCase()));
+  const accountColors = new Map<number, string>();
+
+  integrations.forEach((integration, index) => {
+    const color = GOOGLE_ACCOUNT_DISPLAY_COLORS.find((candidate) => !usedColors.has(candidate))
+      ?? GOOGLE_ACCOUNT_DISPLAY_COLORS[index % GOOGLE_ACCOUNT_DISPLAY_COLORS.length];
+    accountColors.set(integration.id, color);
+    usedColors.add(color);
+  });
+
+  return accountColors;
 }

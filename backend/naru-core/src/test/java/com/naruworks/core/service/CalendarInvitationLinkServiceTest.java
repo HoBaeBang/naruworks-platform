@@ -88,6 +88,48 @@ class CalendarInvitationLinkServiceTest {
         then(calendarInvitationLinkWriter).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("OWNER는 참여자의 보기 권한을 수정 권한으로 변경할 수 있다")
+    void updateMemberRole_ownerChangesViewerToEditor() {
+        CalendarMember viewer = new CalendarMember(2L, 10L, 2L, CalendarMemberRole.VIEWER, LocalDateTime.now());
+        given(calendarReader.findById(10L)).willReturn(Optional.of(sharedCalendar()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 1L))
+                .willReturn(Optional.of(ownerMembership()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 2L)).willReturn(Optional.of(viewer));
+
+        service().updateMemberRole(1L, 10L, 2L, CalendarMemberRole.EDITOR);
+
+        ArgumentCaptor<CalendarMember> updated = ArgumentCaptor.forClass(CalendarMember.class);
+        then(calendarMemberWriter).should().save(updated.capture());
+        assertThat(updated.getValue().id()).isEqualTo(2L);
+        assertThat(updated.getValue().role()).isEqualTo(CalendarMemberRole.EDITOR);
+    }
+
+    @Test
+    @DisplayName("참여자는 공유 캘린더에서 스스로 나갈 수 있다")
+    void leave_memberRemovesOwnMembership() {
+        given(calendarReader.findById(10L)).willReturn(Optional.of(sharedCalendar()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 2L))
+                .willReturn(Optional.of(new CalendarMember(2L, 10L, 2L, CalendarMemberRole.EDITOR, null)));
+
+        service().leave(2L, 10L);
+
+        then(calendarMemberWriter).should().deleteByCalendarIdAndMemberId(10L, 2L);
+    }
+
+    @Test
+    @DisplayName("소유자는 공유 캘린더에서 나갈 수 없다")
+    void leave_ownerIsRejected() {
+        given(calendarReader.findById(10L)).willReturn(Optional.of(sharedCalendar()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 1L))
+                .willReturn(Optional.of(ownerMembership()));
+
+        assertThatThrownBy(() -> service().leave(1L, 10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("캘린더 소유자는 나갈 수 없습니다. 캘린더를 삭제하거나 소유권을 이전해주세요.");
+        then(calendarMemberWriter).shouldHaveNoInteractions();
+    }
+
     private CalendarInvitationLinkService service() {
         return new CalendarInvitationLinkService(calendarReader, calendarMemberReader, calendarMemberWriter,
                 calendarInvitationLinkReader, calendarInvitationLinkWriter, memberReader);

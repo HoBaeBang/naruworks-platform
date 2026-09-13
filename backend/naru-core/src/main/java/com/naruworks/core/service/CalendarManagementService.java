@@ -62,14 +62,38 @@ public class CalendarManagementService {
         return new CalendarMembership(calendar, CalendarMemberRole.OWNER);
     }
 
+    /** OWNER가 캘린더 이름과 표시 색상을 변경한다. */
+    @Transactional
+    public CalendarMembership updateCalendar(Long memberId, Long calendarId, String name, String displayColor) {
+        Calendar calendar = findOwnedCalendar(memberId, calendarId);
+        Calendar updated = calendarWriter.save(calendar.withSettings(
+                name.trim(), displayColor, calendar.isDefaultCalendar()
+        ));
+        return new CalendarMembership(updated, CalendarMemberRole.OWNER);
+    }
+
+    /** OWNER가 개인 캘린더 하나를 새 일정 작성의 기본 대상으로 지정한다. */
+    @Transactional
+    public void setDefaultCalendar(Long memberId, Long calendarId) {
+        Calendar target = findOwnedCalendar(memberId, calendarId);
+        if (target.getType() != CalendarType.PERSONAL) {
+            throw new IllegalArgumentException("개인 캘린더만 기본 캘린더로 지정할 수 있습니다.");
+        }
+        if (target.isDefaultCalendar()) {
+            return;
+        }
+
+        calendarReader.findDefaultByOwnerMemberId(memberId)
+                .ifPresent(current -> calendarWriter.save(current.withSettings(
+                        current.getName(), current.getDisplayColor(), false
+                )));
+        calendarWriter.save(target.withSettings(target.getName(), target.getDisplayColor(), true));
+    }
+
     /** OWNER가 캘린더와 그 안의 모든 일정을 삭제한다. */
     @Transactional
     public void deleteCalendar(Long memberId, Long calendarId) {
-        Calendar calendar = calendarReader.findById(calendarId)
-                .orElseThrow(() -> new NotFoundException("캘린더를 찾을 수 없습니다."));
-        if (!calendar.getOwnerMemberId().equals(memberId)) {
-            throw new AuthorizationException("캘린더를 삭제할 권한이 없습니다.");
-        }
+        Calendar calendar = findOwnedCalendar(memberId, calendarId);
 
         List<Calendar> ownedPersonalCalendars = calendarReader.findAllByOwnerMemberId(memberId).stream()
                 .filter(ownedCalendar -> ownedCalendar.getType() == CalendarType.PERSONAL)
@@ -83,24 +107,22 @@ public class CalendarManagementService {
                     .filter(ownedCalendar -> !ownedCalendar.getId().equals(calendarId))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("기본 캘린더를 변경할 수 없습니다."));
-            calendarWriter.save(copyAsDefault(replacement));
+            calendarWriter.save(replacement.withSettings(
+                    replacement.getName(), replacement.getDisplayColor(), true
+            ));
         }
 
         calendarEventWriter.deleteAllByCalendarId(calendarId);
         calendarWriter.delete(calendarId);
     }
 
-    private Calendar copyAsDefault(Calendar calendar) {
-        return Calendar.builder()
-                .id(calendar.getId())
-                .ownerMemberId(calendar.getOwnerMemberId())
-                .name(calendar.getName())
-                .type(calendar.getType())
-                .displayColor(calendar.getDisplayColor())
-                .defaultCalendar(true)
-                .createdAt(calendar.getCreatedAt())
-                .updatedAt(calendar.getUpdatedAt())
-                .build();
+    private Calendar findOwnedCalendar(Long memberId, Long calendarId) {
+        Calendar calendar = calendarReader.findById(calendarId)
+                .orElseThrow(() -> new NotFoundException("캘린더를 찾을 수 없습니다."));
+        if (!calendar.getOwnerMemberId().equals(memberId)) {
+            throw new AuthorizationException("캘린더를 관리할 권한이 없습니다.");
+        }
+        return calendar;
     }
 
 }

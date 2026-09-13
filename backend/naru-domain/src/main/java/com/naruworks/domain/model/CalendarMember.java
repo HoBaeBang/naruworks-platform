@@ -22,4 +22,9 @@ public record CalendarMember(
     public boolean canEdit() {
         return role == CalendarMemberRole.OWNER || role == CalendarMemberRole.EDITOR;
     }
+
+    /** 참여 관계를 유지한 채 공유 캘린더 권한만 변경한다. */
+    public CalendarMember withRole(CalendarMemberRole role) {
+        return new CalendarMember(id, calendarId, memberId, role, createdAt);
+    }
 }

@@ -1,6 +1,7 @@
 package com.naruworks.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -67,6 +68,57 @@ class CalendarManagementServiceTest {
     }
 
     @Test
+    @DisplayName("OWNER는 캘린더 이름과 표시 색상을 변경할 수 있다")
+    void updateCalendar_updatesOwnedCalendarSettings() {
+        Calendar calendar = Calendar.builder()
+                .id(1L).ownerMemberId(1L).name("내 캘린더").type(CalendarType.PERSONAL)
+                .displayColor("#20b977").defaultCalendar(true).build();
+        given(calendarReader.findById(1L)).willReturn(java.util.Optional.of(calendar));
+        given(calendarWriter.save(any(Calendar.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        var result = service().updateCalendar(1L, 1L, "  운동  ", "#3b82f6");
+
+        assertThat(result.calendar().getName()).isEqualTo("운동");
+        assertThat(result.calendar().getDisplayColor()).isEqualTo("#3b82f6");
+        assertThat(result.calendar().isDefaultCalendar()).isTrue();
+    }
+
+    @Test
+    @DisplayName("개인 기본 캘린더를 바꾸면 기존 기본값은 해제한다")
+    void setDefaultCalendar_switchesDefaultPersonalCalendar() {
+        Calendar current = Calendar.builder()
+                .id(1L).ownerMemberId(1L).name("내 캘린더").type(CalendarType.PERSONAL)
+                .displayColor("#20b977").defaultCalendar(true).build();
+        Calendar target = Calendar.builder()
+                .id(2L).ownerMemberId(1L).name("운동").type(CalendarType.PERSONAL)
+                .displayColor("#3b82f6").defaultCalendar(false).build();
+        given(calendarReader.findById(2L)).willReturn(java.util.Optional.of(target));
+        given(calendarReader.findDefaultByOwnerMemberId(1L)).willReturn(java.util.Optional.of(current));
+
+        service().setDefaultCalendar(1L, 2L);
+
+        ArgumentCaptor<Calendar> calendars = ArgumentCaptor.forClass(Calendar.class);
+        then(calendarWriter).should(org.mockito.Mockito.times(2)).save(calendars.capture());
+        assertThat(calendars.getAllValues())
+                .extracting(Calendar::getId, Calendar::isDefaultCalendar)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(1L, false), org.assertj.core.groups.Tuple.tuple(2L, true));
+    }
+
+    @Test
+    @DisplayName("공유 캘린더는 기본 캘린더로 지정할 수 없다")
+    void setDefaultCalendar_rejectsSharedCalendar() {
+        Calendar shared = Calendar.builder()
+                .id(10L).ownerMemberId(1L).name("가족").type(CalendarType.SHARED)
+                .displayColor("#f4b942").build();
+        given(calendarReader.findById(10L)).willReturn(java.util.Optional.of(shared));
+
+        assertThatThrownBy(() -> service().setDefaultCalendar(1L, 10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("개인 캘린더만 기본 캘린더로 지정할 수 있습니다.");
+        then(calendarWriter).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("기본 개인 캘린더를 삭제하면 다른 개인 캘린더가 기본 캘린더가 된다")
     void deleteCalendar_replacesDefaultPersonalCalendar() {
         Calendar defaultCalendar = Calendar.builder()
@@ -98,7 +150,7 @@ class CalendarManagementServiceTest {
         ));
         given(calendarReader.findAllByOwnerMemberId(1L)).willReturn(java.util.List.of(personalCalendar));
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service().deleteCalendar(1L, 1L))
+        assertThatThrownBy(() -> service().deleteCalendar(1L, 1L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("개인 캘린더는 하나 이상 유지해야 합니다.");
         then(calendarWriter).shouldHaveNoInteractions();

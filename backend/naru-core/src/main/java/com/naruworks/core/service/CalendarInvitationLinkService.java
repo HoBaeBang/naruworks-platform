@@ -104,6 +104,37 @@ public class CalendarInvitationLinkService {
         calendarMemberWriter.deleteByCalendarIdAndMemberId(calendarId, memberId);
     }
 
+    /** OWNER가 참여자의 EDITOR/VIEWER 권한을 바꾼다. */
+    @Transactional
+    public void updateMemberRole(Long requesterMemberId, Long calendarId, Long memberId, CalendarMemberRole role) {
+        requireOwner(requesterMemberId, calendarId);
+        if (role == CalendarMemberRole.OWNER) {
+            throw new IllegalArgumentException("소유자 권한은 변경할 수 없습니다.");
+        }
+        CalendarMember membership = calendarMemberReader.findByCalendarIdAndMemberId(calendarId, memberId)
+                .orElseThrow(() -> new NotFoundException("참여 중인 회원을 찾을 수 없습니다."));
+        if (membership.role() == CalendarMemberRole.OWNER) {
+            throw new IllegalArgumentException("캘린더 소유자의 권한은 변경할 수 없습니다.");
+        }
+        calendarMemberWriter.save(membership.withRole(role));
+    }
+
+    /** 참여자는 공유 캘린더에서 자기 자신을 제거할 수 있다. */
+    @Transactional
+    public void leave(Long memberId, Long calendarId) {
+        Calendar calendar = calendarReader.findById(calendarId)
+                .orElseThrow(() -> new NotFoundException("캘린더를 찾을 수 없습니다."));
+        if (calendar.getType() != CalendarType.SHARED) {
+            throw new IllegalArgumentException("공유 캘린더에서만 나갈 수 있습니다.");
+        }
+        CalendarMember membership = calendarMemberReader.findByCalendarIdAndMemberId(calendarId, memberId)
+                .orElseThrow(() -> new NotFoundException("참여 중인 캘린더가 아닙니다."));
+        if (membership.role() == CalendarMemberRole.OWNER) {
+            throw new IllegalArgumentException("캘린더 소유자는 나갈 수 없습니다. 캘린더를 삭제하거나 소유권을 이전해주세요.");
+        }
+        calendarMemberWriter.deleteByCalendarIdAndMemberId(calendarId, memberId);
+    }
+
     @Transactional(readOnly = true)
     public List<CalendarMember> findMembers(Long requesterMemberId, Long calendarId) {
         requireOwner(requesterMemberId, calendarId);

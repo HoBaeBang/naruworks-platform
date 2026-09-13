@@ -7,7 +7,12 @@ import {
   createCalendarInvitationLink,
   getCalendarMembers,
   getCalendars,
+  leaveCalendar,
   removeCalendarMember,
+  revokeCalendarInvitationLinks,
+  setDefaultCalendar,
+  updateCalendar,
+  updateCalendarMemberRole,
   type CalendarMember,
   type CalendarMembership,
 } from "@/lib/calendars-api";
@@ -38,6 +43,9 @@ export function CalendarSidebar({
   const [shared, setShared] = useState(false);
   const [displayColor, setDisplayColor] = useState(CALENDAR_DISPLAY_COLORS[0]);
   const [manageCalendarId, setManageCalendarId] = useState<number | null>(null);
+  const [settingsCalendarId, setSettingsCalendarId] = useState<number | null>(null);
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsDisplayColor, setSettingsDisplayColor] = useState(CALENDAR_DISPLAY_COLORS[0]);
   const [role, setRole] = useState<"EDITOR" | "VIEWER">("EDITOR");
   const [inviteUrl, setInviteUrl] = useState("");
   const [members, setMembers] = useState<CalendarMember[]>([]);
@@ -124,6 +132,87 @@ export function CalendarSidebar({
     }
   }
 
+  async function changeMemberRole(memberId: number, nextRole: "EDITOR" | "VIEWER") {
+    if (manageCalendarId === null) return;
+    try {
+      await updateCalendarMemberRole(manageCalendarId, memberId, nextRole);
+      setMembers((current) => current.map((member) => (
+        member.memberId === memberId ? { ...member, role: nextRole } : member
+      )));
+    } catch {
+      setMessage("구성원 권한을 변경하지 못했습니다.");
+    }
+  }
+
+  async function revokeInvitationLink() {
+    if (manageCalendarId === null) return;
+    try {
+      await revokeCalendarInvitationLinks(manageCalendarId);
+      setInviteUrl("");
+      setMessage("현재 초대 링크를 폐기했습니다.");
+    } catch {
+      setMessage("초대 링크를 폐기하지 못했습니다.");
+    }
+  }
+
+  function openCalendarSettings(calendar: CalendarMembership) {
+    setSettingsCalendarId(calendar.id);
+    setSettingsName(calendar.name);
+    setSettingsDisplayColor(calendar.displayColor);
+    setManageCalendarId(null);
+  }
+
+  async function saveCalendarSettings() {
+    if (settingsCalendarId === null) return;
+    try {
+      const updated = await updateCalendar(settingsCalendarId, settingsName, settingsDisplayColor);
+      const nextCalendars = calendars.map((calendar) => (
+        calendar.id === updated.id ? updated : calendar
+      ));
+      publishCalendars(nextCalendars);
+      if (activeCalendar?.id === updated.id) onActiveCalendarChange(updated);
+      setSettingsCalendarId(null);
+      setMessage("캘린더 설정을 저장했습니다.");
+    } catch {
+      setMessage("캘린더 설정을 저장하지 못했습니다.");
+    }
+  }
+
+  async function makeDefaultCalendar(calendarId: number) {
+    try {
+      await setDefaultCalendar(calendarId);
+      const nextCalendars = calendars.map((calendar) => ({
+        ...calendar,
+        defaultCalendar: calendar.id === calendarId,
+      }));
+      publishCalendars(nextCalendars);
+      if (activeCalendar) {
+        onActiveCalendarChange(nextCalendars.find((calendar) => calendar.id === activeCalendar.id) ?? null);
+      }
+      setMessage("새 일정의 기본 캘린더를 변경했습니다.");
+    } catch {
+      setMessage("기본 캘린더를 변경하지 못했습니다.");
+    }
+  }
+
+  async function leaveSharedCalendar(calendar: CalendarMembership) {
+    if (!window.confirm(`공유 캘린더 '${calendar.name}'에서 나갈까요?`)) return;
+    try {
+      await leaveCalendar(calendar.id);
+      const nextCalendars = calendars.filter((current) => current.id !== calendar.id);
+      publishCalendars(nextCalendars);
+      const nextVisibleCalendarIds = new Set(visibleCalendarIds);
+      nextVisibleCalendarIds.delete(calendar.id);
+      onVisibleCalendarIdsChange(nextVisibleCalendarIds);
+      if (activeCalendar?.id === calendar.id) {
+        onActiveCalendarChange(nextCalendars.find((current) => current.defaultCalendar) ?? nextCalendars[0] ?? null);
+      }
+      setMessage("공유 캘린더에서 나왔습니다.");
+    } catch {
+      setMessage("공유 캘린더에서 나가지 못했습니다.");
+    }
+  }
+
   async function handleDeleteCalendar(calendar: CalendarMembership) {
     const isShared = calendar.type === "SHARED";
     const confirmed = window.confirm(
@@ -160,41 +249,124 @@ export function CalendarSidebar({
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-bold text-[var(--foreground)]">내 캘린더</p>
-          <button type="button" title="새 캘린더 만들기" onClick={() => setIsCreating((current) => !current)} className="grid h-7 w-7 place-items-center rounded-md text-base font-bold text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]">+</button>
+          <button
+            type="button"
+            title="새 캘린더 만들기"
+            onClick={() => setIsCreating((current) => !current)}
+            className="grid h-7 w-7 place-items-center rounded-md text-base font-bold text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
+          >
+            +
+          </button>
         </div>
 
         {isLoading && <p className="mt-3 text-xs text-[var(--muted)]">불러오는 중</p>}
-        {!isLoading && <div className="mt-3 space-y-1">
-          {calendars.map((calendar) => {
-            const isActive = activeCalendar?.id === calendar.id;
-            return <div key={calendar.id} className="rounded-md">
-              <div className={["flex items-center gap-2 px-2 py-1.5 text-xs", isActive ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--primary-soft)]"].join(" ")}>
-                <input type="checkbox" checked={visibleCalendarIds.has(calendar.id)} onChange={() => toggleVisibleCalendar(calendar.id)} aria-label={`${calendar.name} 표시 여부`} className="h-3.5 w-3.5 accent-[var(--primary)]" />
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: calendar.displayColor }} />
-                <button type="button" onClick={() => onActiveCalendarChange(calendar)} className="min-w-0 flex-1 truncate text-left font-medium" title="새 일정 기본 캘린더로 선택">{calendar.name}</button>
-                {isActive && <span className="text-[10px] font-bold text-[var(--primary-strong)]">작성</span>}
-              </div>
-              <div className="ml-7 flex items-center gap-2 pb-1 text-[10px] text-[var(--muted)]">
-                {calendar.defaultCalendar && <span>기본</span>}
-                {calendar.type === "SHARED" && <span>{roleLabel(calendar.role)}</span>}
-                {calendar.type === "SHARED" && calendar.role === "OWNER" && <button type="button" onClick={() => void openMemberManagement(calendar.id)} className="font-bold text-[var(--primary-strong)]">구성원 관리</button>}
-                {calendar.role === "OWNER" && <button type="button" onClick={() => void handleDeleteCalendar(calendar)} className="font-bold text-[#d9363e]">삭제</button>}
-              </div>
-            </div>;
-          })}
-        </div>}
-
-        {isCreating && <form onSubmit={handleCreate} className="mt-3 space-y-3 border-t border-[var(--border)] pt-3">
-          <p className="text-xs font-bold text-[var(--foreground)]">새 캘린더</p>
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="캘린더 이름" required className="h-9 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs outline-none focus:border-[var(--primary)]" />
-          <div className="flex items-center justify-between gap-2">
-            <label className="flex items-center gap-2 text-xs text-[var(--muted)]"><input type="color" value={displayColor} onChange={(event) => setDisplayColor(event.target.value)} className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0" />표시 색상</label>
-            <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]"><input type="checkbox" checked={shared} onChange={(event) => setShared(event.target.checked)} className="accent-[var(--primary)]" />공유 캘린더</label>
+        {!isLoading && (
+          <div className="mt-3 space-y-1">
+            {calendars.map((calendar) => {
+              const isActive = activeCalendar?.id === calendar.id;
+              return (
+                <div key={calendar.id} className="rounded-md">
+                  <div className={[
+                    "flex items-center gap-2 px-2 py-1.5 text-xs",
+                    isActive ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--primary-soft)]",
+                  ].join(" ")}>
+                    <input
+                      type="checkbox"
+                      checked={visibleCalendarIds.has(calendar.id)}
+                      onChange={() => toggleVisibleCalendar(calendar.id)}
+                      aria-label={`${calendar.name} 표시 여부`}
+                      className="h-3.5 w-3.5 accent-[var(--primary)]"
+                    />
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: calendar.displayColor }} />
+                    <button type="button" onClick={() => onActiveCalendarChange(calendar)} className="min-w-0 flex-1 truncate text-left font-medium" title="새 일정 기본 캘린더로 선택">
+                      {calendar.name}
+                    </button>
+                    {isActive && <span className="text-[10px] font-bold text-[var(--primary-strong)]">작성</span>}
+                  </div>
+                  <div className="ml-7 flex flex-wrap items-center gap-2 pb-1 text-[10px] text-[var(--muted)]">
+                    {calendar.defaultCalendar && <span>기본</span>}
+                    {calendar.type === "SHARED" && <span>{roleLabel(calendar.role)}</span>}
+                    {calendar.type === "SHARED" && calendar.role === "OWNER" && (
+                      <button type="button" onClick={() => void openMemberManagement(calendar.id)} className="font-bold text-[var(--primary-strong)]">구성원 관리</button>
+                    )}
+                    {calendar.role === "OWNER" && <button type="button" onClick={() => openCalendarSettings(calendar)} className="font-bold text-[var(--primary-strong)]">설정</button>}
+                    {calendar.type === "PERSONAL" && calendar.role === "OWNER" && !calendar.defaultCalendar && (
+                      <button type="button" onClick={() => void makeDefaultCalendar(calendar.id)} className="font-bold text-[var(--primary-strong)]">기본으로</button>
+                    )}
+                    {calendar.type === "SHARED" && calendar.role !== "OWNER" && (
+                      <button type="button" onClick={() => void leaveSharedCalendar(calendar)} className="font-bold text-[#d9363e]">나가기</button>
+                    )}
+                    {calendar.role === "OWNER" && <button type="button" onClick={() => void handleDeleteCalendar(calendar)} className="font-bold text-[#d9363e]">삭제</button>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <button className="h-9 w-full rounded-md bg-[var(--primary)] text-xs font-bold text-[#062b20]">생성</button>
-        </form>}
+        )}
 
-        {manageCalendarId !== null && <section className="mt-3 space-y-2 border-t border-[var(--border)] pt-3"><div className="flex items-center justify-between"><p className="text-xs font-bold">구성원 관리</p><button type="button" onClick={() => setManageCalendarId(null)} className="text-xs text-[var(--muted)]">닫기</button></div><div className="flex gap-2"><NaruSelect value={role} onChange={(value) => setRole(value as "EDITOR" | "VIEWER")} ariaLabel="초대 권한" options={[{ value: "EDITOR", label: "수정 가능" }, { value: "VIEWER", label: "보기만" }]} compact className="min-w-0 flex-1" /><button type="button" onClick={() => void createInviteLink()} className="text-xs font-bold text-[var(--primary-strong)]">링크 만들기</button></div>{inviteUrl && <div className="flex gap-1"><input readOnly value={inviteUrl} className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1.5 text-[10px]" /><button type="button" onClick={() => void navigator.clipboard.writeText(inviteUrl)} className="text-xs font-bold text-[var(--primary-strong)]">복사</button></div>}<div className="space-y-1 pt-1">{members.map((member) => <div key={member.memberId} className="flex items-center gap-2 text-[11px]"><span className="min-w-0 flex-1 truncate">{member.displayName} · {roleLabel(member.role)}</span>{member.role !== "OWNER" && <button type="button" onClick={() => void removeMember(member.memberId)} className="text-[#d9363e]">제거</button>}</div>)}</div></section>}
+        {isCreating && (
+          <form onSubmit={handleCreate} className="mt-3 space-y-3 border-t border-[var(--border)] pt-3">
+            <p className="text-xs font-bold text-[var(--foreground)]">새 캘린더</p>
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="캘린더 이름" required className="h-9 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs outline-none focus:border-[var(--primary)]" />
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+                <input type="color" value={displayColor} onChange={(event) => setDisplayColor(event.target.value)} className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                표시 색상
+              </label>
+              <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
+                <input type="checkbox" checked={shared} onChange={(event) => setShared(event.target.checked)} className="accent-[var(--primary)]" />
+                공유 캘린더
+              </label>
+            </div>
+            <button className="h-9 w-full rounded-md bg-[var(--primary)] text-xs font-bold text-[#062b20]">생성</button>
+          </form>
+        )}
+
+        {settingsCalendarId !== null && (
+          <section className="mt-3 space-y-3 border-t border-[var(--border)] pt-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold">캘린더 설정</p>
+              <button type="button" onClick={() => setSettingsCalendarId(null)} className="text-xs text-[var(--muted)]">닫기</button>
+            </div>
+            <input value={settingsName} onChange={(event) => setSettingsName(event.target.value)} required className="h-9 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs outline-none focus:border-[var(--primary)]" aria-label="캘린더 이름" />
+            <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+              <input type="color" value={settingsDisplayColor} onChange={(event) => setSettingsDisplayColor(event.target.value)} className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+              표시 색상
+            </label>
+            <button type="button" onClick={() => void saveCalendarSettings()} className="h-9 w-full rounded-md bg-[var(--primary)] text-xs font-bold text-[#062b20]">저장</button>
+          </section>
+        )}
+
+        {manageCalendarId !== null && (
+          <section className="mt-3 space-y-2 border-t border-[var(--border)] pt-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold">구성원 관리</p>
+              <button type="button" onClick={() => setManageCalendarId(null)} className="text-xs text-[var(--muted)]">닫기</button>
+            </div>
+            <div className="flex gap-2">
+              <NaruSelect value={role} onChange={(value) => setRole(value as "EDITOR" | "VIEWER")} ariaLabel="초대 권한" options={[{ value: "EDITOR", label: "수정 가능" }, { value: "VIEWER", label: "보기만" }]} compact className="min-w-0 flex-1" />
+              <button type="button" onClick={() => void createInviteLink()} className="text-xs font-bold text-[var(--primary-strong)]">링크 만들기</button>
+            </div>
+            <button type="button" onClick={() => void revokeInvitationLink()} className="text-[11px] font-bold text-[var(--muted)] hover:text-[#d9363e]">현재 초대 링크 폐기</button>
+            {inviteUrl && (
+              <div className="flex gap-1">
+                <input readOnly value={inviteUrl} className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1.5 text-[10px]" />
+                <button type="button" onClick={() => void navigator.clipboard.writeText(inviteUrl)} className="text-xs font-bold text-[var(--primary-strong)]">복사</button>
+              </div>
+            )}
+            <div className="space-y-2 pt-1">
+              {members.map((member) => (
+                <div key={member.memberId} className="flex items-center gap-2 text-[11px]">
+                  <span className="min-w-0 flex-1 truncate">{member.displayName}</span>
+                  {member.role === "OWNER" ? <span className="text-[var(--muted)]">소유자</span> : <>
+                    <NaruSelect value={member.role} onChange={(value) => void changeMemberRole(member.memberId, value as "EDITOR" | "VIEWER")} ariaLabel={`${member.displayName} 권한`} options={[{ value: "EDITOR", label: "수정" }, { value: "VIEWER", label: "보기" }]} compact className="w-20 shrink-0" />
+                    <button type="button" onClick={() => void removeMember(member.memberId)} className="shrink-0 text-[#d9363e]">제거</button>
+                  </>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         {message && <p className="mt-3 text-[11px] leading-4 text-[var(--muted)]">{message}</p>}
       </section>
       <CalendarGoogleIntegration

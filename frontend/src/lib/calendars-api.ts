@@ -40,6 +40,25 @@ export function deleteCalendar(calendarId: number): Promise<void> {
   return request<void>(`/api/calendars/${calendarId}`, { method: "DELETE" });
 }
 
+export function updateCalendar(
+  calendarId: number,
+  name: string,
+  displayColor: string,
+): Promise<CalendarMembership> {
+  return request<CalendarMembership>(`/api/calendars/${calendarId}`, {
+    method: "PUT",
+    body: JSON.stringify({ name, displayColor }),
+  });
+}
+
+export function setDefaultCalendar(calendarId: number): Promise<void> {
+  return request<void>(`/api/calendars/${calendarId}/default`, { method: "PUT" });
+}
+
+export function leaveCalendar(calendarId: number): Promise<void> {
+  return request<void>(`/api/calendars/${calendarId}/membership`, { method: "DELETE" });
+}
+
 export type CalendarInvitationLink = { inviteUrl: string; expiresAt: string };
 export type CalendarInvitationPreview = { calendarId: number; calendarName: string; ownerDisplayName: string; role: "EDITOR" | "VIEWER"; expiresAt: string };
 export type CalendarMember = { memberId: number; displayName: string; email: string; role: CalendarMembership["role"] };
@@ -65,4 +84,19 @@ export function getCalendarMembers(calendarId: number): Promise<CalendarMember[]
 
 export function removeCalendarMember(calendarId: number, memberId: number): Promise<void> {
   return request<void>(`/api/calendars/${calendarId}/members/${memberId}`, { method: "DELETE" });
+}
+
+export function updateCalendarMemberRole(
+  calendarId: number,
+  memberId: number,
+  role: "EDITOR" | "VIEWER",
+): Promise<void> {
+  return request<void>(`/api/calendars/${calendarId}/members/${memberId}/role`, {
+    method: "PUT",
+    body: JSON.stringify({ role }),
+  });
+}
+
+export function revokeCalendarInvitationLinks(calendarId: number): Promise<void> {
+  return request<void>(`/api/calendars/${calendarId}/invitation-links`, { method: "DELETE" });
 }

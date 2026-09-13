@@ -3,6 +3,8 @@ package com.naruworks.api.controller;
 import com.naruworks.api.dto.request.CalendarCreateRequest;
 import com.naruworks.api.dto.request.CalendarInvitationLinkAcceptRequest;
 import com.naruworks.api.dto.request.CalendarInvitationLinkCreateRequest;
+import com.naruworks.api.dto.request.CalendarMemberRoleUpdateRequest;
+import com.naruworks.api.dto.request.CalendarUpdateRequest;
 import com.naruworks.api.dto.response.CalendarMembershipResponse;
 import com.naruworks.api.dto.response.CalendarInvitationLinkPreviewResponse;
 import com.naruworks.api.dto.response.CalendarInvitationLinkResponse;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,6 +60,23 @@ public class CalendarController {
                         member.getId(), request.name(), request.shared(), request.displayColor()
                 )
         );
+    }
+
+    @PutMapping("/{calendarId}")
+    public CalendarMembershipResponse updateCalendar(
+            @CurrentMember Member member,
+            @PathVariable Long calendarId,
+            @Valid @RequestBody CalendarUpdateRequest request
+    ) {
+        return CalendarMembershipResponse.from(calendarManagementService.updateCalendar(
+                member.getId(), calendarId, request.name(), request.displayColor()
+        ));
+    }
+
+    @PutMapping("/{calendarId}/default")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setDefaultCalendar(@CurrentMember Member member, @PathVariable Long calendarId) {
+        calendarManagementService.setDefaultCalendar(member.getId(), calendarId);
     }
 
     @DeleteMapping("/{calendarId}")
@@ -105,5 +125,22 @@ public class CalendarController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeCalendarMember(@CurrentMember Member member, @PathVariable Long calendarId, @PathVariable Long memberId) {
         calendarInvitationLinkService.removeMember(member.getId(), calendarId, memberId);
+    }
+
+    @PutMapping("/{calendarId}/members/{memberId}/role")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateCalendarMemberRole(
+            @CurrentMember Member member,
+            @PathVariable Long calendarId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody CalendarMemberRoleUpdateRequest request
+    ) {
+        calendarInvitationLinkService.updateMemberRole(member.getId(), calendarId, memberId, request.role());
+    }
+
+    @DeleteMapping("/{calendarId}/membership")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveCalendar(@CurrentMember Member member, @PathVariable Long calendarId) {
+        calendarInvitationLinkService.leave(member.getId(), calendarId);
     }
 }

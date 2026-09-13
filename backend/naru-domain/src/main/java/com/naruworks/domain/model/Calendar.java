@@ -38,4 +38,18 @@ public class Calendar {
                 .defaultCalendar(false)
                 .build();
     }
+
+    /** 기존 캘린더의 표시 정보 또는 기본 개인 캘린더 여부를 바꾼 복사본을 만든다. */
+    public Calendar withSettings(String name, String displayColor, boolean defaultCalendar) {
+        return Calendar.builder()
+                .id(id)
+                .ownerMemberId(ownerMemberId)
+                .name(name)
+                .type(type)
+                .displayColor(displayColor)
+                .defaultCalendar(defaultCalendar)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+    }
 }

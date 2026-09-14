@@ -61,7 +61,7 @@ export function NaruSelect({
         <span className="min-w-0 flex-1 truncate">{selectedOption?.label ?? "선택하세요"}</span>
         <span aria-hidden="true" className={`text-sm text-[var(--primary-strong)] transition ${isOpen ? "rotate-180" : ""}`}>⌄</span>
       </button>
-      {isOpen && <div role="listbox" aria-labelledby={selectId} className="absolute z-40 mt-2 w-full overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 shadow-[0_18px_45px_rgba(0,0,0,0.24)]">
+      {isOpen && <div role="listbox" aria-labelledby={selectId} className="absolute z-40 mt-2 max-h-72 w-full overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 shadow-[0_18px_45px_rgba(0,0,0,0.24)]">
         {options.map((option) => <button
           key={option.value}
           type="button"

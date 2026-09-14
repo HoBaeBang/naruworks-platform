@@ -7,6 +7,7 @@ import { createCalendarEvent } from "@/lib/calendar-api";
 import { CalendarRecurrenceFields } from "@/components/calendar/calendar-recurrence-fields";
 import { CalendarEventAllDayToggle } from "@/components/calendar/calendar-event-all-day-toggle";
 import { CalendarEventColorPicker } from "@/components/calendar/calendar-event-color-picker";
+import { CalendarDateField, CalendarDateTimeField } from "@/components/calendar/calendar-event-date-time-fields";
 import type { CalendarMembership } from "@/lib/calendars-api";
 import { NaruSelect } from "@/components/ui/naru-select";
 import type { CalendarEvent } from "@/types/calendar";
@@ -89,7 +90,7 @@ export function CalendarEventCreateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#06140f]/45 px-4 py-8 backdrop-blur-sm">
-      <section className="w-full max-w-xl rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+      <section className="w-full max-w-3xl rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
         <header className="flex items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
           <div>
             <p className="text-sm font-bold text-[var(--primary-strong)]">
@@ -131,32 +132,32 @@ export function CalendarEventCreateModal({
             ]} />
           </label>
 
-          <CalendarRecurrenceFields
-            recurrenceRule={recurrenceRule}
-            recurrenceEndDate={recurrenceEndDate}
-            onRecurrenceRuleChange={(nextRecurrenceRule) => {
-              setRecurrenceRule(nextRecurrenceRule);
-              if (nextRecurrenceRule === "NONE") {
-                setRecurrenceEndDate("");
-              }
-            }}
-            onRecurrenceEndDateChange={setRecurrenceEndDate}
-          />
+          <div className="grid items-end gap-3 sm:grid-cols-[8rem_minmax(0,1fr)]">
+            <CalendarEventAllDayToggle
+              checked={allDay}
+              onChange={setAllDay}
+              className="h-12"
+            />
+            <CalendarRecurrenceFields
+              recurrenceRule={recurrenceRule}
+              recurrenceEndDate={recurrenceEndDate}
+              onRecurrenceRuleChange={(nextRecurrenceRule) => {
+                setRecurrenceRule(nextRecurrenceRule);
+                if (nextRecurrenceRule === "NONE") setRecurrenceEndDate("");
+              }}
+              onRecurrenceEndDateChange={setRecurrenceEndDate}
+            />
+          </div>
 
-          <div className="flex flex-wrap items-end gap-3">
-          <CalendarEventAllDayToggle
-            checked={allDay}
-            onChange={setAllDay}
-            className="h-12 shrink-0"
-          />
-          {allDay && <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-            <DateField label="시작일" value={startDate} onChange={setStartDate} />
-            <DateField label="종료일" value={endDate} onChange={setEndDate} />
-          </div>}
-          {!allDay && <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-            <DateTimeField label="시작 일시" date={startDate} time={startTime} onDateChange={setStartDate} onTimeChange={setStartTime} />
-            <DateTimeField label="종료 일시" date={endDate} time={endTime} onDateChange={setEndDate} onTimeChange={setEndTime} />
-          </div>}
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          {allDay && <>
+            <CalendarDateField label="시작일" value={startDate} onChange={setStartDate} />
+            <CalendarDateField label="종료일" value={endDate} onChange={setEndDate} />
+          </>}
+          {!allDay && <>
+            <CalendarDateTimeField label="시작 일시" date={startDate} time={startTime} onDateChange={setStartDate} onTimeChange={setStartTime} />
+            <CalendarDateTimeField label="종료 일시" date={endDate} time={endTime} onDateChange={setEndDate} onTimeChange={setEndTime} />
+          </>}
           </div>
 
           <label className="flex flex-col gap-2">
@@ -244,13 +245,6 @@ function confirmRecurrenceAdjustment(
   return true;
 }
 
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="flex flex-col gap-2"><span className="text-sm font-bold text-[var(--muted)]">{label}</span><input type="date" value={value} onChange={(event) => onChange(event.target.value)} className="naru-native-control h-12 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 text-[var(--foreground)] outline-none transition focus:border-[var(--primary)]" /></label>;
-}
-
-function DateTimeField({ label, date, time, onDateChange, onTimeChange }: { label: string; date: string; time: string; onDateChange: (value: string) => void; onTimeChange: (value: string) => void }) {
-  return <div className="flex min-w-0 flex-col gap-2"><span className="text-sm font-bold text-[var(--muted)]">{label}</span><div className="grid grid-cols-[minmax(0,1fr)_6.25rem] gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"><input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} className="naru-native-control h-9 min-w-0 border-0 bg-transparent px-2 text-sm text-[var(--foreground)] outline-none" /><div className="border-l border-[var(--border)] pl-1"><input type="time" step={600} value={time} onChange={(event) => onTimeChange(event.target.value)} className="naru-native-control h-9 w-full min-w-0 border-0 bg-transparent px-2 text-sm text-[var(--foreground)] outline-none" /></div></div></div>;
-}
 
 function createEventPeriod(allDay: boolean, startDate: string, endDate: string, startTime: string, endTime: string) {
   const startAt = allDay ? `${startDate}T00:00:00` : `${startDate}T${startTime}:00`;

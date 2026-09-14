@@ -23,7 +23,7 @@ export function CalendarRecurrenceFields({
   onRecurrenceEndDateChange: (recurrenceEndDate: string) => void;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className={`grid gap-3 ${recurrenceRule === "NONE" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
       <label className="flex flex-col gap-2">
         <span className="text-sm font-bold text-[var(--muted)]">반복</span>
         <NaruSelect

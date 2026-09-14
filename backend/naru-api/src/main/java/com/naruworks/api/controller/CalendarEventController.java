@@ -41,7 +41,7 @@ public class CalendarEventController {
                 ))
                 .toList();
         List<CalendarEventResponse> googleEvents = externalCalendarEventService
-                .synchronizeAndFindEvents(member.getId(), from, to)
+                .findEvents(member.getId(), from, to)
                 .stream()
                 .map(CalendarEventResponse::from)
                 .toList();

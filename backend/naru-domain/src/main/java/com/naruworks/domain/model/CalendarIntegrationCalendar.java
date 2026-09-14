@@ -52,4 +52,13 @@ public class CalendarIntegrationCalendar {
                 .updatedAt(now)
                 .build();
     }
+
+    /** 외부 일정 반영을 마친 시각과 다음 Google 증분 조회 기준점을 저장한다. */
+    public CalendarIntegrationCalendar withSynchronizationState(LocalDateTime lastSyncedAt, String syncToken) {
+        return toBuilder()
+                .lastSyncedAt(lastSyncedAt)
+                .syncToken(syncToken)
+                .updatedAt(lastSyncedAt)
+                .build();
+    }
 }

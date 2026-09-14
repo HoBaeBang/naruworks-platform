@@ -6,4 +6,11 @@ import java.util.List;
 public interface ExternalCalendarEventWriter {
 
     void upsertAll(List<ExternalCalendarEvent> events);
+
+    void deleteByCalendarIntegrationCalendarIdAndProviderEventIds(
+            Long calendarIntegrationCalendarId,
+            List<String> providerEventIds
+    );
+
+    void deleteAllByCalendarIntegrationCalendarId(Long calendarIntegrationCalendarId);
 }

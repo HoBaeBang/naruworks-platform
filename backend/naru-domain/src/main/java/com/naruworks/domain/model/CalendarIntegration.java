@@ -18,6 +18,9 @@ public class CalendarIntegration {
     private final String providerEmail;
     private final String encryptedRefreshToken;
     private final CalendarIntegrationStatus status;
+    private final LocalDateTime lastSyncAttemptedAt;
+    private final LocalDateTime lastSyncedAt;
+    private final String lastSyncError;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
@@ -51,6 +54,37 @@ public class CalendarIntegration {
                 .providerEmail(providerEmail)
                 .encryptedRefreshToken(encryptedRefreshToken)
                 .status(CalendarIntegrationStatus.CONNECTED)
+                .updatedAt(now)
+                .build();
+    }
+
+    /** 외부 API 동기화가 성공하면 최신 성공 시각을 남기고 이전 오류를 지운다. */
+    public CalendarIntegration synchronizedSuccessfully(LocalDateTime now) {
+        return toBuilder()
+                .lastSyncAttemptedAt(now)
+                .lastSyncedAt(now)
+                .lastSyncError(null)
+                .updatedAt(now)
+                .build();
+    }
+
+    /** 연결 자체는 유지하되, 다음 주기 또는 수동 요청에서 다시 시도할 수 있게 오류를 남긴다. */
+    public CalendarIntegration synchronizationFailed(LocalDateTime now, String errorMessage) {
+        return toBuilder()
+                .lastSyncAttemptedAt(now)
+                .lastSyncError(errorMessage)
+                .updatedAt(now)
+                .build();
+    }
+
+    /** 연결 해제 후에는 refresh token을 보관하지 않는다. */
+    public CalendarIntegration disconnect(LocalDateTime now) {
+        return toBuilder()
+                .encryptedRefreshToken(null)
+                .status(CalendarIntegrationStatus.REVOKED)
+                .lastSyncAttemptedAt(null)
+                .lastSyncedAt(null)
+                .lastSyncError(null)
                 .updatedAt(now)
                 .build();
     }

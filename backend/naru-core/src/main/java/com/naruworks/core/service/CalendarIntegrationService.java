@@ -11,6 +11,7 @@ import com.naruworks.core.port.CalendarIntegrationReader;
 import com.naruworks.core.port.CalendarIntegrationWriter;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
 import com.naruworks.core.port.SensitiveDataEncryptor;
+import com.naruworks.core.port.ExternalCalendarEventWriter;
 import com.naruworks.domain.model.CalendarIntegration;
 import com.naruworks.domain.model.CalendarIntegrationCalendar;
 import com.naruworks.domain.type.CalendarIntegrationProvider;
@@ -21,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CalendarIntegrationService {
 
+    private static final Logger LOGGER = Logger.getLogger(CalendarIntegrationService.class.getName());
+
     private final CalendarIntegrationReader calendarIntegrationReader;
     private final CalendarIntegrationWriter calendarIntegrationWriter;
     private final CalendarIntegrationCalendarReader calendarIntegrationCalendarReader;
     private final CalendarIntegrationCalendarWriter calendarIntegrationCalendarWriter;
+    private final ExternalCalendarEventWriter externalCalendarEventWriter;
     private final GoogleCalendarOAuthClient googleCalendarOAuthClient;
     private final SensitiveDataEncryptor sensitiveDataEncryptor;
     private final Clock clock;
@@ -147,6 +153,26 @@ public class CalendarIntegrationService {
         return googleCalendars.stream()
                 .map(calendar -> toSelection(calendar, savedByCalendarId.get(calendar.calendarId())))
                 .toList();
+    }
+
+    /** Google 권한 철회를 시도하고, 성공 여부와 관계없이 NaruWorks의 토큰과 외부 일정 저장본을 제거한다. */
+    @Transactional
+    public void disconnectGoogleCalendar(Long memberId, Long integrationId) {
+        CalendarIntegration integration = findConnectedGoogleIntegration(memberId, integrationId);
+        List<CalendarIntegrationCalendar> calendars = calendarIntegrationCalendarReader
+                .findAllByCalendarIntegrationId(integration.getId());
+        try {
+            googleCalendarOAuthClient.revokeRefreshToken(
+                    sensitiveDataEncryptor.decrypt(integration.getEncryptedRefreshToken())
+            );
+        } catch (RuntimeException exception) {
+            LOGGER.log(Level.WARNING, "Google OAuth 권한 철회 요청에 실패했지만 로컬 연결은 해제합니다.", exception);
+        }
+
+        calendars.forEach(calendar -> externalCalendarEventWriter
+                .deleteAllByCalendarIntegrationCalendarId(calendar.getId()));
+        calendarIntegrationCalendarWriter.deleteAllByCalendarIntegrationId(integration.getId());
+        calendarIntegrationWriter.save(integration.disconnect(LocalDateTime.now(clock)));
     }
 
     private CalendarIntegration findConnectedGoogleIntegration(Long memberId, Long integrationId) {

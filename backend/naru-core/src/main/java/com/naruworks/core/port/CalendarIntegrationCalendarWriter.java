@@ -6,4 +6,6 @@ import java.util.List;
 public interface CalendarIntegrationCalendarWriter {
 
     List<CalendarIntegrationCalendar> saveAll(List<CalendarIntegrationCalendar> calendars);
+
+    void deleteAllByCalendarIntegrationId(Long calendarIntegrationId);
 }

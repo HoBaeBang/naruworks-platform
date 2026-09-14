@@ -40,4 +40,22 @@ public class ExternalCalendarEventPersistenceAdapter
                 event.getUpdatedAt()
         ));
     }
+
+    @Override
+    public void deleteByCalendarIntegrationCalendarIdAndProviderEventIds(
+            Long calendarIntegrationCalendarId,
+            List<String> providerEventIds
+    ) {
+        if (providerEventIds.isEmpty()) {
+            return;
+        }
+        externalCalendarEventJpaRepository.deleteByCalendarIntegrationCalendarIdAndProviderEventIdIn(
+                calendarIntegrationCalendarId, providerEventIds
+        );
+    }
+
+    @Override
+    public void deleteAllByCalendarIntegrationCalendarId(Long calendarIntegrationCalendarId) {
+        externalCalendarEventJpaRepository.deleteByCalendarIntegrationCalendarId(calendarIntegrationCalendarId);
+    }
 }

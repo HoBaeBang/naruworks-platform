@@ -37,4 +37,16 @@ class GoogleCalendarOAuthAdapterTest {
 
         assertThat(uri.getRawQuery()).contains("pageToken=next+page%2F%2Btoken");
     }
+
+    @Test
+    @DisplayName("Google 증분 동기화 URI는 기간 조건 없이 syncToken과 삭제 이벤트를 요청한다")
+    void createSyncEventsUri() {
+        URI uri = GoogleCalendarOAuthAdapter.createSyncEventsUri("primary", "sync token/+", "next page");
+
+        assertThat(uri.getRawQuery()).contains("singleEvents=true");
+        assertThat(uri.getRawQuery()).contains("showDeleted=true");
+        assertThat(uri.getRawQuery()).contains("syncToken=sync+token%2F%2B");
+        assertThat(uri.getRawQuery()).contains("pageToken=next+page");
+        assertThat(uri.getRawQuery()).doesNotContain("timeMin");
+    }
 }

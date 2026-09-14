@@ -52,13 +52,25 @@ public class CalendarIntegrationEntity {
     private String providerEmail;
 
     /** AES-GCM으로 암호화한 제공자 refresh token */
-    @Column(name = "encrypted_refresh_token", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "encrypted_refresh_token", columnDefinition = "TEXT")
     private String encryptedRefreshToken;
 
     /** 현재 연결 상태 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private CalendarIntegrationStatus status;
+
+    /** 최근 Google 동기화를 시도한 시각 */
+    @Column(name = "last_sync_attempted_at")
+    private LocalDateTime lastSyncAttemptedAt;
+
+    /** 최근 Google 동기화에 성공한 시각 */
+    @Column(name = "last_synced_at")
+    private LocalDateTime lastSyncedAt;
+
+    /** 최근 Google 동기화 실패 원인 */
+    @Column(name = "last_sync_error", columnDefinition = "TEXT")
+    private String lastSyncError;
 
     /** 연결 생성 시각 */
     @Column(name = "created_at", nullable = false)
@@ -77,6 +89,9 @@ public class CalendarIntegrationEntity {
         entity.providerEmail = integration.getProviderEmail();
         entity.encryptedRefreshToken = integration.getEncryptedRefreshToken();
         entity.status = integration.getStatus();
+        entity.lastSyncAttemptedAt = integration.getLastSyncAttemptedAt();
+        entity.lastSyncedAt = integration.getLastSyncedAt();
+        entity.lastSyncError = integration.getLastSyncError();
         entity.createdAt = integration.getCreatedAt();
         entity.updatedAt = integration.getUpdatedAt();
         return entity;
@@ -91,6 +106,9 @@ public class CalendarIntegrationEntity {
                 .providerEmail(providerEmail)
                 .encryptedRefreshToken(encryptedRefreshToken)
                 .status(status)
+                .lastSyncAttemptedAt(lastSyncAttemptedAt)
+                .lastSyncedAt(lastSyncedAt)
+                .lastSyncError(lastSyncError)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();

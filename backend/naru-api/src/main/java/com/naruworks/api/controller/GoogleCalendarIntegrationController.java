@@ -6,6 +6,7 @@ import com.naruworks.api.dto.response.GoogleCalendarSelectionResponse;
 import com.naruworks.api.security.AuthSessionAttribute;
 import com.naruworks.api.security.CurrentMember;
 import com.naruworks.core.service.CalendarIntegrationService;
+import com.naruworks.core.service.ExternalCalendarEventService;
 import com.naruworks.domain.model.Member;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,6 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -35,6 +40,7 @@ public class GoogleCalendarIntegrationController {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final CalendarIntegrationService calendarIntegrationService;
+    private final ExternalCalendarEventService externalCalendarEventService;
 
     @Value("${naru.frontend-base-url}")
     private String frontendBaseUrl;
@@ -100,6 +106,27 @@ public class GoogleCalendarIntegrationController {
                 ).stream()
                 .map(GoogleCalendarSelectionResponse::from)
                 .toList();
+    }
+
+    /** 한 Google 계정의 선택 캘린더를 즉시 동기화하고 최신 상태를 반환한다. */
+    @PostMapping("/accounts/{integrationId}/synchronize")
+    public GoogleCalendarIntegrationResponse synchronizeGoogleCalendar(
+            @CurrentMember Member member,
+            @org.springframework.web.bind.annotation.PathVariable Long integrationId
+    ) {
+        return GoogleCalendarIntegrationResponse.from(
+                externalCalendarEventService.synchronizeGoogleCalendar(member.getId(), integrationId)
+        );
+    }
+
+    /** 계정 연결을 해제하고 NaruWorks에 저장된 토큰 및 외부 일정 저장본을 제거한다. */
+    @DeleteMapping("/accounts/{integrationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disconnectGoogleCalendar(
+            @CurrentMember Member member,
+            @org.springframework.web.bind.annotation.PathVariable Long integrationId
+    ) {
+        calendarIntegrationService.disconnectGoogleCalendar(member.getId(), integrationId);
     }
 
     private String createState() {

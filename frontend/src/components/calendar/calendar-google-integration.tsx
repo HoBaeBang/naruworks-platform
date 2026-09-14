@@ -5,6 +5,8 @@ import {
   getGoogleCalendarAuthorizationUrl,
   getGoogleCalendarIntegrations,
   getGoogleCalendarSelections,
+  disconnectGoogleCalendar,
+  synchronizeGoogleCalendar,
   updateGoogleCalendarSelections,
   type GoogleCalendarIntegration,
   type GoogleCalendarSelection,
@@ -20,6 +22,8 @@ export function CalendarGoogleIntegration({ justConnected, reservedColors }: Pro
   const [hasIntegrationLoadError, setHasIntegrationLoadError] = useState(false);
   const [errorAccountId, setErrorAccountId] = useState<number | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [syncingId, setSyncingId] = useState<number | null>(null);
+  const [disconnectingId, setDisconnectingId] = useState<number | null>(null);
   const accountColors = useMemo(
     () => createAccountDisplayColors(integrations, reservedColors),
     [integrations, reservedColors],
@@ -93,6 +97,41 @@ export function CalendarGoogleIntegration({ justConnected, reservedColors }: Pro
     }
   }
 
+  async function synchronizeAccount(integrationId: number) {
+    setSyncingId(integrationId);
+    try {
+      const result = await synchronizeGoogleCalendar(integrationId);
+      setIntegrations((current) => current.map((integration) => (
+        integration.id === integrationId ? result : integration
+      )));
+      setErrorAccountId(null);
+    } catch {
+      setErrorAccountId(integrationId);
+    } finally {
+      setSyncingId(null);
+    }
+  }
+
+  async function disconnectAccount(integrationId: number) {
+    if (!window.confirm("이 계정의 연결과 NaruWorks에 저장된 Google 일정이 삭제됩니다. 계속할까요?")) return;
+    setDisconnectingId(integrationId);
+    try {
+      await disconnectGoogleCalendar(integrationId);
+      setIntegrations((current) => current.filter((integration) => integration.id !== integrationId));
+      setCalendarsByAccount((current) => {
+        const next = { ...current };
+        delete next[integrationId];
+        return next;
+      });
+      if (expandedId === integrationId) setExpandedId(null);
+      setErrorAccountId(null);
+    } catch {
+      setErrorAccountId(integrationId);
+    } finally {
+      setDisconnectingId(null);
+    }
+  }
+
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)]">
       <div className="flex items-center justify-between gap-2 px-3 py-3">
@@ -110,25 +149,33 @@ export function CalendarGoogleIntegration({ justConnected, reservedColors }: Pro
         isExpanded={expandedId === integration.id}
         hasError={errorAccountId === integration.id}
         isSaving={savingId === integration.id}
+        isSyncing={syncingId === integration.id}
+        isDisconnecting={disconnectingId === integration.id}
         onToggle={() => void toggleAccount(integration.id)}
         onToggleCalendar={(calendarId) => toggleCalendar(integration.id, calendarId)}
         onSave={() => void saveSelections(integration.id)}
+        onSynchronize={() => void synchronizeAccount(integration.id)}
+        onDisconnect={() => void disconnectAccount(integration.id)}
       />)}
       {justConnected && <span className="sr-only" aria-live="polite">Google Calendar 연결이 완료되었습니다.</span>}
     </section>
   );
 }
 
-function AccountGroup({ integration, accountColor, calendars, isExpanded, hasError, isSaving, onToggle, onToggleCalendar, onSave }: {
+function AccountGroup({ integration, accountColor, calendars, isExpanded, hasError, isSaving, isSyncing, isDisconnecting, onToggle, onToggleCalendar, onSave, onSynchronize, onDisconnect }: {
   integration: GoogleCalendarIntegration;
   accountColor: string | undefined;
   calendars: GoogleCalendarSelection[] | undefined;
   isExpanded: boolean;
   hasError: boolean;
   isSaving: boolean;
+  isSyncing: boolean;
+  isDisconnecting: boolean;
   onToggle: () => void;
   onToggleCalendar: (calendarId: string) => void;
   onSave: () => void;
+  onSynchronize: () => void;
+  onDisconnect: () => void;
 }) {
   return <div className="border-t border-[var(--border)]">
     <button type="button" onClick={onToggle} aria-expanded={isExpanded} className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
@@ -142,8 +189,22 @@ function AccountGroup({ integration, accountColor, calendars, isExpanded, hasErr
     {isExpanded && calendars && <div className="space-y-1.5 px-3 pb-3">
       {calendars.map((calendar) => <label key={calendar.calendarId} className="flex cursor-pointer items-center gap-2 text-xs text-[var(--foreground)]"><input type="checkbox" checked={calendar.enabled} onChange={() => onToggleCalendar(calendar.calendarId)} className="h-3.5 w-3.5 accent-[var(--primary)]" /><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: calendar.color ?? "var(--primary)" }} /><span className="min-w-0 flex-1 truncate">{calendar.name}</span>{calendar.primary && <span className="text-[10px] text-[var(--muted)]">기본</span>}</label>)}
       <button type="button" onClick={onSave} disabled={isSaving} className="mt-2 h-8 rounded-md border border-[var(--border)] px-2.5 text-xs font-bold text-[var(--primary-strong)] disabled:opacity-60">{isSaving ? "저장 중" : "선택 저장"}</button>
+      <div className="mt-3 border-t border-[var(--border)] pt-3">
+        <p className="text-[11px] text-[var(--muted)]">{syncStatusText(integration)}</p>
+        {integration.lastSyncError && <p className="mt-1 text-[11px] text-[#d9363e]">{integration.lastSyncError}</p>}
+        <div className="mt-2 flex items-center gap-3">
+          <button type="button" onClick={onSynchronize} disabled={isSyncing || isDisconnecting} className="text-xs font-bold text-[var(--primary-strong)] disabled:opacity-60">{isSyncing ? "동기화 중" : "지금 동기화"}</button>
+          <button type="button" onClick={onDisconnect} disabled={isSyncing || isDisconnecting} className="text-xs font-bold text-red-600 disabled:opacity-60 dark:text-red-300">{isDisconnecting ? "해제 중" : "연결 해제"}</button>
+        </div>
+      </div>
     </div>}
   </div>;
+}
+
+function syncStatusText(integration: GoogleCalendarIntegration): string {
+  if (integration.lastSyncError) return "최근 동기화에 실패했습니다.";
+  if (!integration.lastSyncedAt) return "아직 동기화한 일정이 없습니다.";
+  return `최근 동기화: ${new Intl.DateTimeFormat("ko-KR", { dateStyle: "short", timeStyle: "short" }).format(new Date(integration.lastSyncedAt))}`;
 }
 
 const GOOGLE_ACCOUNT_DISPLAY_COLORS = [

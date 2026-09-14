@@ -5,7 +5,9 @@ export type GoogleCalendarIntegration = {
   connected: boolean;
   email: string | null;
   status: "CONNECTED" | "REVOKED" | "FAILED" | null;
+  lastSyncAttemptedAt: string | null;
   lastSyncedAt: string | null;
+  lastSyncError: string | null;
 };
 
 export type GoogleCalendarSelection = {
@@ -64,4 +66,28 @@ export async function updateGoogleCalendarSelections(
   }
 
   return response.json() as Promise<GoogleCalendarSelection[]>;
+}
+
+export async function synchronizeGoogleCalendar(integrationId: number): Promise<GoogleCalendarIntegration> {
+  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/accounts/${integrationId}/synchronize`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Google Calendar 동기화를 시작하지 못했습니다.");
+  }
+
+  return response.json() as Promise<GoogleCalendarIntegration>;
+}
+
+export async function disconnectGoogleCalendar(integrationId: number): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/calendar/integrations/google/accounts/${integrationId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Google Calendar 연결을 해제하지 못했습니다.");
+  }
 }

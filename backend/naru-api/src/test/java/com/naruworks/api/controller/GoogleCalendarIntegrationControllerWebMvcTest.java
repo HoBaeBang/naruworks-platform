@@ -2,13 +2,17 @@ package com.naruworks.api.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.naruworks.api.security.CurrentMemberArgumentResolver;
 import com.naruworks.core.service.CalendarIntegrationService;
+import com.naruworks.core.service.ExternalCalendarEventService;
 import com.naruworks.core.model.GoogleCalendarSelection;
 import com.naruworks.domain.model.CalendarIntegration;
 import com.naruworks.domain.model.Member;
@@ -33,6 +37,9 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
 
     @MockitoBean
     private CalendarIntegrationService calendarIntegrationService;
+
+    @MockitoBean
+    private ExternalCalendarEventService externalCalendarEventService;
 
     @MockitoBean
     private CurrentMemberArgumentResolver currentMemberArgumentResolver;
@@ -102,5 +109,28 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].calendarId").value("primary"))
                 .andExpect(jsonPath("$[0].enabled").value(true));
+    }
+
+    @Test
+    @DisplayName("Google Calendar 즉시 동기화 API는 계정의 최신 상태를 반환한다")
+    void synchronizeGoogleCalendar() throws Exception {
+        CalendarIntegration integration = CalendarIntegration.connectGoogle(
+                1L, "google-calendar-account", "calendar@example.com", "encrypted-refresh-token",
+                LocalDateTime.of(2026, 9, 10, 10, 0)
+        ).toBuilder().id(10L).lastSyncedAt(LocalDateTime.of(2026, 9, 10, 10, 30)).build();
+        given(externalCalendarEventService.synchronizeGoogleCalendar(1L, 10L)).willReturn(integration);
+
+        mockMvc.perform(post("/api/calendar/integrations/google/accounts/{integrationId}/synchronize", 10L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lastSyncedAt").value("2026-09-10T10:30:00"));
+    }
+
+    @Test
+    @DisplayName("Google Calendar 연결 해제 API는 204를 반환한다")
+    void disconnectGoogleCalendar() throws Exception {
+        mockMvc.perform(delete("/api/calendar/integrations/google/accounts/{integrationId}", 10L))
+                .andExpect(status().isNoContent());
+
+        then(calendarIntegrationService).should().disconnectGoogleCalendar(1L, 10L);
     }
 }

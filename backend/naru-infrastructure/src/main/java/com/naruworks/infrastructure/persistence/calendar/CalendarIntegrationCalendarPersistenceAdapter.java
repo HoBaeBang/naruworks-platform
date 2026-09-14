@@ -32,4 +32,9 @@ public class CalendarIntegrationCalendarPersistenceAdapter
                 .map(CalendarIntegrationCalendarEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByCalendarIntegrationId(Long calendarIntegrationId) {
+        calendarIntegrationCalendarJpaRepository.deleteByCalendarIntegrationId(calendarIntegrationId);
+    }
 }

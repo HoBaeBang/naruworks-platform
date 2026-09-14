@@ -42,6 +42,15 @@ public interface ExternalCalendarEventJpaRepository extends JpaRepository<Extern
             @Param("updatedAt") LocalDateTime updatedAt
     );
 
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteByCalendarIntegrationCalendarIdAndProviderEventIdIn(
+            Long calendarIntegrationCalendarId,
+            List<String> providerEventIds
+    );
+
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteByCalendarIntegrationCalendarId(Long calendarIntegrationCalendarId);
+
     @Query("""
             select event
             from ExternalCalendarEventEntity event,

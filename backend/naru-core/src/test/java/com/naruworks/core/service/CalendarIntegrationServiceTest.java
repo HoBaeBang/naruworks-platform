@@ -15,6 +15,7 @@ import com.naruworks.core.port.CalendarIntegrationReader;
 import com.naruworks.core.port.CalendarIntegrationWriter;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
 import com.naruworks.core.port.SensitiveDataEncryptor;
+import com.naruworks.core.port.ExternalCalendarEventWriter;
 import com.naruworks.domain.model.CalendarIntegration;
 import com.naruworks.domain.model.CalendarIntegrationCalendar;
 import com.naruworks.domain.type.CalendarIntegrationProvider;
@@ -47,6 +48,9 @@ class CalendarIntegrationServiceTest {
 
     @Mock
     private CalendarIntegrationCalendarWriter calendarIntegrationCalendarWriter;
+
+    @Mock
+    private ExternalCalendarEventWriter externalCalendarEventWriter;
 
     @Mock
     private GoogleCalendarOAuthClient googleCalendarOAuthClient;
@@ -195,12 +199,35 @@ class CalendarIntegrationServiceTest {
                 .containsExactly("primary:true", "family:false");
     }
 
+    @Test
+    @DisplayName("Google Calendar 연결 해제는 권한 철회 후 토큰과 외부 일정 저장본을 제거한다")
+    void disconnectGoogleCalendar() {
+        CalendarIntegration integration = connectedIntegration();
+        CalendarIntegrationCalendar calendar = CalendarIntegrationCalendar.create(
+                10L, "primary", "개인", "#20b977", true, LocalDateTime.of(2026, 9, 10, 10, 0)
+        ).toBuilder().id(100L).build();
+        given(calendarIntegrationReader.findByIdAndMemberId(10L, 1L)).willReturn(Optional.of(integration));
+        given(calendarIntegrationCalendarReader.findAllByCalendarIntegrationId(10L)).willReturn(List.of(calendar));
+        given(sensitiveDataEncryptor.decrypt("encrypted-refresh-token")).willReturn("refresh-token");
+
+        service().disconnectGoogleCalendar(1L, 10L);
+
+        then(googleCalendarOAuthClient).should().revokeRefreshToken("refresh-token");
+        then(externalCalendarEventWriter).should().deleteAllByCalendarIntegrationCalendarId(100L);
+        then(calendarIntegrationCalendarWriter).should().deleteAllByCalendarIntegrationId(10L);
+        ArgumentCaptor<CalendarIntegration> captor = ArgumentCaptor.forClass(CalendarIntegration.class);
+        then(calendarIntegrationWriter).should().save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(CalendarIntegrationStatus.REVOKED);
+        assertThat(captor.getValue().getEncryptedRefreshToken()).isNull();
+    }
+
     private CalendarIntegrationService service() {
         return new CalendarIntegrationService(
                 calendarIntegrationReader,
                 calendarIntegrationWriter,
                 calendarIntegrationCalendarReader,
                 calendarIntegrationCalendarWriter,
+                externalCalendarEventWriter,
                 googleCalendarOAuthClient,
                 sensitiveDataEncryptor,
                 Clock.fixed(Instant.parse("2026-09-10T01:00:00Z"), ZoneId.of("Asia/Seoul"))

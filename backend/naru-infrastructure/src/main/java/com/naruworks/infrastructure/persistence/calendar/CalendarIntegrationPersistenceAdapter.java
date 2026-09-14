@@ -4,6 +4,7 @@ import com.naruworks.core.port.CalendarIntegrationReader;
 import com.naruworks.core.port.CalendarIntegrationWriter;
 import com.naruworks.domain.model.CalendarIntegration;
 import com.naruworks.domain.type.CalendarIntegrationProvider;
+import com.naruworks.domain.type.CalendarIntegrationStatus;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,16 @@ public class CalendarIntegrationPersistenceAdapter
     ) {
         return calendarIntegrationJpaRepository.findAllByMemberIdAndProviderOrderByProviderEmailAsc(memberId, provider)
                 .stream()
+                .map(CalendarIntegrationEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<CalendarIntegration> findAllByProviderAndStatus(
+            CalendarIntegrationProvider provider,
+            CalendarIntegrationStatus status
+    ) {
+        return calendarIntegrationJpaRepository.findAllByProviderAndStatus(provider, status).stream()
                 .map(CalendarIntegrationEntity::toDomain)
                 .toList();
     }

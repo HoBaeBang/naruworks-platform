@@ -5,6 +5,7 @@ import com.naruworks.core.model.GoogleCalendar;
 import com.naruworks.core.model.GoogleCalendarAccount;
 import com.naruworks.core.model.GoogleCalendarOAuthToken;
 import com.naruworks.core.model.GoogleCalendarEvent;
+import com.naruworks.core.model.GoogleCalendarSyncResult;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -21,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
@@ -29,6 +31,7 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
 
     private static final String AUTHORIZATION_URI = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_URI = "https://oauth2.googleapis.com/token";
+    private static final String REVOCATION_URI = "https://oauth2.googleapis.com/revoke";
     private static final String USER_INFO_URI = "https://openidconnect.googleapis.com/v1/userinfo";
     private static final String CALENDAR_LIST_URI =
             "https://www.googleapis.com/calendar/v3/users/me/calendarList";
@@ -126,6 +129,18 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     }
 
     @Override
+    public void revokeRefreshToken(String refreshToken) {
+        LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("token", refreshToken);
+        restClient.post()
+                .uri(REVOCATION_URI)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    @Override
     public List<GoogleCalendar> findCalendars(String accessToken) {
         GoogleCalendarListResponse response = restClient.get()
                 .uri(CALENDAR_LIST_URI)
@@ -179,6 +194,51 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
         return events;
     }
 
+    @Override
+    public GoogleCalendarSyncResult synchronizeEvents(String accessToken, String calendarId, String syncToken) {
+        List<GoogleCalendarEvent> events = new ArrayList<>();
+        List<String> cancelledEventIds = new ArrayList<>();
+        String pageToken = null;
+        String nextSyncToken = null;
+        try {
+            do {
+                GoogleCalendarEventsResponse response = restClient.get()
+                        .uri(createSyncEventsUri(calendarId, syncToken, pageToken))
+                        .headers(headers -> headers.setBearerAuth(accessToken))
+                        .retrieve()
+                        .body(GoogleCalendarEventsResponse.class);
+                if (response == null) {
+                    break;
+                }
+                if (response.items() != null) {
+                    response.items().forEach(item -> {
+                        if (item.id() == null) {
+                            return;
+                        }
+                        if ("cancelled".equals(item.status())) {
+                            cancelledEventIds.add(item.id());
+                        } else if (item.start() != null && item.end() != null) {
+                            events.add(toGoogleCalendarEvent(item));
+                        }
+                    });
+                }
+                pageToken = response.nextPageToken();
+                if (pageToken == null || pageToken.isBlank()) {
+                    nextSyncToken = response.nextSyncToken();
+                }
+            } while (pageToken != null && !pageToken.isBlank());
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 410 && syncToken != null) {
+                return GoogleCalendarSyncResult.expired();
+            }
+            throw exception;
+        }
+        if (nextSyncToken == null || nextSyncToken.isBlank()) {
+            throw new IllegalStateException("Google Calendar 증분 동기화 기준점을 받지 못했습니다.");
+        }
+        return new GoogleCalendarSyncResult(events, cancelledEventIds, nextSyncToken, false);
+    }
+
     static URI createEventsUri(String calendarId, LocalDateTime from, LocalDateTime to) {
         return createEventsUri(calendarId, from, to, null);
     }
@@ -206,6 +266,21 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
                 + "&timeMax=" + timeMax
                 + "&singleEvents=true&orderBy=startTime"
                 + pageTokenQuery);
+    }
+
+    static URI createSyncEventsUri(String calendarId, String syncToken, String pageToken) {
+        String baseUri = UriComponentsBuilder.fromUriString(EVENTS_URI)
+                .buildAndExpand(calendarId)
+                .encode()
+                .toUriString();
+        String syncTokenQuery = syncToken == null || syncToken.isBlank()
+                ? ""
+                : "&syncToken=" + URLEncoder.encode(syncToken, StandardCharsets.UTF_8);
+        String pageTokenQuery = pageToken == null || pageToken.isBlank()
+                ? ""
+                : "&pageToken=" + URLEncoder.encode(pageToken, StandardCharsets.UTF_8);
+        return URI.create(baseUri + "?singleEvents=true&showDeleted=true"
+                + syncTokenQuery + pageTokenQuery);
     }
 
     private void validateConfiguration() {
@@ -269,7 +344,8 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
 
     private record GoogleCalendarEventsResponse(
             List<GoogleCalendarEventItem> items,
-            @JsonProperty("nextPageToken") String nextPageToken
+            @JsonProperty("nextPageToken") String nextPageToken,
+            @JsonProperty("nextSyncToken") String nextSyncToken
     ) {
     }
 
@@ -279,6 +355,7 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
             String description,
             String location,
             @JsonProperty("colorId") String colorId,
+            String status,
             String updated,
             GoogleCalendarEventDateTime start,
             GoogleCalendarEventDateTime end

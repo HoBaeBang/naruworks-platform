@@ -9,4 +9,6 @@ public interface CalendarIntegrationCalendarJpaRepository
     List<CalendarIntegrationCalendarEntity> findAllByCalendarIntegrationIdOrderByCalendarNameAsc(
             Long calendarIntegrationId
     );
+
+    void deleteByCalendarIntegrationId(Long calendarIntegrationId);
 }

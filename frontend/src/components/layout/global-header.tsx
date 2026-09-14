@@ -38,7 +38,7 @@ export function GlobalHeader() {
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sm sm:gap-5">
+        <div className="flex items-center gap-3 text-sm sm:gap-4">
           {pathname === "/" ? (
             <nav className="hidden items-center gap-4 text-[var(--muted)] sm:flex sm:gap-5">
               <a href="#services">서비스</a>

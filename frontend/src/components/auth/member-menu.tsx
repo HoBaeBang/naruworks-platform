@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getLoginUrl } from "@/lib/auth-url";
 import {
@@ -8,12 +8,14 @@ import {
   logoutMember,
   type MemberProfile,
 } from "@/lib/member-api";
+import { ThemeSelector } from "@/components/layout/theme-selector";
 
 export function MemberMenu() {
   const [member, setMember] = useState<MemberProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const loadMember = useCallback(async () => {
     try {
@@ -28,6 +30,31 @@ export function MemberMenu() {
   useEffect(() => {
     void Promise.resolve().then(loadMember);
   }, [loadMember]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function closeWhenClickedOutside(event: PointerEvent) {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        setMessage(null);
+      }
+    }
+
+    function closeWhenEscapePressed(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        setMessage(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeWhenClickedOutside);
+    document.addEventListener("keydown", closeWhenEscapePressed);
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenClickedOutside);
+      document.removeEventListener("keydown", closeWhenEscapePressed);
+    };
+  }, [isOpen]);
 
   async function handleCopyInvitationLink() {
     if (!member) {
@@ -74,7 +101,7 @@ export function MemberMenu() {
   }
 
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <button
         type="button"
         onClick={() => {
@@ -119,6 +146,8 @@ export function MemberMenu() {
               회원 관리
             </Link>
           )}
+
+          <ThemeSelector />
 
           <button
             type="button"

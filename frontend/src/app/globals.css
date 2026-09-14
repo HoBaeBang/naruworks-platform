@@ -1,20 +1,34 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fbf8;
-  --foreground: #15201d;
-  --primary: #20b977;
-  --primary-strong: #087a5f;
-  --primary-soft: #e1faf1;
-  --mint-highlight: #a8f5df;
-  --surface: rgba(255, 255, 255, 0.8);
-  --surface-raised: #ffffff;
-  --border: rgba(21, 32, 29, 0.1);
-  --muted: rgba(21, 32, 29, 0.68);
+:root,
+:root[data-theme="light"] {
+  --background: #eef5f0;
+  --foreground: #10221b;
+  --primary: #168e5e;
+  --primary-strong: #086641;
+  --primary-soft: #d4f1e3;
+  --mint-highlight: #8ee2c0;
+  --surface: rgba(251, 255, 252, 0.9);
+  --surface-raised: #fafffb;
+  --border: rgba(16, 34, 27, 0.24);
+  --muted: rgba(16, 34, 27, 0.74);
+}
+
+:root[data-theme="dark"] {
+    --background: #101816;
+    --foreground: #eff8f2;
+    --primary: #57df9a;
+    --primary-strong: #a8f5df;
+    --primary-soft: rgba(109, 238, 194, 0.15);
+    --mint-highlight: #a8f5df;
+    --surface: rgba(255, 255, 255, 0.056);
+    --surface-raised: #1b2622;
+    --border: rgba(239, 248, 242, 0.1);
+    --muted: rgba(239, 248, 242, 0.68);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #101816;
     --foreground: #eff8f2;
     --primary: #57df9a;
@@ -30,8 +44,8 @@
 
 body {
   background:
-    radial-gradient(circle at 84% 12%, rgba(168, 245, 223, 0.36), transparent 28%),
-    radial-gradient(circle at 12% 86%, rgba(32, 185, 119, 0.16), transparent 30%),
+    radial-gradient(circle at 84% 12%, rgba(112, 209, 167, 0.18), transparent 28%),
+    radial-gradient(circle at 12% 86%, rgba(22, 142, 94, 0.1), transparent 30%),
     var(--background);
   color: var(--foreground);
 }
@@ -46,8 +60,12 @@ body {
   color: var(--foreground);
 }
 
+:root[data-theme="dark"] .naru-native-control {
+  color-scheme: dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  .naru-native-control {
+  :root:not([data-theme]) .naru-native-control {
     color-scheme: dark;
   }
 }

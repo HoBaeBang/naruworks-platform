@@ -107,6 +107,9 @@ erDiagram
         VARCHAR provider_email
         TEXT encrypted_refresh_token
         VARCHAR status
+        TIMESTAMP last_sync_attempted_at
+        TIMESTAMP last_synced_at
+        TEXT last_sync_error
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -172,7 +175,7 @@ erDiagram
 | `member_terms_agreements.member_id -> members.id` | 회원 1 : 약관 동의 0..N | FK, `UNIQUE(member_id, agreement_type, agreement_version)`, member_id index | `ON DELETE RESTRICT` |
 | `calendar_events.member_id -> members.id` | 회원 1 : 일정 0..N | FK, `INDEX(member_id, start_at)` | `ON DELETE RESTRICT` |
 | `calendar_event_exceptions.calendar_event_id -> calendar_events.id` | 원본 일정 1 : 회차 예외 0..N | FK, `UNIQUE(calendar_event_id, occurrence_start_at)`, event_id index | `ON DELETE CASCADE` |
-| `calendar_integrations.member_id -> members.id` | 회원 1 : 제공자 연결 0..N | FK, `UNIQUE(member_id, provider)` | PostgreSQL 기본 `NO ACTION` |
+| `calendar_integrations.member_id -> members.id` | 회원 1 : 제공자 연결 0..N | FK, `UNIQUE(member_id, provider, provider_account_id)` | PostgreSQL 기본 `NO ACTION` |
 | `calendar_integration_calendars.calendar_integration_id -> calendar_integrations.id` | OAuth 연결 1 : Google 캘린더 0..N | FK, `UNIQUE(calendar_integration_id, provider_calendar_id)`, integration_id index | `ON DELETE CASCADE` |
 | `external_calendar_events.calendar_integration_calendar_id -> calendar_integration_calendars.id` | 선택 Google 캘린더 1 : 외부 일정 0..N | FK, `UNIQUE(calendar_integration_calendar_id, provider_event_id)`, calendar/start_at index | `ON DELETE CASCADE` |
 
@@ -184,14 +187,14 @@ erDiagram
 | `service_catalog_items` | `UNIQUE(slug)` | 서비스 진입 경로를 중복 없이 식별 |
 | `members` | `UNIQUE(provider, provider_user_id)`, `UNIQUE(referral_code)`, email/status index | Google 계정 중복 가입 방지와 추천 코드 식별 |
 | `calendar_holiday_overrides` | `UNIQUE(holiday_date)`, operation/name CHECK | 한 날짜에 하나의 운영 예외만 두고 ADD/REMOVE 규칙 강제 |
-| `calendar_integrations` | provider/status CHECK | 현재 제공자를 `GOOGLE`로, 상태를 허용 enum 범위로 제한 |
+| `calendar_integrations` | provider/status CHECK, `UNIQUE(member_id, provider, provider_account_id)` | 현재 제공자를 `GOOGLE`로, 상태를 허용 enum 범위로 제한하고 동일 Google 계정의 중복 연결을 막음 |
 | `calendar_integration_calendars` | `UNIQUE(calendar_integration_id, provider_calendar_id)`, integration_id index | 한 Google 계정에서 같은 캘린더를 중복 저장하지 않음 |
 | `external_calendar_events` | `UNIQUE(calendar_integration_calendar_id, provider_event_id)`, calendar/start_at index | 같은 Google 이벤트는 upsert하고 조회 기간으로 빠르게 찾음 |
 
 ## 현재 설계의 의도
 
 - Google Calendar 연결 정보는 `calendar_events`에 섞지 않는다. 내부 일정의 수정 가능 모델과 외부 원본의 읽기 전용 모델이 다르기 때문이다.
-- `calendar_integrations`는 Google 계정 연결과 refresh token만 관리하고, 여러 캘린더의 표시 선택·증분 동기화 지점은 `calendar_integration_calendars`가 관리한다.
+- `calendar_integrations`는 Google 계정 연결·암호화 refresh token·계정 단위 동기화 상태를 관리한다. 연결 해제 뒤 token은 `NULL`이 되며, 여러 캘린더의 표시 선택·증분 동기화 지점은 `calendar_integration_calendars`가 관리한다.
 - `external_calendar_events`는 Google 일정의 읽기 전용 저장본이다. `provider_event_id`로 upsert하며, 내부 일정 수정 API와 경계를 유지한다.
 - `calendar_holiday_overrides`는 회원 소유 데이터가 아니라 서비스 공통 날짜 메타데이터이므로 회원 FK가 없다.
 - `projects`, `service_catalog_items`는 현재 공개 홈 카탈로그라 회원 데이터와 관계를 두지 않는다.

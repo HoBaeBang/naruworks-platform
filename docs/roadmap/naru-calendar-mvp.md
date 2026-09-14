@@ -524,6 +524,7 @@ Step 5
 = OWNER 구성원 목록 조회, EDITOR / VIEWER 권한 변경, 참여 회원 제거
 = EDITOR / VIEWER의 공유 캘린더 나가기
 = OWNER의 캘린더 이름·표시 색상 수정과 개인 기본 캘린더 직접 변경
+= OWNER의 기존 참여자 대상 소유권 이전, 이전 OWNER의 EDITOR 전환
 
 원칙
 = Google 외부 일정은 OAuth 연결 회원의 읽기 전용 일정이며 공유 대상에 자동 포함하지 않음
@@ -531,6 +532,7 @@ Step 5
 = 링크 수락 전에는 calendar_members 관계를 만들지 않음
 = OWNER만 링크 발급·폐기, 참여 회원 권한 변경·제거, 캘린더 표시 정보 변경을 할 수 있음
 = OWNER가 아닌 참여 회원은 공유 캘린더에서 스스로 나갈 수 있음
+= 소유권 이전 시 이전 OWNER가 발급한 활성 초대 링크는 모두 폐기함
 ```
 
 ### Step 6-1: Google 계정 다중 연결
@@ -542,6 +544,24 @@ Step 5
 = Google 계정은 왼쪽 패널의 상위 접힘 그룹이고, 실제 일정 선택은 계정 안의 Google Calendar 단위다.
 = Naru 내부 개인·공유 캘린더와 Google 하위 캘린더는 화면에서 함께 보이되 데이터 소유와 권한 모델은 분리한다.
 = 선택된 모든 연결 계정의 Google Calendar를 조회·동기화한다.
+```
+
+### Step 6-2: Google Calendar 증분 동기화
+
+```text
+완료
+= 최초 조회에서 Google nextSyncToken을 calendar_integration_calendars에 저장
+= 이후 조회는 syncToken 기준 추가·수정·취소 이벤트만 반영
+= 취소 이벤트는 external_calendar_events 저장본에서 제거
+= Google HTTP 410 토큰 만료 시 전체 동기화로 기준점 복구
+= 애플리케이션 시작 1분 후부터 실행 완료 기준 30분 fixedDelay 백그라운드 동기화
+= Calendar 조회 API는 저장된 외부 일정만 읽도록 분리
+= 계정별 동기화 성공·실패 상태와 수동 재시도 제공
+= Google OAuth 권한 철회 및 로컬 token·외부 일정 저장본 정리로 연결 해제 제공
+
+제외
+= Google Calendar로 일정 쓰기 및 양방향 동기화
+= 다중 백엔드 인스턴스용 분산 잠금과 queue 기반 대량 동기화
 ```
 ```
 

@@ -97,6 +97,13 @@ export function updateCalendarMemberRole(
   });
 }
 
+export function transferCalendarOwnership(calendarId: number, memberId: number): Promise<void> {
+  return request<void>(`/api/calendars/${calendarId}/ownership`, {
+    method: "PUT",
+    body: JSON.stringify({ memberId }),
+  });
+}
+
 export function revokeCalendarInvitationLinks(calendarId: number): Promise<void> {
   return request<void>(`/api/calendars/${calendarId}/invitation-links`, { method: "DELETE" });
 }

@@ -12,6 +12,7 @@ import com.naruworks.core.port.CalendarInvitationLinkWriter;
 import com.naruworks.core.port.CalendarMemberReader;
 import com.naruworks.core.port.CalendarMemberWriter;
 import com.naruworks.core.port.CalendarReader;
+import com.naruworks.core.port.CalendarWriter;
 import com.naruworks.core.port.MemberReader;
 import com.naruworks.domain.model.Calendar;
 import com.naruworks.domain.model.CalendarInvitationLink;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CalendarInvitationLinkServiceTest {
 
     @Mock private CalendarReader calendarReader;
+    @Mock private CalendarWriter calendarWriter;
     @Mock private CalendarMemberReader calendarMemberReader;
     @Mock private CalendarMemberWriter calendarMemberWriter;
     @Mock private CalendarInvitationLinkReader calendarInvitationLinkReader;
@@ -130,8 +132,34 @@ class CalendarInvitationLinkServiceTest {
         then(calendarMemberWriter).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("OWNER는 참여자에게 소유권을 넘기고 자신은 EDITOR가 된다")
+    void transferOwnership_promotesMemberAndRevokesInvitationLinks() {
+        CalendarMember editor = new CalendarMember(2L, 10L, 2L, CalendarMemberRole.EDITOR, LocalDateTime.now());
+        given(calendarReader.findById(10L)).willReturn(Optional.of(sharedCalendar()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 1L))
+                .willReturn(Optional.of(ownerMembership()));
+        given(calendarMemberReader.findByCalendarIdAndMemberId(10L, 2L)).willReturn(Optional.of(editor));
+
+        service().transferOwnership(1L, 10L, 2L);
+
+        ArgumentCaptor<Calendar> calendar = ArgumentCaptor.forClass(Calendar.class);
+        then(calendarWriter).should().save(calendar.capture());
+        assertThat(calendar.getValue().getOwnerMemberId()).isEqualTo(2L);
+
+        ArgumentCaptor<CalendarMember> memberships = ArgumentCaptor.forClass(CalendarMember.class);
+        then(calendarMemberWriter).should(org.mockito.Mockito.times(2)).save(memberships.capture());
+        assertThat(memberships.getAllValues())
+                .extracting(CalendarMember::memberId, CalendarMember::role)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(1L, CalendarMemberRole.EDITOR),
+                        org.assertj.core.groups.Tuple.tuple(2L, CalendarMemberRole.OWNER)
+                );
+        then(calendarInvitationLinkWriter).should().revokeActiveByCalendarId(10L);
+    }
+
     private CalendarInvitationLinkService service() {
-        return new CalendarInvitationLinkService(calendarReader, calendarMemberReader, calendarMemberWriter,
+        return new CalendarInvitationLinkService(calendarReader, calendarWriter, calendarMemberReader, calendarMemberWriter,
                 calendarInvitationLinkReader, calendarInvitationLinkWriter, memberReader);
     }
 

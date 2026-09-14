@@ -11,6 +11,7 @@ import {
   removeCalendarMember,
   revokeCalendarInvitationLinks,
   setDefaultCalendar,
+  transferCalendarOwnership,
   updateCalendar,
   updateCalendarMemberRole,
   type CalendarMember,
@@ -152,6 +153,28 @@ export function CalendarSidebar({
       setMessage("현재 초대 링크를 폐기했습니다.");
     } catch {
       setMessage("초대 링크를 폐기하지 못했습니다.");
+    }
+  }
+
+  async function transferOwnership(member: CalendarMember) {
+    if (manageCalendarId === null) return;
+    if (!window.confirm(`'${member.displayName}'님에게 캘린더 소유권을 이전할까요? 초대 링크는 함께 폐기됩니다.`)) return;
+    try {
+      await transferCalendarOwnership(manageCalendarId, member.memberId);
+      const nextCalendars = calendars.map((calendar) => (
+        calendar.id === manageCalendarId
+          ? { ...calendar, ownerMemberId: member.memberId, role: "EDITOR" as const }
+          : calendar
+      ));
+      publishCalendars(nextCalendars);
+      if (activeCalendar?.id === manageCalendarId) {
+        onActiveCalendarChange(nextCalendars.find((calendar) => calendar.id === manageCalendarId) ?? null);
+      }
+      setManageCalendarId(null);
+      setInviteUrl("");
+      setMessage("캘린더 소유권을 이전했습니다.");
+    } catch {
+      setMessage("캘린더 소유권을 이전하지 못했습니다.");
     }
   }
 
@@ -360,6 +383,7 @@ export function CalendarSidebar({
                   <span className="min-w-0 flex-1 truncate">{member.displayName}</span>
                   {member.role === "OWNER" ? <span className="text-[var(--muted)]">소유자</span> : <>
                     <NaruSelect value={member.role} onChange={(value) => void changeMemberRole(member.memberId, value as "EDITOR" | "VIEWER")} ariaLabel={`${member.displayName} 권한`} options={[{ value: "EDITOR", label: "수정" }, { value: "VIEWER", label: "보기" }]} compact className="w-20 shrink-0" />
+                    <button type="button" onClick={() => void transferOwnership(member)} className="shrink-0 text-[var(--primary-strong)]">이전</button>
                     <button type="button" onClick={() => void removeMember(member.memberId)} className="shrink-0 text-[#d9363e]">제거</button>
                   </>}
                 </div>

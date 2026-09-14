@@ -4,6 +4,7 @@ import com.naruworks.api.dto.request.CalendarCreateRequest;
 import com.naruworks.api.dto.request.CalendarInvitationLinkAcceptRequest;
 import com.naruworks.api.dto.request.CalendarInvitationLinkCreateRequest;
 import com.naruworks.api.dto.request.CalendarMemberRoleUpdateRequest;
+import com.naruworks.api.dto.request.CalendarOwnershipTransferRequest;
 import com.naruworks.api.dto.request.CalendarUpdateRequest;
 import com.naruworks.api.dto.response.CalendarMembershipResponse;
 import com.naruworks.api.dto.response.CalendarInvitationLinkPreviewResponse;
@@ -136,6 +137,16 @@ public class CalendarController {
             @Valid @RequestBody CalendarMemberRoleUpdateRequest request
     ) {
         calendarInvitationLinkService.updateMemberRole(member.getId(), calendarId, memberId, request.role());
+    }
+
+    @PutMapping("/{calendarId}/ownership")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void transferCalendarOwnership(
+            @CurrentMember Member member,
+            @PathVariable Long calendarId,
+            @Valid @RequestBody CalendarOwnershipTransferRequest request
+    ) {
+        calendarInvitationLinkService.transferOwnership(member.getId(), calendarId, request.memberId());
     }
 
     @DeleteMapping("/{calendarId}/membership")

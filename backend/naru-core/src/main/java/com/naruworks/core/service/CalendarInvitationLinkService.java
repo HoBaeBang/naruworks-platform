@@ -9,6 +9,7 @@ import com.naruworks.core.port.CalendarInvitationLinkWriter;
 import com.naruworks.core.port.CalendarMemberReader;
 import com.naruworks.core.port.CalendarMemberWriter;
 import com.naruworks.core.port.CalendarReader;
+import com.naruworks.core.port.CalendarWriter;
 import com.naruworks.core.port.MemberReader;
 import com.naruworks.domain.model.Calendar;
 import com.naruworks.domain.model.CalendarInvitationLink;
@@ -35,6 +36,7 @@ public class CalendarInvitationLinkService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final CalendarReader calendarReader;
+    private final CalendarWriter calendarWriter;
     private final CalendarMemberReader calendarMemberReader;
     private final CalendarMemberWriter calendarMemberWriter;
     private final CalendarInvitationLinkReader calendarInvitationLinkReader;
@@ -117,6 +119,30 @@ public class CalendarInvitationLinkService {
             throw new IllegalArgumentException("캘린더 소유자의 권한은 변경할 수 없습니다.");
         }
         calendarMemberWriter.save(membership.withRole(role));
+    }
+
+    /** OWNER가 기존 참여자에게 공유 캘린더의 운영 책임을 넘긴다. */
+    @Transactional
+    public void transferOwnership(Long requesterMemberId, Long calendarId, Long nextOwnerMemberId) {
+        requireOwner(requesterMemberId, calendarId);
+        if (requesterMemberId.equals(nextOwnerMemberId)) {
+            throw new IllegalArgumentException("현재 소유자에게 소유권을 이전할 수 없습니다.");
+        }
+
+        Calendar calendar = calendarReader.findById(calendarId)
+                .orElseThrow(() -> new NotFoundException("캘린더를 찾을 수 없습니다."));
+        CalendarMember currentOwner = calendarMemberReader.findByCalendarIdAndMemberId(calendarId, requesterMemberId)
+                .orElseThrow(() -> new AuthorizationException("공유 캘린더 관리 권한이 없습니다."));
+        CalendarMember nextOwner = calendarMemberReader.findByCalendarIdAndMemberId(calendarId, nextOwnerMemberId)
+                .orElseThrow(() -> new NotFoundException("소유권을 받을 참여 회원을 찾을 수 없습니다."));
+        if (nextOwner.role() == CalendarMemberRole.OWNER) {
+            throw new IllegalArgumentException("이미 캘린더 소유자입니다.");
+        }
+
+        calendarWriter.save(calendar.withOwnerMemberId(nextOwnerMemberId));
+        calendarMemberWriter.save(currentOwner.withRole(CalendarMemberRole.EDITOR));
+        calendarMemberWriter.save(nextOwner.withRole(CalendarMemberRole.OWNER));
+        calendarInvitationLinkWriter.revokeActiveByCalendarId(calendarId);
     }
 
     /** 참여자는 공유 캘린더에서 자기 자신을 제거할 수 있다. */

@@ -52,4 +52,18 @@ public class Calendar {
                 .updatedAt(updatedAt)
                 .build();
     }
+
+    /** 공유 캘린더의 운영 책임자를 새 OWNER로 변경한 복사본을 만든다. */
+    public Calendar withOwnerMemberId(Long ownerMemberId) {
+        return Calendar.builder()
+                .id(id)
+                .ownerMemberId(ownerMemberId)
+                .name(name)
+                .type(type)
+                .displayColor(displayColor)
+                .defaultCalendar(defaultCalendar)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+    }
 }

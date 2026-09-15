@@ -1,7 +1,8 @@
 name: 기능 작업
 description: 작은 기능 또는 개선 작업을 정의합니다.
 title: "[기능] "
-labels: ["feature"]
+labels: ["type:feature"]
+assignees: ["HoBaeBang"]
 body:
   - type: markdown
     attributes:
@@ -15,6 +16,20 @@ body:
       options:
         - 학습형 - 구현 가이드를 받고 직접 작성한 뒤 리뷰받기
         - 구현형 - Codex가 구현하고 PR에서 검토하기
+    validations:
+      required: true
+  - type: dropdown
+    id: domain
+    attributes:
+      label: 기능 영역
+      description: 작업의 주된 영역을 선택합니다. 이슈 생성 뒤 같은 이름의 domain 라벨도 붙입니다.
+      options:
+        - platform - 홈, 공통 UI, 회원 메뉴, 프로젝트 운영
+        - calendar - Naru Calendar와 공유 일정
+        - auth - 인증, 회원, 권한, 초대
+        - drive - Naru Drive
+        - docs - Naru Docs, Sheets, Slides
+        - infra - Docker, Cloudflare, 홈서버, 배포
     validations:
       required: true
   - type: textarea

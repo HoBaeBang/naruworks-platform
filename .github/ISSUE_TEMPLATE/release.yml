@@ -1,7 +1,8 @@
 name: 릴리즈
 description: develop의 검증된 변경을 main으로 릴리즈합니다.
 title: "[릴리즈] "
-labels: ["release"]
+labels: ["type:release"]
+assignees: ["HoBaeBang"]
 body:
   - type: textarea
     id: release-scope

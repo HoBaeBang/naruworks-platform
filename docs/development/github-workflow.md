@@ -20,6 +20,23 @@ feature/NARU-이슈번호-짧은-영문-설명
 
 기능 작업은 항상 `develop`에서 분기하고 `develop`으로 PR을 연다. 릴리즈는 별도의 릴리즈 이슈를 만든 후 `develop`에서 `main`으로 PR을 연다. `main`과 `develop`에 직접 push하지 않는다.
 
+## 라벨과 담당자
+
+모든 이슈와 PR에는 작업 방식과 기능 영역 라벨을 붙인다. 라벨은 검색·릴리즈 범위 확인·리뷰 준비를 위한 분류 정보이며, 하나의 작업이 여러 영역에 걸치더라도 주된 영역 하나를 우선 선택한다.
+
+| 분류 | 라벨 | 의미 |
+| --- | --- | --- |
+| 작업 유형 | `type:feature`, `type:release` | 기능 작업 또는 develop -> main 릴리즈 |
+| 작업 방식 | `mode:learning`, `mode:implementation` | 호배님 구현 후 리뷰 또는 Codex 구현 후 리뷰 |
+| 기능 영역 | `domain:platform` | 홈, 공통 UI, 회원 메뉴, 프로젝트 운영 |
+| 기능 영역 | `domain:calendar` | Naru Calendar, Google Calendar, 공유 캘린더 |
+| 기능 영역 | `domain:auth` | Google 로그인, 회원, 권한, 초대 |
+| 기능 영역 | `domain:drive` | Naru Drive |
+| 기능 영역 | `domain:docs` | Naru Docs, Sheets, Slides |
+| 기능 영역 | `domain:infra` | Docker, Cloudflare, 홈서버, 배포 |
+
+이슈와 PR의 기본 assignee는 `HoBaeBang`으로 둔다. 리뷰어는 현재 같은 GitHub 계정만 사용하므로 설정하지 않고, 호배님이 최종 검토와 merge를 담당한다.
+
 ## 작업 방식
 
 각 기능 이슈를 만들 때 작업 방식을 하나 선택한다.
@@ -33,11 +50,11 @@ feature/NARU-이슈번호-짧은-영문-설명
 
 ## 기능 이슈 흐름
 
-1. 기능 이슈를 만들고 배경, 완료 조건, 검증 시나리오, 작업 방식을 채운다.
+1. 기능 이슈를 만들고 배경, 완료 조건, 검증 시나리오, 작업 방식, 기능 영역을 채운다. 기본 assignee는 호배님이다.
 2. `develop` 최신 상태에서 `feature/NARU-이슈번호-설명` 브랜치를 만든다.
 3. 테스트를 먼저 작성할 수 있는 규칙은 Red -> Green -> Refactor로 진행한다.
 4. 커밋 메시지는 한글로 작성한다.
-5. PR의 대상 브랜치는 `develop`으로 정하고 `Closes #이슈번호`를 작성한다.
+5. PR의 대상 브랜치는 `develop`으로 정하고 `Closes #이슈번호`, `mode:*`, `domain:*` 라벨을 작성한다.
 6. GitHub Actions의 `Backend Test`, `Frontend Quality`가 모두 성공해야 한다.
 7. 호배님이 코드와 직접 테스트 결과를 검토하고 코멘트를 남긴다.
 8. 코멘트 반영과 CI 재통과 후, 호배님이 PR을 머지한다.

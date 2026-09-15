@@ -102,6 +102,12 @@ docs/프로젝트_운영_메모리.md
 
 그 다음 README, architecture, roadmap 문서를 확인하고 현재 Phase의 작은 단위 작업부터 진행합니다.
 
+GitHub 이슈, 브랜치, PR, CI 운영 방식은 아래 문서에 정리합니다.
+
+```text
+docs/development/github-workflow.md
+```
+
 ## Local Runtime
 
 Docker Compose 기반 로컬 실행과 재시작 절차는 아래 문서에 정리합니다.

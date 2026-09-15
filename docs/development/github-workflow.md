@@ -74,7 +74,7 @@ gh pr checks 2 --repo HoBaeBang/naruworks-platform
 5. PR의 대상 브랜치는 `develop`으로 정하고 `Closes #이슈번호`, `mode:*`, `domain:*` 라벨을 작성한다.
 6. GitHub Actions의 `Backend Test`, `Frontend Quality`가 모두 성공해야 한다.
 7. 호배님이 코드와 직접 테스트 결과를 검토하고 코멘트를 남긴다.
-8. 코멘트 반영과 CI 재통과 후, 호배님이 PR을 머지한다.
+8. 코멘트 반영과 CI 재통과 후, 호배님이 PR을 머지한다. PR 본문에 `Closes #이슈번호`를 적었다면 `develop` 머지 뒤 연결 이슈도 자동으로 종료된다.
 
 ## 릴리즈 흐름
 
@@ -95,6 +95,15 @@ PR CI는 `develop`, `main` 대상 PR과 두 브랜치의 push에서 실행한다
 | Frontend Quality | `cd frontend && npm ci && npm run lint && npm run build` | 의존성 재현, 정적 검사, production build 확인 |
 
 CI workflow의 GitHub token 권한은 `contents: read`로 제한한다. CI는 소스 검증만 수행하며 배포나 외부 서비스 변경 권한을 갖지 않는다.
+
+## 연결 이슈 자동 종료
+
+`develop`으로 실제 머지된 PR은 본문에서 같은 저장소 이슈를 찾는다. `Closes #123`, `Fixes #123`, `Resolves #123` 형식만 인식하며, 찾은 이슈가 열려 있으면 종료한다.
+
+- 머지되지 않고 닫힌 PR에는 동작하지 않는다.
+- `main`으로 가는 릴리즈 PR에는 동작하지 않는다. 릴리즈 이슈는 배포 확인까지 마친 뒤 별도로 종료한다.
+- 이슈 참조가 없거나 이미 종료된 이슈만 참조해도 workflow는 성공한다.
+- 이 동작을 위한 workflow만 `issues: write` 권한을 가지며, PR CI는 계속 `contents: read`만 사용한다.
 
 ## GitHub Ruleset
 

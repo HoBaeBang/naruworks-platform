@@ -1,0 +1,55 @@
+name: Close Linked Issues
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-linked-issues:
+    name: Close Linked Issues
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 연결 이슈 종료
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = context.payload.pull_request.body ?? '';
+            const issueNumbers = [...body.matchAll(
+              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)\b/gi
+            )].map((match) => Number(match[1]));
+            const uniqueIssueNumbers = [...new Set(issueNumbers)];
+
+            if (uniqueIssueNumbers.length === 0) {
+              core.info('자동 종료할 연결 이슈가 없습니다.');
+              return;
+            }
+
+            for (const issueNumber of uniqueIssueNumbers) {
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                });
+
+                if (issue.state === 'closed') {
+                  core.info(`#${issueNumber} 이슈는 이미 종료되었습니다.`);
+                  continue;
+                }
+
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  state: 'closed',
+                });
+                core.info(`#${issueNumber} 이슈를 종료했습니다.`);
+              } catch (error) {
+                core.warning(`#${issueNumber} 이슈를 종료하지 못했습니다: ${error.message}`);
+              }
+            }

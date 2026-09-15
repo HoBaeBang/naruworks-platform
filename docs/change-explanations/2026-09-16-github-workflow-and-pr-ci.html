@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NaruWorks GitHub 협업 흐름과 PR CI</title>
+  <style>
+    :root { --paper:#eae7d9; --panel:#f2f0e6; --panel-2:#e1ddcd; --ink:#1c1d18; --body:#3a3c34; --muted:#6d7168; --rule:#cfcaba; --green:#234c38; --green-soft:#3d6b52; --rust:#a24b2f; --gold:#9a7b1f; --blue:#2f5d78; --plum:#6d3a52; --radius:4px; --serif:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif; --hair:1px solid var(--rule); }
+    * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; background:var(--paper); color:var(--body); font-family:var(--serif); line-height:1.72; } main { width:min(100% - 32px, 940px); margin:auto; padding:64px 0 88px; } .kicker,.label { color:var(--green); font-size:.72rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; } h1,h2,h3 { color:var(--ink); line-height:1.18; } h1 { max-width:800px; margin:12px 0 20px; font-size:clamp(2.5rem,7vw,5rem); } h1 em { color:var(--green); } h2 { margin:56px 0 18px; font-size:2rem; } h3 { margin:28px 0 10px; font-size:1.25rem; } p,li { max-width:70ch; } a { color:var(--green); text-decoration-thickness:1px; text-underline-offset:3px; } .lead { font-size:1.16rem; } .toc,.callout,pre,.quiz,.compare article { background:var(--panel); border:var(--hair); border-radius:var(--radius); } .toc { margin:34px 0; padding:20px 24px; } .toc ol { margin:10px 0 0; padding-left:22px; } .callout { margin:22px 0; padding:16px 20px; border-left:4px solid var(--blue); } .callout.warning { border-left-color:var(--rust); } .callout strong { color:var(--ink); } pre { overflow:auto; padding:18px; color:var(--ink); font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre-wrap; } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; } .flow { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:24px 0; } .step { min-height:130px; padding:16px 14px; background:var(--panel); border:var(--hair); border-radius:var(--radius); cursor:pointer; font:inherit; text-align:left; color:var(--body); } .step::before { content:""; display:block; width:12px; height:12px; margin-bottom:10px; border-radius:50%; background:var(--green); } .step.active { outline:2px solid var(--green); outline-offset:2px; } .step small { color:var(--muted); } .flow-note { min-height:52px; color:var(--blue); font-weight:700; } .compare { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; } .compare article { padding:18px; } .old { border-top:4px solid var(--rust)!important; } .new { border-top:4px solid var(--green)!important; } .toggle { display:flex; gap:8px; margin:16px 0; } button { border:var(--hair); border-radius:var(--radius); background:var(--panel); color:var(--ink); padding:8px 12px; font:inherit; cursor:pointer; } button:hover,button:focus-visible { outline:2px solid var(--green); outline-offset:2px; } button.active { background:var(--green); color:var(--paper); } .hidden { display:none; } table { width:100%; border-collapse:collapse; margin:20px 0; background:var(--panel); border:var(--hair); } th,td { padding:10px; border-bottom:var(--hair); text-align:left; vertical-align:top; } th { color:var(--green); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; } .quiz { margin:18px 0; padding:20px; } .quiz h3 { margin-top:0; } .options { display:grid; gap:8px; } .option { text-align:left; } .feedback { display:none; margin:12px 0 0; padding:12px; border-left:4px solid var(--blue); background:var(--panel-2); } .feedback.show { display:block; } .correct { border-color:var(--green); color:var(--green); } .incorrect { border-color:var(--rust); color:var(--rust); } footer { margin-top:64px; color:var(--muted); font-size:.82rem; letter-spacing:.08em; } @media (max-width:720px) { main { width:min(100% - 24px,940px); padding-top:42px; } .flow,.compare { grid-template-columns:1fr; } h1 { font-size:2.65rem; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="kicker">NARUWORKS · CHANGE EXPLANATION · 2026-09-16</div>
+  <h1><em>작은 변경을</em> 끝까지<br>추적하는 GitHub 흐름</h1>
+  <p class="lead">Issue #1과 PR #2에서 만든 이슈 양식, 브랜치 전략, 라벨, PR CI가 어떤 순서로 협업 품질을 지키는지 설명합니다.</p>
+  <nav class="toc" aria-label="목차"><div class="label">Contents</div><ol><li><a href="#background">Background</a></li><li><a href="#intuition">Intuition</a></li><li><a href="#code">Code</a></li><li><a href="#quiz">Quiz</a></li></ol></nav>
+
+  <section id="background"><div class="label">01 · Background</div><h2>코드는 늘고, 변경의 이유도 늘어난다</h2>
+    <p>NaruWorks는 Calendar, 인증, Google 연동, 공유 캘린더처럼 실제 운영 기능이 늘어나는 단계다. 커밋만 남으면 “왜 바꿨는지”, “어떤 경로로 검증했는지”, “어떤 영역의 변경인지”를 나중에 빠르게 복원하기 어렵다.</p>
+    <div class="callout"><strong>가장 작은 단위의 기록.</strong> 이슈는 문제와 완료 조건, 브랜치는 구현 중인 변경, PR은 리뷰와 검증 결과, CI는 반복 가능한 통과 증거를 맡는다. 네 가지를 나누면 하나의 도구가 모든 책임을 떠안지 않는다.</div>
+    <p>이번 변경은 실제 서비스 기능이 아니라, 이후의 서비스 기능을 더 안전하고 읽기 쉽게 만들기 위한 개발 기반이다. Issue #1을 만들고 <code>feature/NARU-1-github-workflow</code> 브랜치에서 작업한 뒤, PR #2를 <code>develop</code>으로 열었다.</p>
+  </section>
+
+  <section id="intuition"><div class="label">02 · Intuition</div><h2>이슈에서 머지까지, 한 번의 짧은 루프</h2>
+    <p>아래 단계를 누르면 각 단계가 남기는 정보와 다음 단계의 이유를 볼 수 있다.</p>
+    <div class="flow" id="flow">
+      <button class="step active" data-note="Issue는 배경, 목표, 완료 조건, 검증 시나리오를 먼저 고정한다."><strong>1. Issue</strong><br><small>문제와 완료 조건</small></button>
+      <button class="step" data-note="작업 유형과 기능 영역 라벨을 붙여, 나중에도 검색 가능한 분류를 남긴다."><strong>2. Labels</strong><br><small>type · mode · domain</small></button>
+      <button class="step" data-note="develop에서 기능 브랜치를 만들면 미완성 변경이 안정 브랜치에 섞이지 않는다."><strong>3. Feature branch</strong><br><small>작업 격리</small></button>
+      <button class="step" data-note="PR 본문은 변경 이유, 주요 파일, 영향, 검증과 리뷰 포인트를 한곳에 모은다."><strong>4. Pull request</strong><br><small>검토 맥락</small></button>
+      <button class="step" data-note="GitHub Actions가 backend와 frontend를 같은 명령으로 검증한다. 통과 뒤 사람의 직접 테스트와 리뷰가 남는다."><strong>5. CI + review</strong><br><small>재현 가능한 확인</small></button>
+    </div>
+    <p id="flow-note" class="flow-note">Issue는 배경, 목표, 완료 조건, 검증 시나리오를 먼저 고정한다.</p>
+    <div class="toggle"><button class="active" data-mode="old">이전 흐름</button><button data-mode="new">현재 흐름</button></div>
+    <div class="compare"><article class="old" id="old"><div class="label">Before</div><h3>작업 뒤에 설명을 찾는다</h3><p>브랜치 목적, 테스트 범위, 변경 영역을 커밋과 대화에서 추측해야 한다. 같은 검증 명령도 사람마다 빠질 수 있다.</p></article><article class="new hidden" id="new"><div class="label">After</div><h3>작업 전에 증거의 자리를 만든다</h3><p>이슈 양식과 PR 양식이 먼저 필요한 내용을 묻고, CI가 backend와 frontend 품질 검증을 매 PR마다 반복한다.</p></article></div>
+  </section>
+
+  <section id="code"><div class="label">03 · Code</div><h2>실행 순서대로 읽기</h2>
+    <h3>1. 이슈 양식은 구현 전에 합의할 질문을 만든다</h3>
+    <p><a href="../../.github/ISSUE_TEMPLATE/feature.yml">feature.yml</a>은 작업 방식과 기능 영역을 선택하게 하고, 배경·목표·설계·검증 시나리오를 받는다. 이슈 하나의 범위를 작게 유지하기 위한 장치다.</p>
+    <pre><code>작업 방식: 학습형 | 구현형
+기능 영역: platform | calendar | auth | drive | docs | infra
+
+배경과 문제
+목표와 완료 조건
+구현 설계
+검증 시나리오</code></pre>
+    <h3>2. 라벨은 제목보다 구조적인 검색 키다</h3>
+    <table><thead><tr><th>라벨 축</th><th>예시</th><th>답하는 질문</th></tr></thead><tbody><tr><td>작업 유형</td><td><code>type:feature</code></td><td>기능인가, 릴리즈인가?</td></tr><tr><td>작업 방식</td><td><code>mode:learning</code></td><td>누가 구현하고, 리뷰에서 무엇을 볼까?</td></tr><tr><td>기능 영역</td><td><code>domain:calendar</code></td><td>어느 서비스의 변경인가?</td></tr></tbody></table>
+    <p>이번 PR #2에는 <code>type:feature</code>, <code>mode:implementation</code>, <code>domain:platform</code>을 붙였다. 담당자는 항상 <code>HoBaeBang</code>으로 두고, 같은 계정으로 운영하는 현재 상황에서는 별도 reviewer 강제를 두지 않는다.</p>
+    <h3>3. PR 템플릿은 리뷰자가 필요한 순서로 내용을 정렬한다</h3>
+    <p><a href="../../.github/PULL_REQUEST_TEMPLATE.md">PULL_REQUEST_TEMPLATE.md</a>는 연결 이슈, 라벨, 변경 이유, 주요 파일, API/DB/운영 영향, 검증 결과, 직접 테스트 방법, 리뷰 포인트를 남긴다. PR을 처음 보는 사람이 diff보다 먼저 “변경의 의도”를 읽을 수 있게 한다.</p>
+    <h3>4. CI는 두 작업을 독립적으로 검증한다</h3>
+    <p><a href="../../.github/workflows/pr-ci.yml">pr-ci.yml</a>은 <code>develop</code> 또는 <code>main</code> 대상 PR에서 두 job을 병렬로 실행한다. 하나가 실패해도 다른 job의 결과가 남아 원인을 더 빨리 좁힐 수 있다.</p>
+    <pre><code>Backend Test
+  cd backend
+  ./gradlew clean test
+
+Frontend Quality
+  cd frontend
+  npm ci
+  npm run lint
+  npm run build</code></pre>
+    <div class="callout"><strong>관찰된 결과.</strong> PR #2는 두 번의 커밋 뒤에도 <code>Backend Test</code>, <code>Frontend Quality</code> 모두 성공했고, 충돌 없는 머지 가능 상태가 됐다.</div>
+    <h3>5. 반복 확인에는 브라우저 대신 gh를 쓴다</h3>
+    <p>브라우저는 GitHub Settings Ruleset 설정이나 사람이 보는 최종 diff에 유용하다. 하지만 PR 상태, 라벨, CI처럼 구조화된 정보는 <code>gh</code>가 더 짧고 안정적으로 읽는다. 인증 토큰은 macOS Keychain에 보관하며 커밋이나 문서에 넣지 않는다.</p>
+    <pre><code>gh pr view 2 --repo HoBaeBang/naruworks-platform \
+  --json title,state,labels,statusCheckRollup,mergeStateStatus
+
+gh pr checks 2 --repo HoBaeBang/naruworks-platform</code></pre>
+    <div class="callout warning"><strong>아직 남은 운영 설정.</strong> 문서에는 main Ruleset 기준을 정했지만, GitHub Settings에서 Ruleset을 실제로 생성하는 마지막 저장 작업은 별도로 남아 있다. Ruleset은 PR 필수, 두 CI 성공, force push·삭제 금지, 대화 해결을 요구하도록 설정한다.</div>
+  </section>
+
+  <section id="quiz"><div class="label">04 · Quiz</div><h2>짧게 확인하기</h2><p>각 선택지를 누르면 바로 이유가 나옵니다.</p><div id="quizzes"></div></section>
+  <footer>BACKGROUND · INTUITION · CODE · QUIZ · 기준 PR: #2 · 2026-09-16</footer>
+</main>
+<script>
+(() => {
+  const steps=[...document.querySelectorAll('.step')], note=document.querySelector('#flow-note');
+  steps.forEach(step=>step.addEventListener('click',()=>{steps.forEach(x=>x.classList.remove('active'));step.classList.add('active');note.textContent=step.dataset.note;}));
+  const old=document.querySelector('#old'), newer=document.querySelector('#new');
+  document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('active'));button.classList.add('active');const showNew=button.dataset.mode==='new';old.classList.toggle('hidden',showNew);newer.classList.toggle('hidden',!showNew);}));
+  const questions=[
+    {q:'기능 이슈를 만들 때 완료 조건과 검증 시나리오를 먼저 적는 가장 직접적인 이유는?',a:['PR 제목을 짧게 만들기 위해','변경의 성공 기준을 구현 전에 합의하기 위해','GitHub Actions 실행 시간을 줄이기 위해','브랜치 이름을 자동 생성하기 위해'],c:1,e:'이슈가 먼저 사용자가 확인할 수 있는 결과를 정의하면 구현 범위와 테스트가 그 기준을 향하게 된다.'},
+    {q:'mode 라벨이 domain 라벨과 다른 점은 무엇인가?',a:['mode는 작업 방식, domain은 주된 기능 영역을 나타낸다','mode는 PR 번호, domain은 이슈 번호를 나타낸다','mode는 CI 결과, domain은 Git 사용자 이름을 나타낸다','mode는 배포 환경, domain은 데이터베이스를 나타낸다'],c:0,e:'mode는 학습형 또는 구현형이라는 협업 방식을, domain은 calendar나 auth 같은 변경 영역을 표현한다.'},
+    {q:'PR CI에서 Backend Test와 Frontend Quality를 별도 job으로 둔 이유는?',a:['각각의 검증 결과와 실패 원인을 분리해 보기 위해','두 job이 같은 Docker 컨테이너를 반드시 공유하게 하기 위해','GitHub 토큰을 frontend에 전달하기 위해','main 브랜치에서만 테스트를 하기 위해'],c:0,e:'검증 단위를 분리하면 backend 문제와 frontend 문제를 독립적으로 확인할 수 있고, 두 결과가 모두 기록된다.'},
+    {q:'현재 gh CLI를 기본으로 쓰는 가장 적절한 상황은 무엇인가?',a:['GitHub Ruleset 화면의 최종 저장 버튼을 찾을 때','PR의 라벨, CI 상태, 머지 가능 여부를 반복 확인할 때','Calendar 월간 화면의 색상을 점검할 때','Google OAuth 동의 화면을 수정할 때'],c:1,e:'CLI는 PR 상태처럼 구조화된 GitHub 정보를 가볍게 조회하기 좋다. 화면 배치나 Settings의 최종 설정은 브라우저가 더 적합하다.'},
+    {q:'같은 GitHub 계정으로 운영할 때 현재 PR 승인 절차는 무엇인가?',a:['리뷰어 수를 2명으로 강제한다','CI만 성공하면 자동으로 main에 머지한다','PR 코드·CI·직접 테스트를 호배님이 확인한 뒤 머지한다','모든 이슈를 먼저 닫은 뒤 PR을 연다'],c:2,e:'같은 계정은 별도 타인 승인을 기술적으로 강제하기 어렵다. 그래서 코드, CI, 직접 테스트를 검토하는 절차 자체를 승인으로 삼는다.'}
+  ];
+  const root=document.querySelector('#quizzes');
+  questions.forEach((item,index)=>{const card=document.createElement('article');card.className='quiz';card.innerHTML=`<h3>${index+1}. ${item.q}</h3><div class="options"></div><p class="feedback"></p>`;const options=card.querySelector('.options'),feedback=card.querySelector('.feedback');item.a.forEach((answer,i)=>{const button=document.createElement('button');button.className='option';button.textContent=answer;button.addEventListener('click',()=>{if(card.dataset.done)return;card.dataset.done='true';const correct=i===item.c;button.classList.add(correct?'correct':'incorrect');feedback.className='feedback show';feedback.textContent=(correct?'정답. ':'다시 생각해봐. ')+item.e;});options.append(button);});root.append(card);});
+})();
+</script>
+</body>
+</html>

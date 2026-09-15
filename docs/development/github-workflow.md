@@ -37,6 +37,23 @@ feature/NARU-이슈번호-짧은-영문-설명
 
 이슈와 PR의 기본 assignee는 `HoBaeBang`으로 둔다. 리뷰어는 현재 같은 GitHub 계정만 사용하므로 설정하지 않고, 호배님이 최종 검토와 merge를 담당한다.
 
+## GitHub CLI 운영
+
+이슈, PR, 라벨, CI 상태는 기본적으로 GitHub CLI `gh`로 관리한다. 브라우저 UI 전체를 읽는 방식보다 필요한 구조화된 정보만 가져오므로, 반복 확인에 더 적합하다.
+
+```bash
+# 현재 인증 계정 확인
+gh auth status
+
+# PR의 브랜치, 라벨, CI, merge 가능 여부 확인
+gh pr view 2 --repo HoBaeBang/naruworks-platform --json title,state,labels,statusCheckRollup,mergeStateStatus
+
+# PR의 CI만 확인
+gh pr checks 2 --repo HoBaeBang/naruworks-platform
+```
+
+`gh` 인증 토큰은 macOS Keychain에 보관한다. 토큰을 소스, Git 커밋, `.env.example`, 문서에 기록하지 않는다. GitHub Settings의 Ruleset처럼 최종 화면 확인이 필요한 설정과 실제 UI 검토에는 브라우저를 보조적으로 사용한다.
+
 ## 작업 방식
 
 각 기능 이슈를 만들 때 작업 방식을 하나 선택한다.

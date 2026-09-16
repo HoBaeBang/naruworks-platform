@@ -174,6 +174,16 @@ cp .env.example .env
 
 로컬 기본값만으로도 Docker Compose는 실행됩니다. 실제 운영 값이나 개인 환경 값은 `.env`에 작성하고 Git에 올리지 않습니다.
 
+Google OAuth callback은 목적별로 서로 다릅니다. 일반 NaruWorks 로그인은 `GOOGLE_LOGIN_REDIRECT_URI`를 사용하고, Google Calendar 읽기 연동은 `GOOGLE_CALENDAR_REDIRECT_URI`를 사용합니다.
+
+```env
+# Home server .env
+GOOGLE_LOGIN_REDIRECT_URI=https://api.naruworks.com/login/oauth2/code/google
+GOOGLE_CALENDAR_REDIRECT_URI=https://api.naruworks.com/api/calendar/integrations/google/callback
+```
+
+Google Cloud Console의 OAuth client에도 각각 정확히 같은 URI를 승인된 redirect URI로 등록해야 합니다. Cloudflare Tunnel 뒤의 backend 컨테이너는 HTTP로 요청을 받으므로, 일반 로그인 callback은 위 환경 변수로 외부 HTTPS 주소를 명시적으로 고정합니다.
+
 ### 포트 충돌
 
 이미 로컬에서 Next.js dev server나 Spring Boot가 떠 있으면 포트 충돌이 날 수 있습니다.

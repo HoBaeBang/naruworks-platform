@@ -107,7 +107,7 @@ CI workflow의 GitHub token 권한은 `contents: read`로 제한한다. CI는 �
 
 ## GitHub Ruleset
 
-`main`에는 다음 규칙을 적용한다.
+`main`에는 다음 규칙을 적용한다. 2026-09-16에 GitHub 저장소 Ruleset `main 보호 규칙`을 Active 상태로 실제 적용했다.
 
 - Pull Request 필수
 - `Backend Test`, `Frontend Quality` 성공 필수
@@ -117,5 +117,17 @@ CI workflow의 GitHub token 권한은 `contents: read`로 제한한다. CI는 �
 - PR 대화 해결 후 merge
 
 현재 저장소는 같은 GitHub 계정으로 운영하므로, 다른 계정의 승인 수를 강제하지 않는다. 대신 호배님이 PR의 Files changed, CI, 직접 테스트를 확인한 뒤 직접 merge하는 것을 승인 절차로 삼는다.
+
+Ruleset 대상은 `refs/heads/main` 하나이며 bypass actor는 두지 않는다. 따라서 `feature/NARU-*` 브랜치는 Ruleset 밖에 있어, `develop` rebase나 커밋 정리가 필요한 경우 force push할 수 있다. 이때 PR의 commit SHA가 바뀌므로 CI를 다시 통과시키고, 리뷰 중이었다면 변경 사실을 남긴다. `develop`과 `main`에는 직접 force push하지 않는다.
+
+적용 검증 결과:
+
+```text
+Ruleset: main 보호 규칙
+Enforcement: active
+Required checks: Backend Test, Frontend Quality
+Pull request: required, stale review dismissal, conversation resolution
+Branch safety: deletion 금지, non-fast-forward(force push) 금지
+```
 
 `develop`에는 우선 CI 통과와 PR 경로를 운영 규칙으로 적용하고, 흐름이 안정되면 `main`과 같은 보호 규칙을 추가한다.

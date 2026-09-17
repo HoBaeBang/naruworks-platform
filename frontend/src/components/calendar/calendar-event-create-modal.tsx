@@ -89,38 +89,39 @@ export function CalendarEventCreateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#06140f]/45 px-4 py-8 backdrop-blur-sm">
-      <section className="w-full max-w-3xl rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
-        <header className="flex items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#06140f]/45 p-3 backdrop-blur-sm sm:p-8">
+      <section className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.28)] sm:max-h-[calc(100dvh-4rem)] sm:p-5">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border)] pb-3 sm:pb-4">
           <div>
             <p className="text-sm font-bold text-[var(--primary-strong)]">
               새 일정
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">기간 일정</h2>
+            <h2 className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">기간 일정</h2>
           </div>
 
           <Link
             href={closeHref}
             aria-label="새 일정 모달 닫기"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)] sm:h-10 sm:w-10"
           >
             ×
           </Link>
         </header>
 
-        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
-          <label className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto pr-1 sm:mt-5">
+          <div className="flex flex-col gap-3 sm:gap-4">
+          <label className="flex flex-col gap-1.5 sm:gap-2">
             <span className="text-sm font-bold text-[var(--muted)]">제목</span>
             <input
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="일정 제목"
-              className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-base outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
+              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-base outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)] sm:h-12 sm:px-4"
             />
           </label>
 
-          <label className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1.5 sm:gap-2">
             <span className="text-sm font-bold text-[var(--muted)]">저장할 캘린더</span>
             <NaruSelect value={String(calendarId ?? "")} onChange={(value) => {
               const nextCalendar = calendars.find((calendar) => calendar.id === Number(value));
@@ -132,7 +133,7 @@ export function CalendarEventCreateModal({
             ]} />
           </label>
 
-          <div className="grid items-end gap-3 sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <div className="grid items-end gap-2 sm:gap-3 sm:grid-cols-[8rem_minmax(0,1fr)]">
             <CalendarEventAllDayToggle
               checked={allDay}
               onChange={setAllDay}
@@ -149,7 +150,7 @@ export function CalendarEventCreateModal({
             />
           </div>
 
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-2 sm:gap-3 sm:grid-cols-2">
           {allDay && <>
             <CalendarDateField label="시작일" value={startDate} onChange={setStartDate} />
             <CalendarDateField label="종료일" value={endDate} onChange={setEndDate} />
@@ -160,25 +161,25 @@ export function CalendarEventCreateModal({
           </>}
           </div>
 
-          <label className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1.5 sm:gap-2">
             <span className="text-sm font-bold text-[var(--muted)]">장소</span>
             <input
               type="text"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
               placeholder="장소를 입력하세요"
-              className="h-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
+              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)] sm:h-12 sm:px-4"
             />
           </label>
 
-          <label className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1.5 sm:gap-2">
             <span className="text-sm font-bold text-[var(--muted)]">설명</span>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="일정 메모"
-              rows={4}
-              className="resize-none rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
+              rows={3}
+              className="min-h-[4.5rem] resize-none rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)] sm:px-4 sm:py-3"
             />
           </label>
 
@@ -189,18 +190,19 @@ export function CalendarEventCreateModal({
                 {errorMessage}
               </p>
           )}
+          </div>
 
-          <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end">
+          <div className="sticky bottom-0 mt-3 flex shrink-0 flex-col gap-2 border-t border-[var(--border)] bg-[var(--background)] pt-3 sm:mt-4 sm:flex-row sm:justify-end sm:gap-3 sm:pt-4">
             <Link
               href={closeHref}
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-bold text-[var(--foreground)]"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-bold text-[var(--foreground)] sm:h-11"
             >
               취소
             </Link>
             <button
                 type="submit"
                 disabled={isSaving || !calendarId || calendars.find((calendar) => calendar.id === calendarId)?.role === "VIEWER"}
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-bold text-[#062b20] shadow-[0_14px_32px_rgba(32,185,119,0.20)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-bold text-[#062b20] shadow-[0_14px_32px_rgba(32,185,119,0.20)] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11"
             >
               {isSaving ? "저장 중" : "저장"}
             </button>

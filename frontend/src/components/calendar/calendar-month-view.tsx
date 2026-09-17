@@ -1,5 +1,5 @@
 import type { CalendarEvent } from "@/types/calendar";
-import { formatLunarDate, getCalendarDateTextClass, getCalendarDayMetadata, getCalendarWeekdayTextClass } from "@/lib/calendar-date-style";
+import { formatCompactLunarDate, formatLunarDate, getCalendarDateTextClass, getCalendarDayMetadata, getCalendarWeekdayTextClass } from "@/lib/calendar-date-style";
 import type { CalendarDayMetadata } from "@/types/calendar-day-metadata";
 import Link from "next/link";
 
@@ -25,8 +25,8 @@ export function CalendarMonthView({
     const days = createMonthDays(year, month);
 
     return (
-        <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-            <div className="grid grid-cols-7 border-b border-[var(--border)] pb-3 text-center text-sm font-bold text-[var(--muted)]">
+        <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 max-[479px]:p-2">
+            <div className="grid grid-cols-7 border-b border-[var(--border)] pb-3 text-center text-sm font-bold text-[var(--muted)] max-[479px]:pb-2 max-[479px]:text-xs">
                 {["일", "월", "화", "수", "목", "금", "토"].map((day, index) => (
                     <div key={day} className={getCalendarWeekdayTextClass(index)}>{day}</div>
                 ))}
@@ -36,11 +36,14 @@ export function CalendarMonthView({
                 {days.map((day) => {
                     const dayEvents = getEventsForDay(events, day.date);
                     const metadata = getCalendarDayMetadata(dayMetadataByDate, day.date);
+                    const visibleEvents = dayEvents.slice(0, 3);
+                    const hiddenEventCount = dayEvents.length - visibleEvents.length;
                     return (
                         <article
                             key={day.date.toISOString()}
                             className={[
-                                "relative min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)]",
+                                "relative min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)] max-[479px]:min-h-[5.75rem] max-[479px]:p-1",
+                                day.date.getDay() === 0 ? "border-l" : "",
                                 day.isCurrentMonth ? "" : "opacity-35",
                                 selectedDate === formatDate(day.date) ? "bg-[var(--primary-soft)]" : "",
                             ].join(" ")}
@@ -51,18 +54,19 @@ export function CalendarMonthView({
                                 className="absolute inset-0 z-0"
                             />
 
-                            <div className="pointer-events-none relative z-10 flex items-center justify-between">
+                            <div className="pointer-events-none relative z-10 flex items-center justify-between max-[479px]:flex-col max-[479px]:items-center max-[479px]:gap-0.5">
                                 <span
                                   className={[
-                                      "grid h-7 w-7 place-items-center rounded-full text-sm font-bold",
+                                      "grid h-7 w-7 place-items-center rounded-full text-sm font-bold max-[479px]:h-5 max-[479px]:w-5 max-[479px]:text-xs",
                                       day.isToday ? "bg-[var(--primary-soft)]" : "",
                                       getCalendarDateTextClass(day.date, metadata),
                                   ].join(" ")}
                                 >
                                     {day.date.getDate()}
                                 </span>
-                                <span className="text-[10px] font-medium text-[var(--muted)]">
-                                    {formatLunarDate(metadata)}
+                                <span className="text-[10px] font-medium text-[var(--muted)] max-[479px]:text-[9px]">
+                                    <span className="max-[479px]:hidden">{formatLunarDate(metadata)}</span>
+                                    <span className="hidden max-[479px]:inline">{formatCompactLunarDate(metadata)}</span>
                                 </span>
                             </div>
 
@@ -72,8 +76,8 @@ export function CalendarMonthView({
                                 </p>
                             )}
 
-                            <div className="relative z-10 mt-2 flex flex-col gap-1">
-                                {dayEvents.slice(0, 3).map((event) => {
+                            <div className="relative z-10 mt-2 flex flex-col gap-1 max-[479px]:mt-1 max-[479px]:gap-0.5">
+                                {visibleEvents.map((event) => {
                                     const segment = getMonthEventSegment(event, day.date);
 
                                     return (
@@ -81,10 +85,10 @@ export function CalendarMonthView({
                                         key={event.occurrenceKey}
                                         href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
                                         className={[
-                                            "flex min-w-0 flex-col items-start px-2 py-1 text-xs font-semibold transition",
+                                            "flex min-w-0 flex-col items-start text-xs font-semibold transition",
                                             event.allDay
-                                                ? allDaySegmentClass(segment)
-                                                : "border bg-[var(--surface)] text-[var(--foreground)]",
+                                                ? `px-2 py-1 max-[479px]:px-[5px] max-[479px]:py-0 max-[479px]:text-[10px] ${allDaySegmentClass(segment)}`
+                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:min-h-4 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
                                         ].join(" ")}
                                         style={event.allDay
                                             ? { backgroundColor: event.color }
@@ -92,14 +96,25 @@ export function CalendarMonthView({
                                         title={event.readOnly ? `${event.title} (Google Calendar)` : event.recurrenceRule === "NONE" ? event.title : `${event.title} (반복 일정)`}
                                     >
                                         {!event.allDay && (
-                                            <span className="text-[10px] font-medium leading-4 text-[var(--muted)]">
+                                            <span className="text-[10px] font-medium leading-4 text-[var(--muted)] max-[479px]:hidden">
                                                 {formatTimeRange(event)}
                                             </span>
                                         )}
-                                        {(segment === "single" || segment === "start") && <span className="w-full truncate">{event.title}</span>}
+                                        {(segment === "single" || segment === "start") && (
+                                            <CalendarEventTitle title={event.title} />
+                                        )}
                                     </Link>
                                     );
                                 })}
+                                {hiddenEventCount > 0 && (
+                                    <Link
+                                        href={`/calendar?view=day&date=${formatDate(day.date)}`}
+                                        className="inline-flex h-5 w-fit items-center rounded px-1 text-[10px] font-bold text-[var(--primary)] transition hover:bg-[var(--primary-soft)] max-[479px]:h-4 max-[479px]:text-[9px]"
+                                        aria-label={`${formatDate(day.date)}의 나머지 일정 ${hiddenEventCount}건 보기`}
+                                    >
+                                        +{hiddenEventCount}
+                                    </Link>
+                                )}
                             </div>
                         </article>
                     );
@@ -110,6 +125,25 @@ export function CalendarMonthView({
 }
 
 type MonthEventSegment = "single" | "start" | "middle" | "end";
+
+function CalendarEventTitle({ title }: { title: string }) {
+    return (
+        <span className="w-full overflow-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[line-break:strict] max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]">
+            {title.split(/(\[[^\[\]]*\]|\([^()]*\))/g).map((part, index) => (
+                <span
+                    key={`${part}-${index}`}
+                    className={isBracketedTitlePart(part) ? "whitespace-nowrap" : undefined}
+                >
+                    {part}
+                </span>
+            ))}
+        </span>
+    );
+}
+
+function isBracketedTitlePart(value: string) {
+    return /^(\[[^\[\]]*\]|\([^()]*\))$/.test(value);
+}
 
 function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegment {
     if (!event.allDay) {
@@ -128,10 +162,12 @@ function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegme
 }
 
 function allDaySegmentClass(segment: MonthEventSegment) {
-    if (segment === "start") return "-mx-2 rounded-l-md rounded-r-none text-[#062b20]";
-    if (segment === "middle") return "-mx-2 rounded-none text-transparent";
-    if (segment === "end") return "-mx-2 rounded-l-none rounded-r-md text-transparent";
-    return "rounded-md text-[#062b20]";
+    const sharedClass = "h-6 justify-center overflow-hidden";
+
+    if (segment === "start") return `${sharedClass} -mx-2 rounded-l-[3px] rounded-r-none text-[#062b20] max-[479px]:-mx-1`;
+    if (segment === "middle") return `${sharedClass} -mx-2 rounded-none text-transparent max-[479px]:-mx-1`;
+    if (segment === "end") return `${sharedClass} -mx-2 rounded-l-none rounded-r-[3px] text-transparent max-[479px]:-mx-1`;
+    return "h-6 justify-center overflow-hidden rounded-[3px] text-[#062b20] max-[479px]:h-auto max-[479px]:min-h-4";
 }
 
 function createMonthDays(year: number, month: number): CalendarDay[] {

@@ -141,7 +141,11 @@ export function CalendarClientPage() {
           <div>
             {isLoading && <CalendarMessage message="일정을 불러오는 중입니다." />}
             {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
-            {canRenderCalendar && view === "month" && <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />}
+            {canRenderCalendar && view === "month" && (
+              <div className="max-[479px]:-mx-6">
+                <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />
+              </div>
+            )}
             {canRenderCalendar && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
             {canRenderCalendar && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
             {canRenderCalendar && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}

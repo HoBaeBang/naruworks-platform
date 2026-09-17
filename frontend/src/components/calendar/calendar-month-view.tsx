@@ -43,6 +43,7 @@ export function CalendarMonthView({
                             key={day.date.toISOString()}
                             className={[
                                 "relative min-h-28 border-b border-r border-[var(--border)] p-2 transition hover:bg-[var(--primary-soft)] max-[479px]:min-h-[5.75rem] max-[479px]:p-1",
+                                day.date.getDay() === 0 ? "border-l" : "",
                                 day.isCurrentMonth ? "" : "opacity-35",
                                 selectedDate === formatDate(day.date) ? "bg-[var(--primary-soft)]" : "",
                             ].join(" ")}
@@ -53,7 +54,7 @@ export function CalendarMonthView({
                                 className="absolute inset-0 z-0"
                             />
 
-                            <div className="pointer-events-none relative z-10 flex items-center justify-between max-[479px]:flex-col max-[479px]:items-start max-[479px]:gap-0.5">
+                            <div className="pointer-events-none relative z-10 flex items-center justify-between max-[479px]:flex-col max-[479px]:items-center max-[479px]:gap-0.5">
                                 <span
                                   className={[
                                       "grid h-7 w-7 place-items-center rounded-full text-sm font-bold max-[479px]:h-5 max-[479px]:w-5 max-[479px]:text-xs",
@@ -84,10 +85,10 @@ export function CalendarMonthView({
                                         key={event.occurrenceKey}
                                         href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
                                         className={[
-                                            "flex min-w-0 flex-col items-start px-2 py-1 text-xs font-semibold transition",
+                                            "flex min-w-0 flex-col items-start text-xs font-semibold transition",
                                             event.allDay
-                                                ? allDaySegmentClass(segment)
-                                                : "border bg-[var(--surface)] text-[var(--foreground)] max-[479px]:h-8 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
+                                                ? `px-2 py-1 max-[479px]:px-0.5 max-[479px]:py-0 ${allDaySegmentClass(segment)}`
+                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:h-7 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
                                         ].join(" ")}
                                         style={event.allDay
                                             ? { backgroundColor: event.color }
@@ -102,8 +103,8 @@ export function CalendarMonthView({
                                         {(segment === "single" || segment === "start") && (
                                             <span
                                                 className={event.allDay
-                                                    ? "w-full truncate max-[479px]:text-clip"
-                                                    : "w-full truncate max-[479px]:max-h-8 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-4"}
+                                                    ? getAllDayTitleClass(segment)
+                                                    : "w-full truncate max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-[0.65rem]"}
                                             >
                                                 {event.title}
                                             </span>
@@ -148,12 +149,20 @@ function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegme
 }
 
 function allDaySegmentClass(segment: MonthEventSegment) {
-    const sharedClass = "h-6 items-center overflow-hidden max-[479px]:h-4";
+    const sharedClass = "h-6 justify-center overflow-hidden max-[479px]:h-4";
 
     if (segment === "start") return `${sharedClass} -mx-2 rounded-l-md rounded-r-none text-[#062b20] max-[479px]:-mx-1`;
     if (segment === "middle") return `${sharedClass} -mx-2 rounded-none text-transparent max-[479px]:-mx-1`;
     if (segment === "end") return `${sharedClass} -mx-2 rounded-l-none rounded-r-md text-transparent max-[479px]:-mx-1`;
-    return `${sharedClass} rounded-md text-[#062b20]`;
+    return "h-6 justify-center overflow-hidden rounded-md text-[#062b20] max-[479px]:h-7";
+}
+
+function getAllDayTitleClass(segment: MonthEventSegment) {
+    if (segment !== "single") {
+        return "w-full truncate max-[479px]:text-clip";
+    }
+
+    return "w-full truncate max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-[0.65rem]";
 }
 
 function createMonthDays(year: number, month: number): CalendarDay[] {

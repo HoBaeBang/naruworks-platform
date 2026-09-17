@@ -87,8 +87,8 @@ export function CalendarMonthView({
                                         className={[
                                             "flex min-w-0 flex-col items-start overflow-y-hidden text-xs font-semibold transition",
                                             event.allDay
-                                                ? `px-2 py-1 max-[479px]:px-[5px] max-[479px]:py-0 max-[479px]:text-[10px] ${allDaySegmentClass(segment)}`
-                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:min-h-4 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
+                                                ? `px-2 py-1 max-[479px]:px-0.5 max-[479px]:py-0 max-[479px]:text-[10px] ${allDaySegmentClass(segment)}`
+                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:min-h-4 max-[479px]:justify-center max-[479px]:px-0.5 max-[479px]:py-0 max-[479px]:text-[10px]",
                                         ].join(" ")}
                                         style={event.allDay
                                             ? { backgroundColor: event.color }

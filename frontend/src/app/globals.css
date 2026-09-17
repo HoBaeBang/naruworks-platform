@@ -50,6 +50,31 @@ body {
   color: var(--foreground);
 }
 
+.naruworks-mark {
+  display: inline-grid;
+  overflow: hidden;
+  flex: none;
+  border-radius: 0.5rem;
+}
+
+.naruworks-mark img {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+
+.naruworks-mark-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .naruworks-mark-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .naruworks-mark-dark {
+  display: block;
+}
+
 .naru-native-control {
   color: var(--foreground);
   color-scheme: light;

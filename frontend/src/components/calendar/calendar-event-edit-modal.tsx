@@ -135,8 +135,8 @@ export function CalendarEventEditModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#06140f]/45 px-4 py-8 backdrop-blur-sm">
-            <section className="w-full max-w-3xl rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#06140f]/45 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8">
+            <section className="w-full max-w-3xl rounded-lg border border-[var(--border)] bg-[var(--background)] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.28)] sm:my-auto sm:p-5">
                 <header className="flex items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
                     <div>
                         <p className="text-sm font-bold text-[var(--primary-strong)]">
@@ -182,9 +182,9 @@ export function CalendarEventEditModal({
                     </label>
 
                     {event.recurrenceRule !== "NONE" && (
-                        <fieldset className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-                            <legend className="px-1 text-sm font-bold text-[var(--muted)]">변경 범위</legend>
-                            <div className="grid gap-2 sm:grid-cols-3">
+                        <fieldset className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 max-[479px]:gap-1.5 max-[479px]:p-2">
+                            <legend className="px-1 text-sm font-bold text-[var(--muted)] max-[479px]:text-xs">변경 범위</legend>
+                            <div className="grid grid-cols-3 gap-2 max-[479px]:gap-1.5">
                                 <ScopeButton scope="THIS" label="이 일정만" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
                                 <ScopeButton scope="THIS_AND_FOLLOWING" label="이후 일정" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
                                 <ScopeButton scope="ALL" label="전체 일정" selectedScope={occurrenceScope} onSelect={setOccurrenceScope} />
@@ -296,7 +296,7 @@ function ScopeButton({
             type="button"
             onClick={() => onSelect(scope)}
             className={[
-                "h-10 rounded-lg border px-3 text-sm font-bold transition",
+                "h-10 rounded-lg border px-3 text-sm font-bold transition max-[479px]:h-9 max-[479px]:rounded-md max-[479px]:px-1 max-[479px]:text-xs",
                 selectedScope === scope
                     ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]"
                     : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--primary)]",

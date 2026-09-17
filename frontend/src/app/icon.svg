@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <style>
+    .dark { display: none; }
+    @media (prefers-color-scheme: dark) {
+      .light { display: none; }
+      .dark { display: block; }
+    }
+  </style>
+  <g class="light">
+    <rect x="2" y="2" width="60" height="60" rx="10" fill="#F4F7F5"/>
+    <path d="M16 15H25V49H16V15Z" fill="#20B977"/>
+    <path d="M25 15H32L49 49H40L25 19V15Z" fill="#15201D"/>
+    <path d="M40 15H49V49H40V15Z" fill="#15201D"/>
+    <path d="M27.5 37.5V48H38L27.5 37.5Z" fill="#15201D"/>
+  </g>
+  <g class="dark">
+    <rect x="2" y="2" width="60" height="60" rx="10" fill="#2A3A34"/>
+    <path d="M16 15H25V49H16V15Z" fill="#57DF9A"/>
+    <path d="M25 15H32L49 49H40L25 19V15Z" fill="#F4F7F5"/>
+    <path d="M40 15H49V49H40V15Z" fill="#F4F7F5"/>
+    <path d="M27.5 37.5V48H38L27.5 37.5Z" fill="#F4F7F5"/>
+  </g>
+</svg>

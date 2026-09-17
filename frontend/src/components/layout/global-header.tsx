@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MemberMenu } from "@/components/auth/member-menu";
+import { NaruWorksMark } from "@/components/brand/naruworks-mark";
 
 const pageLabelByPath: Record<string, string> = {
   "/calendar": "Naru Calendar",
@@ -26,9 +27,7 @@ export function GlobalHeader() {
             href="/"
             className="flex shrink-0 items-center gap-3 text-lg font-bold text-[var(--foreground)]"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--primary)] text-sm font-black text-[#062b20]">
-              N
-            </span>
+            <NaruWorksMark className="h-8 w-8" />
             NaruWorks
           </Link>
           {pageLabel && (

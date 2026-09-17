@@ -101,11 +101,7 @@ export function CalendarMonthView({
                                             </span>
                                         )}
                                         {(segment === "single" || segment === "start") && (
-                                            <span
-                                                className="w-full overflow-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]"
-                                            >
-                                                {event.title}
-                                            </span>
+                                            <CalendarEventTitle title={event.title} />
                                         )}
                                     </Link>
                                     );
@@ -129,6 +125,25 @@ export function CalendarMonthView({
 }
 
 type MonthEventSegment = "single" | "start" | "middle" | "end";
+
+function CalendarEventTitle({ title }: { title: string }) {
+    return (
+        <span className="w-full overflow-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[line-break:strict] max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]">
+            {title.split(/(\[[^\[\]]*\]|\([^()]*\))/g).map((part, index) => (
+                <span
+                    key={`${part}-${index}`}
+                    className={isBracketedTitlePart(part) ? "whitespace-nowrap" : undefined}
+                >
+                    {part}
+                </span>
+            ))}
+        </span>
+    );
+}
+
+function isBracketedTitlePart(value: string) {
+    return /^(\[[^\[\]]*\]|\([^()]*\))$/.test(value);
+}
 
 function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegment {
     if (!event.allDay) {

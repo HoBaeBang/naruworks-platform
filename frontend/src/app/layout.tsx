@@ -5,6 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "NaruWorks",
   description: "Personal service platform for NaruWorks.",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       {
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
         type: "image/svg+xml",
       },
     ],
+    apple: "/brand/naruworks-app-icon-192.png",
   },
 };
 

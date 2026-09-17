@@ -45,6 +45,14 @@ export function formatLunarDate(metadata?: CalendarDayMetadata) {
   return `음 ${metadata.lunarIntercalation ? "윤" : ""}${metadata.lunarMonth}.${metadata.lunarDay}`;
 }
 
+export function formatCompactLunarDate(metadata?: CalendarDayMetadata) {
+  if (!metadata) {
+    return null;
+  }
+
+  return `${metadata.lunarIntercalation ? "윤" : ""}${metadata.lunarMonth}.${metadata.lunarDay}`;
+}
+
 export function formatDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

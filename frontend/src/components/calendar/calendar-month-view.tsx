@@ -85,7 +85,7 @@ export function CalendarMonthView({
                                         key={event.occurrenceKey}
                                         href={`/calendar?year=${year}&month=${month}&date=${formatDate(day.date)}&occurrenceKey=${encodeURIComponent(event.occurrenceKey)}&mode=${event.readOnly ? "detail" : "edit"}`}
                                         className={[
-                                            "flex min-w-0 flex-col items-start text-xs font-semibold transition",
+                                            "flex min-w-0 flex-col items-start overflow-y-hidden text-xs font-semibold transition",
                                             event.allDay
                                                 ? `px-2 py-1 max-[479px]:px-[5px] max-[479px]:py-0 max-[479px]:text-[10px] ${allDaySegmentClass(segment)}`
                                                 : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:min-h-4 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
@@ -128,7 +128,7 @@ type MonthEventSegment = "single" | "start" | "middle" | "end";
 
 function CalendarEventTitle({ title }: { title: string }) {
     return (
-        <span className="w-full overflow-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[line-break:strict] max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]">
+        <span className="w-full overflow-x-hidden overflow-y-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[line-break:strict] max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]">
             {title.split(/(\[[^\[\]]*\]|\([^()]*\))/g).map((part, index) => (
                 <span
                     key={`${part}-${index}`}
@@ -162,12 +162,12 @@ function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegme
 }
 
 function allDaySegmentClass(segment: MonthEventSegment) {
-    const sharedClass = "h-6 justify-center overflow-hidden";
+    const sharedClass = "h-6 justify-center overflow-x-hidden overflow-y-hidden";
 
     if (segment === "start") return `${sharedClass} -mx-2 rounded-l-[3px] rounded-r-none text-[#062b20] max-[479px]:-mx-1`;
     if (segment === "middle") return `${sharedClass} -mx-2 rounded-none text-transparent max-[479px]:-mx-1`;
     if (segment === "end") return `${sharedClass} -mx-2 rounded-l-none rounded-r-[3px] text-transparent max-[479px]:-mx-1`;
-    return "h-6 justify-center overflow-hidden rounded-[3px] text-[#062b20] max-[479px]:h-auto max-[479px]:min-h-4";
+    return "h-6 justify-center overflow-x-hidden overflow-y-hidden rounded-[3px] text-[#062b20] max-[479px]:h-auto max-[479px]:min-h-4";
 }
 
 function createMonthDays(year: number, month: number): CalendarDay[] {

@@ -5,6 +5,20 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "NaruWorks",
   description: "Personal service platform for NaruWorks.",
+  icons: {
+    icon: [
+      {
+        url: "/brand/naruworks-mark-light.svg",
+        media: "(prefers-color-scheme: light)",
+        type: "image/svg+xml",
+      },
+      {
+        url: "/brand/naruworks-mark-dark.svg",
+        media: "(prefers-color-scheme: dark)",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

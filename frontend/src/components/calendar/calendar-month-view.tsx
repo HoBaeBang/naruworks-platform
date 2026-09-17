@@ -88,7 +88,7 @@ export function CalendarMonthView({
                                             "flex min-w-0 flex-col items-start text-xs font-semibold transition",
                                             event.allDay
                                                 ? `px-2 py-1 max-[479px]:px-0.5 max-[479px]:py-0 max-[479px]:text-[10px] ${allDaySegmentClass(segment)}`
-                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:h-7 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
+                                                : "border bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] max-[479px]:min-h-4 max-[479px]:justify-center max-[479px]:px-1 max-[479px]:py-0 max-[479px]:text-[10px]",
                                         ].join(" ")}
                                         style={event.allDay
                                             ? { backgroundColor: event.color }
@@ -102,7 +102,7 @@ export function CalendarMonthView({
                                         )}
                                         {(segment === "single" || segment === "start") && (
                                             <span
-                                                className="w-full truncate max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-[0.65rem]"
+                                                className="w-full overflow-hidden text-ellipsis whitespace-nowrap max-[479px]:max-h-6 max-[479px]:whitespace-normal max-[479px]:text-clip max-[479px]:leading-3 max-[479px]:[word-break:keep-all] max-[479px]:[overflow-wrap:anywhere]"
                                             >
                                                 {event.title}
                                             </span>
@@ -147,12 +147,12 @@ function getMonthEventSegment(event: CalendarEvent, date: Date): MonthEventSegme
 }
 
 function allDaySegmentClass(segment: MonthEventSegment) {
-    const sharedClass = "h-6 justify-center overflow-hidden max-[479px]:h-7";
+    const sharedClass = "h-6 justify-center overflow-hidden";
 
-    if (segment === "start") return `${sharedClass} -mx-2 rounded-l-md rounded-r-none text-[#062b20] max-[479px]:-mx-1`;
+    if (segment === "start") return `${sharedClass} -mx-2 rounded-l-[3px] rounded-r-none text-[#062b20] max-[479px]:-mx-1`;
     if (segment === "middle") return `${sharedClass} -mx-2 rounded-none text-transparent max-[479px]:-mx-1`;
-    if (segment === "end") return `${sharedClass} -mx-2 rounded-l-none rounded-r-md text-transparent max-[479px]:-mx-1`;
-    return `${sharedClass} rounded-md text-[#062b20]`;
+    if (segment === "end") return `${sharedClass} -mx-2 rounded-l-none rounded-r-[3px] text-transparent max-[479px]:-mx-1`;
+    return "h-6 justify-center overflow-hidden rounded-[3px] text-[#062b20] max-[479px]:h-auto max-[479px]:min-h-4";
 }
 
 function createMonthDays(year: number, month: number): CalendarDay[] {

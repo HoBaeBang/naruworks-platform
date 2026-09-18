@@ -25,6 +25,7 @@ export function CalendarClientPage() {
   const searchParams = useSearchParams();
   const today = useMemo(() => startOfDay(new Date()), []);
   const view = parseView(searchParams.get("view"));
+  const mobileWeekLayout = searchParams.get("weekLayout") === "grid" ? "grid" : "agenda";
   const year = getPositiveNumber(searchParams.get("year"), today.getFullYear());
   const month = getPositiveNumber(searchParams.get("month"), today.getMonth() + 1);
   const navigationDate = getDate(
@@ -148,7 +149,7 @@ export function CalendarClientPage() {
             )}
             {canRenderCalendar && view === "week" && (
               <div className="max-[479px]:-mx-6">
-                <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />
+                <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} mobileLayout={mobileWeekLayout} />
               </div>
             )}
             {canRenderCalendar && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}

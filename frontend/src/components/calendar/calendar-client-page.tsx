@@ -146,7 +146,11 @@ export function CalendarClientPage() {
                 <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />
               </div>
             )}
-            {canRenderCalendar && view === "week" && <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+            {canRenderCalendar && view === "week" && (
+              <div className="max-[479px]:-mx-6">
+                <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />
+              </div>
+            )}
             {canRenderCalendar && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
             {canRenderCalendar && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
           </div>

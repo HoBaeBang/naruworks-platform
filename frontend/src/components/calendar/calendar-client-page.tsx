@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarEventCreateModal } from "@/components/calendar/calendar-event-create-modal";
 import { CalendarEventEditModal } from "@/components/calendar/calendar-event-edit-modal";
 import { CalendarExternalEventDetailModal } from "@/components/calendar/calendar-external-event-detail-modal";
@@ -22,6 +22,7 @@ import type { CalendarDayMetadata } from "@/types/calendar-day-metadata";
 type CalendarView = "year" | "month" | "week" | "day";
 
 export function CalendarClientPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const today = useMemo(() => startOfDay(new Date()), []);
   const view = parseView(searchParams.get("view"));
@@ -121,9 +122,9 @@ export function CalendarClientPage() {
               {rangeLabel(view, range.from, range.to)}
             </div>
             <div className="flex items-center gap-2">
-              <CalendarNavLink label="←" ariaLabel="이전 기간" href={getNavigationHref(view, year, month, navigationDate, -1)} />
-              <CalendarNavLink label="오늘" ariaLabel="오늘" href={getTodayHref(view, today)} />
-              <CalendarNavLink label="→" ariaLabel="다음 기간" href={getNavigationHref(view, year, month, navigationDate, 1)} />
+              <CalendarNavLink label="←" ariaLabel="이전 기간" href={getNavigationHref(view, year, month, navigationDate, -1, mobileWeekLayout)} />
+              <CalendarNavLink label="오늘" ariaLabel="오늘" href={getTodayHref(view, today, mobileWeekLayout)} />
+              <CalendarNavLink label="→" ariaLabel="다음 기간" href={getNavigationHref(view, year, month, navigationDate, 1, mobileWeekLayout)} />
             </div>
           </div>
         </header>
@@ -142,17 +143,24 @@ export function CalendarClientPage() {
           <div>
             {isLoading && <CalendarMessage message="일정을 불러오는 중입니다." />}
             {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
-            {canRenderCalendar && view === "month" && (
-              <div className="max-[479px]:-mx-6">
-                <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />
-              </div>
+            {canRenderCalendar && view !== "year" && (
+              <MobileCalendarSwipeArea
+                onPrevious={() => router.push(getNavigationHref(view, year, month, navigationDate, -1, mobileWeekLayout))}
+                onNext={() => router.push(getNavigationHref(view, year, month, navigationDate, 1, mobileWeekLayout))}
+              >
+                {view === "month" && (
+                  <div className="max-[479px]:-mx-6">
+                    <CalendarMonthView year={year} month={month} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} selectedDate={selectedDate} />
+                  </div>
+                )}
+                {view === "week" && (
+                  <div className="max-[479px]:-mx-6">
+                    <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} mobileLayout={mobileWeekLayout} />
+                  </div>
+                )}
+                {view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
+              </MobileCalendarSwipeArea>
             )}
-            {canRenderCalendar && view === "week" && (
-              <div className="max-[479px]:-mx-6">
-                <CalendarWeekView anchorDate={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} mobileLayout={mobileWeekLayout} />
-              </div>
-            )}
-            {canRenderCalendar && view === "day" && <CalendarDayView date={navigationDate} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
             {canRenderCalendar && view === "year" && <CalendarYearView year={year} events={visibleEvents} dayMetadataByDate={dayMetadataByDate} />}
           </div>
         </div>
@@ -163,6 +171,38 @@ export function CalendarClientPage() {
         {invitationToken && <CalendarInvitationJoinModal token={invitationToken} closeHref={calendarHref} />}
       </section>
     </main>
+  );
+}
+
+function MobileCalendarSwipeArea({ children, onPrevious, onNext }: { children: ReactNode; onPrevious: () => void; onNext: () => void }) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  return (
+    <div
+      className="touch-pan-y"
+      onTouchStart={(event) => {
+        if (window.innerWidth > 479) return;
+        const touch = event.touches[0];
+        touchStart.current = { x: touch.clientX, y: touch.clientY };
+      }}
+      onTouchCancel={() => {
+        touchStart.current = null;
+      }}
+      onTouchEnd={(event) => {
+        if (!touchStart.current || window.innerWidth > 479) return;
+
+        const touch = event.changedTouches[0];
+        const horizontalDistance = touch.clientX - touchStart.current.x;
+        const verticalDistance = touch.clientY - touchStart.current.y;
+        touchStart.current = null;
+
+        if (Math.abs(horizontalDistance) < 56 || Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+        if (horizontalDistance < 0) onNext();
+        else onPrevious();
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -182,9 +222,10 @@ function CalendarNavLink({ label, ariaLabel, href }: { label: string; ariaLabel:
 
 function getViewRange(view: CalendarView, year: number, month: number, date: Date) { if (view === "year") { return { from: new Date(year, 0, 1), to: new Date(year + 1, 0, 1) }; } if (view === "month") { const from = new Date(year, month - 1, 1); return { from, to: new Date(year, month, 1) }; } if (view === "week") { const from = new Date(date); from.setDate(date.getDate() - date.getDay()); const to = new Date(from); to.setDate(from.getDate() + 7); return { from, to }; } const from = startOfDay(date); const to = new Date(from); to.setDate(from.getDate() + 1); return { from, to }; }
 function getMetadataRange(view: CalendarView, year: number, month: number, range: { from: Date; to: Date }) { if (view !== "month") return { from: range.from, to: addDays(range.to, -1) }; const firstDay = new Date(year, month - 1, 1); const from = new Date(firstDay); from.setDate(firstDay.getDate() - firstDay.getDay()); return { from, to: addDays(from, 41) }; }
-function getNavigationHref(view: CalendarView, year: number, month: number, date: Date, offset: -1 | 1) { const target = new Date(date); if (view === "year") { return getCalendarHref(view, year + offset, month, target); } if (view === "month") { target.setMonth(target.getMonth() + offset); return getCalendarHref(view, target.getFullYear(), target.getMonth() + 1, target); } target.setDate(target.getDate() + (view === "week" ? offset * 7 : offset)); return getCalendarHref(view, target.getFullYear(), target.getMonth() + 1, target); }
-function getTodayHref(view: CalendarView, today: Date) { return getCalendarHref(view, today.getFullYear(), today.getMonth() + 1, today); }
+function getNavigationHref(view: CalendarView, year: number, month: number, date: Date, offset: -1 | 1, mobileWeekLayout: "agenda" | "grid") { const target = new Date(date); if (view === "year") { return getCalendarHref(view, year + offset, month, target); } if (view === "month") { target.setMonth(target.getMonth() + offset); return getCalendarHref(view, target.getFullYear(), target.getMonth() + 1, target); } target.setDate(target.getDate() + (view === "week" ? offset * 7 : offset)); return withMobileWeekLayout(getCalendarHref(view, target.getFullYear(), target.getMonth() + 1, target), view, mobileWeekLayout); }
+function getTodayHref(view: CalendarView, today: Date, mobileWeekLayout: "agenda" | "grid") { return withMobileWeekLayout(getCalendarHref(view, today.getFullYear(), today.getMonth() + 1, today), view, mobileWeekLayout); }
 function getCalendarHref(view: CalendarView, year: number, month: number, date: Date) { if (view === "year") return `/calendar?view=year&year=${year}`; return view === "month" ? `/calendar?view=month&year=${year}&month=${month}` : `/calendar?view=${view}&date=${formatDate(date)}`; }
+function withMobileWeekLayout(href: string, view: CalendarView, mobileWeekLayout: "agenda" | "grid") { return view === "week" && mobileWeekLayout === "grid" ? `${href}&weekLayout=grid` : href; }
 function parseView(value: string | null): CalendarView { return value === "year" || value === "week" || value === "day" ? value : "month"; }
 function getPositiveNumber(value: string | null, fallback: number) { const number = Number(value); return Number.isInteger(number) && number > 0 ? number : fallback; }
 function getDate(value: string | null, fallback: Date) { return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : fallback; }

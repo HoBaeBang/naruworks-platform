@@ -145,8 +145,8 @@ export function CalendarClientPage() {
             {error && <CalendarError error={error} onRetry={() => setReloadToken((token) => token + 1)} />}
             {canRenderCalendar && view !== "year" && (
               <MobileCalendarSwipeArea
-                onPrevious={() => router.push(getNavigationHref(view, year, month, navigationDate, -1, mobileWeekLayout))}
-                onNext={() => router.push(getNavigationHref(view, year, month, navigationDate, 1, mobileWeekLayout))}
+                onPrevious={() => router.push(getNavigationHref(view, year, month, navigationDate, -1, mobileWeekLayout), { scroll: false })}
+                onNext={() => router.push(getNavigationHref(view, year, month, navigationDate, 1, mobileWeekLayout), { scroll: false })}
               >
                 {view === "month" && (
                   <div className="max-[479px]:-mx-6">
@@ -218,7 +218,7 @@ function CalendarError({ error, onRetry }: { error: CalendarApiError; onRetry: (
 }
 
 function CalendarMessage({ message }: { message: string }) { return <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-6 py-12 text-center text-sm font-bold text-[var(--muted)]">{message}</section>; }
-function CalendarNavLink({ label, ariaLabel, href }: { label: string; ariaLabel: string; href: string }) { const isIconOnly = label !== "오늘"; return <Link href={href} aria-label={ariaLabel} className={["inline-flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]", isIconOnly ? "w-11 px-0" : "px-4"].join(" ")}>{label}</Link>; }
+function CalendarNavLink({ label, ariaLabel, href }: { label: string; ariaLabel: string; href: string }) { const isIconOnly = label !== "오늘"; return <Link href={href} scroll={false} aria-label={ariaLabel} className={["inline-flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-bold text-[var(--foreground)] transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]", isIconOnly ? "w-11 px-0" : "px-4"].join(" ")}>{label}</Link>; }
 
 function getViewRange(view: CalendarView, year: number, month: number, date: Date) { if (view === "year") { return { from: new Date(year, 0, 1), to: new Date(year + 1, 0, 1) }; } if (view === "month") { const from = new Date(year, month - 1, 1); return { from, to: new Date(year, month, 1) }; } if (view === "week") { const from = new Date(date); from.setDate(date.getDate() - date.getDay()); const to = new Date(from); to.setDate(from.getDate() + 7); return { from, to }; } const from = startOfDay(date); const to = new Date(from); to.setDate(from.getDate() + 1); return { from, to }; }
 function getMetadataRange(view: CalendarView, year: number, month: number, range: { from: Date; to: Date }) { if (view !== "month") return { from: range.from, to: addDays(range.to, -1) }; const firstDay = new Date(year, month - 1, 1); const from = new Date(firstDay); from.setDate(firstDay.getDate() - firstDay.getDay()); return { from, to: addDays(from, 41) }; }

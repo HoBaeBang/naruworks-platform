@@ -43,6 +43,10 @@ services:
       NARU_GOOGLE_CALENDAR_SYNC_INITIAL_DELAY: ${NARU_GOOGLE_CALENDAR_SYNC_INITIAL_DELAY:-PT1M}
       NARU_GOOGLE_CALENDAR_SYNC_FIXED_DELAY: ${NARU_GOOGLE_CALENDAR_SYNC_FIXED_DELAY:-PT30M}
       NARU_INITIAL_ADMIN_EMAIL: ${NARU_INITIAL_ADMIN_EMAIL:-}
+      NARU_DRIVE_S3_ENDPOINT: ${NARU_DRIVE_S3_ENDPOINT:-http://rustfs:9000}
+      NARU_DRIVE_S3_BUCKET: ${NARU_DRIVE_S3_BUCKET:-naru-drive}
+      NARU_DRIVE_S3_ACCESS_KEY: ${NARU_DRIVE_S3_ACCESS_KEY:-}
+      NARU_DRIVE_S3_SECRET_KEY: ${NARU_DRIVE_S3_SECRET_KEY:-}
     ports:
       - "8081:8080"
     depends_on:
@@ -72,5 +76,67 @@ services:
     depends_on:
       - frontend
 
+  rustfs-volume-permission:
+    image: alpine:3.22
+    container_name: naruworks-rustfs-volume-permission
+    restart: "no"
+    command: ["sh", "-ec", "chown -R 10001:10001 /data"]
+    volumes:
+      - naruworks-drive-data:/data
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.6
+    container_name: naruworks-rustfs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      rustfs-volume-permission:
+        condition: service_completed_successfully
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${NARU_DRIVE_S3_ACCESS_KEY:?NARU_DRIVE_S3_ACCESS_KEY is required}
+      RUSTFS_SECRET_KEY: ${NARU_DRIVE_S3_SECRET_KEY:?NARU_DRIVE_S3_SECRET_KEY is required}
+    ports:
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - naruworks-drive-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-ec",
+          "curl -fsS http://127.0.0.1:9000/health && curl -fsS http://127.0.0.1:9001/rustfs/console/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  rustfs-bucket-init:
+    image: amazon/aws-cli:2.36.44
+    container_name: naruworks-rustfs-bucket-init
+    restart: "no"
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${NARU_DRIVE_S3_ACCESS_KEY:?NARU_DRIVE_S3_ACCESS_KEY is required}
+      AWS_SECRET_ACCESS_KEY: ${NARU_DRIVE_S3_SECRET_KEY:?NARU_DRIVE_S3_SECRET_KEY is required}
+      AWS_DEFAULT_REGION: us-east-1
+      NARU_DRIVE_S3_BUCKET: ${NARU_DRIVE_S3_BUCKET:-naru-drive}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        endpoint=http://rustfs:9000
+        if ! aws --endpoint-url "$${endpoint}" s3api head-bucket --bucket "$${NARU_DRIVE_S3_BUCKET}" >/dev/null 2>&1; then
+          aws --endpoint-url "$${endpoint}" s3api create-bucket --bucket "$${NARU_DRIVE_S3_BUCKET}"
+        fi
+
 volumes:
   naruworks-postgres-data:
+  naruworks-drive-data:

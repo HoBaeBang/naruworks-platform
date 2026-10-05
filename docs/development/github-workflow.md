@@ -4,6 +4,8 @@
 
 NaruWorks의 모든 변경을 작은 이슈와 Pull Request 단위로 추적한다. 구현 의도, 리뷰, 자동 검증, 배포 단서를 GitHub에 남겨 기능이 늘어난 뒤에도 변경의 맥락을 확인할 수 있게 한다.
 
+다른 세션이 실제 GitHub 작업을 바로 이어야 할 때는 [GitHub 작업 런북](git-github-session-runbook.md)의 순서와 PR 본문 형식을 기준으로 한다.
+
 ## 브랜치 전략
 
 ```text

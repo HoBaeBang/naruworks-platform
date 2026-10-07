@@ -6,7 +6,9 @@ Naru Calendar는 NaruWorks 회원의 개인·공유 일정을 관리하고, 선�
 
 | 문서 | 역할 |
 | --- | --- |
+| [ERD](erd.md) | 현재 Flyway migration 기준의 테이블·컬럼·FK·제약·index |
 | [도메인 모델](domain-model.md) | 내부·공유·Google 외부 일정의 데이터 경계와 권한 |
+| [반복 일정·날짜 메타데이터](recurrence-and-day-metadata.md) | 반복 회차, 음력, 공휴일, 기간 일정의 계산 기준 |
 | [API 계약](api-contract.md) | 현재 backend endpoint와 권한·응답 범위 |
 | [Google Calendar 연동](google-calendar-integration.md) | OAuth, 다중 계정, 동기화, 연결 해제 정책 |
 | [화면·UX 정책](ux-policy.md) | 연·월·주·일 보기, 모바일 정보 밀도, 스와이프 기준 |
@@ -32,5 +34,5 @@ Google Calendar
 
 - Calendar 자체의 정책과 API는 이 디렉터리에 둔다.
 - 로그인·회원·세션의 공통 정책은 `docs/architecture`와 프로젝트 운영 메모리에 둔다.
-- 전체 서비스의 실제 테이블 관계는 [관계 ERD](../../specs/erd-relations.md)를 함께 확인한다.
+- 이 서비스의 현재 테이블 구조는 [Calendar ERD](erd.md)를 기준으로 한다. 기존 [공통 관계 ERD](../../specs/erd-relations.md)는 서비스 분리 전의 참고·이력 문서다.
 - 특정 변경의 학습용 설명은 `docs/change-explanations/`에 보존한다.

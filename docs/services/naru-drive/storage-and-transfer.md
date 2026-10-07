@@ -58,7 +58,7 @@ members/{ownerMemberId}/files/{driveEntryId}/{randomUuid}
 | 파일 형식 | 허용 목록 없이 시작 | 실행 파일·위험 형식 차단은 업로드 구현 이슈에서 결정 |
 | 파일명 | 최대 255자, 빈 이름 불가 | 경로 구분자와 제어 문자는 거절 |
 
-MVP quota는 `PENDING`과 `AVAILABLE` 파일의 `size_bytes` 합으로 판단한다. 업로드 중단으로 `PENDING`이 남으면 별도 정리 job이 회수한다.
+MVP quota는 `PENDING`과 `AVAILABLE` 파일의 `size_bytes` 합으로 판단한다. 업로드 중단으로 `PENDING`이 남으면 `upload_requested_at`을 기준으로 별도 정리 job이 예약 용량과 RustFS 객체를 회수한다.
 
 ## 직접 업로드 전환 조건
 

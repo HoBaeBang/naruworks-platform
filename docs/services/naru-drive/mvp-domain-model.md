@@ -15,6 +15,7 @@
 ## ERD
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f8fafc', 'primaryTextColor': '#0f172a', 'primaryBorderColor': '#64748b', 'lineColor': '#64748b', 'tertiaryColor': '#f8fafc'}}}%%
 erDiagram
     MEMBERS ||--o{ DRIVE_ENTRIES : owns
     DRIVE_ENTRIES ||--o| DRIVE_FILES : describes_file
@@ -43,6 +44,10 @@ erDiagram
         varchar sha256 "nullable"
         varchar upload_status "PENDING | AVAILABLE | FAILED"
     }
+
+    style MEMBERS fill:#f8fafc,stroke:#64748b,color:#0f172a
+    style DRIVE_ENTRIES fill:#f8fafc,stroke:#64748b,color:#0f172a
+    style DRIVE_FILES fill:#f8fafc,stroke:#64748b,color:#0f172a
 ```
 
 `DRIVE_ENTRIES.parent_id`는 같은 테이블의 `id`를 참조한다. `parent_id = NULL`은 특정 회원의 논리적 루트이며, 실제 “내 Drive” 폴더 행은 만들지 않는다.

@@ -30,9 +30,9 @@ erDiagram
         bigint parent_id FK "nullable: personal root"
         varchar entry_type "FOLDER | FILE"
         varchar name
-        timestamptz deleted_at "nullable: trash state"
-        timestamptz created_at
-        timestamptz updated_at
+        timestamp deleted_at "nullable: trash state"
+        timestamp created_at
+        timestamp updated_at
     }
 
     DRIVE_FILES {
@@ -42,7 +42,7 @@ erDiagram
         varchar content_type "nullable"
         varchar sha256 "nullable"
         varchar upload_status "PENDING | AVAILABLE | FAILED"
-        timestamptz upload_requested_at
+        timestamp upload_started_at
     }
 
 ```
@@ -62,9 +62,9 @@ erDiagram
 | `parent_id` | `BIGINT` | 가능 | `NULL` | 상위 폴더. `NULL`이면 소유자의 루트 |
 | `entry_type` | `VARCHAR(20)` | 불가 | 없음 | `FOLDER` 또는 `FILE` |
 | `name` | `VARCHAR(255)` | 불가 | 없음 | 화면에 표시하는 파일·폴더 이름 |
-| `deleted_at` | `TIMESTAMPTZ` | 가능 | `NULL` | 휴지통 이동 시각. `NULL`이면 활성 상태 |
-| `created_at` | `TIMESTAMPTZ` | 불가 | `CURRENT_TIMESTAMP` | 생성 시각 |
-| `updated_at` | `TIMESTAMPTZ` | 불가 | `CURRENT_TIMESTAMP` | 이름·부모 변경 시각 |
+| `deleted_at` | `TIMESTAMP` | 가능 | `NULL` | 휴지통 이동 시각. `NULL`이면 활성 상태 |
+| `created_at` | `TIMESTAMP` | 불가 | `CURRENT_TIMESTAMP` | 생성 시각 |
+| `updated_at` | `TIMESTAMP` | 불가 | `CURRENT_TIMESTAMP` | 이름·부모 변경 시각 |
 
 제약과 index:
 
@@ -93,7 +93,7 @@ INDEX: (owner_member_id, parent_id, name) WHERE deleted_at IS NULL
 | `content_type` | `VARCHAR(255)` | 가능 | `NULL` | 브라우저가 보낸 MIME 타입. 신뢰 경계는 별도 검증 |
 | `sha256` | `VARCHAR(64)` | 가능 | `NULL` | 향후 무결성 검증용 SHA-256 |
 | `upload_status` | `VARCHAR(20)` | 불가 | `PENDING` | `PENDING`, `AVAILABLE`, `FAILED` |
-| `upload_requested_at` | `TIMESTAMPTZ` | 불가 | `CURRENT_TIMESTAMP` | 업로드 예약 시각. 중단·실패 업로드 정리 기준 |
+| `upload_started_at` | `TIMESTAMP` | 불가 | `CURRENT_TIMESTAMP` | `PENDING` 메타데이터를 만들고 실제 업로드를 시작한 시각. 오래 멈춘 업로드 정리 기준 |
 
 제약과 index:
 
@@ -102,12 +102,12 @@ PK/FK: drive_entry_id -> drive_entries.id ON DELETE RESTRICT
 UNIQUE: storage_key
 CHECK: size_bytes >= 0
 CHECK: upload_status IN ('PENDING', 'AVAILABLE', 'FAILED')
-INDEX: (upload_status, upload_requested_at)
+INDEX: (upload_status, upload_started_at)
 ```
 
 `storage_key`는 DB의 `drive_entry_id`와 다른 책임을 가진다. `drive_entry_id`는 PostgreSQL의 파일 메타데이터를 찾는 내부 식별자이고, `storage_key`는 RustFS에서 실제 파일 바이트를 `PUT`, `GET`, `DELETE`할 때 필요한 물리 객체 주소다. 파일 이름 변경이나 폴더 이동 뒤에도 객체를 복사·이동하지 않도록 `storage_key`는 UUID 기반으로 고정한다. `UNIQUE(storage_key)`는 서로 다른 파일 entry가 실수로 같은 실제 객체를 가리키는 것을 막는다.
 
-`upload_status`만을 단독으로 index로 만들면 값 종류가 세 개뿐이라 효율이 낮다. 정리 배치가 실제로 찾는 대상은 “특정 상태이면서 오래된 업로드”이므로, `upload_status`와 `upload_requested_at`을 함께 둔 복합 index를 사용한다. PostgreSQL과 MySQL 등에서 같은 방식으로 사용할 수 있으며, 배치가 생기기 전에는 migration에 넣지 않고 해당 배치 이슈에서 추가한다. 30일 휴지통 정리 job과 별도로, 이 index는 중단된 업로드 객체·예약 용량을 더 이른 시간에 정리할 때 사용한다.
+`upload_status`만을 단독으로 index로 만들면 값 종류가 세 개뿐이라 효율이 낮다. 정리 배치가 실제로 찾는 대상은 “`PENDING` 상태이면서 오래 멈춘 업로드”이므로, `upload_status`와 `upload_started_at`을 함께 둔 복합 index를 사용한다. PostgreSQL과 MySQL 등에서 같은 방식으로 사용할 수 있으며, 배치가 생기기 전에는 migration에 넣지 않고 해당 배치 이슈에서 추가한다. 30일 휴지통 정리 job과 별도로, 이 index는 중단된 업로드 객체·예약 용량을 더 이른 시간에 정리할 때 사용한다.
 
 ## 권한 규칙
 

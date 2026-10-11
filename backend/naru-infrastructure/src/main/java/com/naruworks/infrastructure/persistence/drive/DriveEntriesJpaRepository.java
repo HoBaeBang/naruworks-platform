@@ -2,14 +2,14 @@ package com.naruworks.infrastructure.persistence.drive;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface DriveEntriesJpaRepository extends JpaRepository<DriveEntriesEntity, Long> {
 
-    Optional<DriveEntriesEntity> findByIdAndOwnerMemberIdAndDeletedAtIsNull(Long Id, Long ownerMemberId);
+    Optional<DriveEntriesEntity> findByIdAndOwnerMemberIdAndDeletedAtIsNull(Long id, Long ownerMemberId);
 
     @Query("""
     select entry
@@ -30,7 +30,7 @@ public interface DriveEntriesJpaRepository extends JpaRepository<DriveEntriesEnt
       entry.name asc
     """)
     List<DriveEntriesEntity> findActiveChildren(
-            Long ownerMemberId,
-            Long parentId
+            @Param("ownerMemberId") Long ownerMemberId,
+            @Param("parentId") Long parentId
     );
 }

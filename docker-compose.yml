@@ -32,9 +32,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-naruworks_local}
       POSTGRES_USER: ${POSTGRES_USER:-naruworks_local}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_password}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/google}
+      AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
+      AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}
+      AUTHENTIK_LOGIN_REDIRECT_URI: ${AUTHENTIK_LOGIN_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/authentik}
+      AUTHENTIK_ISSUER_URI: ${AUTHENTIK_ISSUER_URI:-https://idp.naruworks.com/application/o/naru-api/}
       GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID:-}
       GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET:-}
       GOOGLE_CALENDAR_REDIRECT_URI: ${GOOGLE_CALENDAR_REDIRECT_URI:-https://api.naruworks.com/api/calendar/integrations/google/callback}
@@ -64,6 +65,56 @@ services:
     depends_on:
       - backend
 
+  authentik-postgres:
+    image: postgres:16-alpine
+    container_name: naruworks-authentik-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${AUTHENTIK_PG_PASSWORD:?AUTHENTIK_PG_PASSWORD is required}
+    volumes:
+      - naruworks-authentik-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authentik -d authentik"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:2026.8.5
+    container_name: naruworks-authentik-server
+    restart: unless-stopped
+    command: server
+    environment: &authentik-env
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?AUTHENTIK_SECRET_KEY is required}
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_PG_PASSWORD}
+    ports:
+      - "127.0.0.1:${AUTHENTIK_HOST_PORT:-9100}:9000"
+    volumes:
+      - naruworks-authentik-data:/data
+    depends_on:
+      authentik-postgres:
+        condition: service_healthy
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:2026.8.5
+    container_name: naruworks-authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment: *authentik-env
+    volumes:
+      - naruworks-authentik-data:/data
+    depends_on:
+      authentik-postgres:
+        condition: service_healthy
+      # 같은 볼륨을 두 컨테이너가 동시에 처음 만들면 /data/media 링크 생성이 충돌하므로 server 생성 이후에 시작한다.
+      authentik-server:
+        condition: service_started
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: naruworks-cloudflared
@@ -74,3 +125,5 @@ services:
 
 volumes:
   naruworks-postgres-data:
+  naruworks-authentik-postgres-data:
+  naruworks-authentik-data:

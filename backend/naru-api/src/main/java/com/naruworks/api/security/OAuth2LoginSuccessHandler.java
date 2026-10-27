@@ -39,6 +39,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String providerUserId = oAuth2User.getAttribute("sub");
         String email = oAuth2User.getAttribute("email");
+        boolean emailVerified = Boolean.TRUE.equals(oAuth2User.getAttribute("email_verified"));
 
         Optional<Member> member = memberService.findAndUpdateExistingGoogleMember(
                 providerUserId
@@ -49,7 +50,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        if (hasPendingReferralCode(request) || isInitialAdminCandidate(email)) {
+        if (hasPendingReferralCode(request) || isInitialAdminCandidate(email, emailVerified)) {
             response.sendRedirect(frontendBaseUrl + "/join/terms");
             return;
         }
@@ -74,8 +75,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 && session.getAttribute(AuthSessionAttribute.PENDING_REFERRAL_CODE) != null;
     }
 
-    private boolean isInitialAdminCandidate(String email) {
-        return initialAdminPolicy.matches(email)
+    private boolean isInitialAdminCandidate(String email, boolean emailVerified) {
+        return emailVerified
+                && initialAdminPolicy.matches(email)
                 && memberService.hasNoMember();
     }
 }

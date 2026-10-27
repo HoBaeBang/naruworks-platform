@@ -162,13 +162,15 @@ Authentik은 별도 compose로 분리하지 않고 기존 `docker-compose.yml`�
 - Spring은 서버 앱이므로 `confidential` 클라이언트로 등록하고 Client Secret을 사용한다. 체험용으로 만든 `public` 클라이언트는 사용하지 않는다.
 - Redirect URI는 정확히 일치하는 주소만 허용한다(Strict). 로컬과 운영 주소를 각각 등록한다.
 - Google 소스는 검증된 이메일만 신뢰한다. 이메일로 계정을 자동 병합하는 정책은 사용하지 않는다.
+- 최초 관리자는 `NARU_INITIAL_ADMIN_EMAIL`과 이메일이 같은 사용자가 가입할 때 정해진다. Spring은 `email_verified` 클레임이 `true`일 때만 이 경로를 허용한다. Authentik의 기본 `email` 스코프 매핑은 `email_verified`를 항상 `false`로 내보내므로, 이메일을 Google 소스에서 가져온 사용자에게만 `true`를 내보내는 커스텀 스코프 매핑을 만들어 앱에 연결해야 한다. 이 설정 전에는 빈 DB에서 최초 관리자를 만들 수 없다. 회원이 한 명이라도 있으면 이 경로가 열리지 않는다.
+- Authentik의 셀프 가입(enrollment)과 사용자 자체 이메일 변경은 비활성화한다. 그렇지 않으면 임의의 이메일로 계정을 만들 수 있다.
 - 비밀번호 로그인은 비활성화하거나 관리자 비상 접근용으로만 남긴다.
 - 로그에 토큰과 Client Secret이 남지 않는지 확인한다.
 
 ## 9. 구현 순서
 
 1. 로컬에서 Authentik에 Google 소스를 연결하고, 로그인 화면에서 Google 버튼이 동작하는지 확인한다.
-2. Spring용 `confidential` 앱을 등록하고 Subject mode를 정한다.
+2. Spring용 `confidential` 앱을 등록하고 Subject mode를 정한다. 검증된 이메일만 `email_verified=true`로 내보내는 스코프 매핑을 연결하고 셀프 가입을 끈다.
 3. Spring 설정과 `AuthController` 리다이렉트를 바꾼다. 인증 관련 기존 테스트가 통과하는지 확인한다.
 4. OIDC 로그아웃을 적용하고 `AuthController` 로그아웃 동작 테스트를 추가한다.
 5. 로컬에서 기존 회원 이전 절차를 연습한다.

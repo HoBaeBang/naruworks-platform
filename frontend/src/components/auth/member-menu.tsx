@@ -76,10 +76,10 @@ export function MemberMenu() {
     setMessage(null);
 
     try {
-      await logoutMember();
+      const logoutUrl = await logoutMember();
       setMember(null);
       setIsOpen(false);
-      window.location.assign("/");
+      window.location.assign(logoutUrl ?? "/");
     } catch {
       setMessage("로그아웃하지 못했습니다. 다시 시도해주세요.");
     }

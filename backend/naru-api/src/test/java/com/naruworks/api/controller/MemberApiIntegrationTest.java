@@ -81,13 +81,14 @@ class MemberApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("로그아웃하면 현재 HTTP 세션을 종료한다")
+    @DisplayName("로그아웃하면 현재 HTTP 세션을 종료하고, IdP 설정이 없으면 로그아웃 URL은 비어 있다")
     void logout() throws Exception {
         MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/api/auth/logout")
                         .session(session))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoutUrl").isEmpty());
 
         assertThat(session.isInvalid()).isTrue();
     }

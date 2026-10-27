@@ -107,7 +107,7 @@ flowchart TB
 
 1. `application-*.properties`에 `registration.authentik.*`와 `provider.authentik.issuer-uri`를 추가한다. 스코프는 `openid,email,profile`이다. 환경변수 이름은 기존 방식에 맞춰 `AUTHENTIK_*`로 정한다.
 2. `AuthController`의 리다이렉트 경로 `/oauth2/authorization/google`을 `/oauth2/authorization/authentik`으로 바꾼다. `/api/auth/login`과 `/api/auth/google?ref=...` 두 곳이다. 초대 코드를 세션에 보관한 뒤 로그인으로 보내는 기존 흐름은 그대로 유지한다.
-3. 로그아웃: 현재 `POST /api/auth/logout`은 Spring 세션만 무효화한다. Authentik 세션까지 끊도록 OIDC 로그아웃(RP-initiated logout)을 적용한다. 사용자가 로그아웃한 뒤 같은 브라우저에서 다시 로그인하면 IdP에 남은 세션 때문에 비밀번호 없이 바로 로그인되는 문제를 막기 위해서다. 프런트는 백엔드가 알려주는 종료 주소로 이동하고, 로그아웃이 끝나면 홈 화면(`/`)으로 돌아온다. 이 주소는 Authentik 앱 설정의 허용된 로그아웃 후 리다이렉트 주소에도 등록한다.
+3. 로그아웃: 현재 `POST /api/auth/logout`은 Spring 세션만 무효화한다. Authentik 세션까지 끊도록 OIDC 로그아웃(RP-initiated logout)을 적용한다. 사용자가 로그아웃한 뒤 같은 브라우저에서 다시 로그인하면 IdP에 남은 세션 때문에 비밀번호 없이 바로 로그인되는 문제를 막기 위해서다. 프런트는 백엔드가 알려주는 종료 주소로 이동하고, 로그아웃이 끝나면 홈 화면(`/`)으로 돌아온다. 이 주소는 Authentik 앱의 Redirect URIs에 **Logout 종류**로 등록해야 한다. Authentik은 `post_logout_redirect_uri`를 Logout 종류로 등록된 주소에서만 찾고, 하나도 없으면 복귀 주소를 무시하고 기본 로그인 화면으로 보낸다. 같은 이유로 앱의 Invalidation flow는 로그아웃 단계가 있는 `default-invalidation-flow`로 지정한다. `default-provider-invalidation-flow`에는 로그아웃 단계가 없어 Authentik 세션이 끊기지 않는다. 이 설정은 로컬 Authentik에서 코드와 설정을 확인한 내용이고, 로그아웃 후 홈 화면으로 돌아오는 전체 흐름은 아직 브라우저에서 확인하지 못했다.
 4. `SecurityConfig`, `OAuth2LoginSuccessHandler`, `CurrentMemberResolver`, `AdminAuthorizationManager`는 `sub`로 회원을 조회하는 구조를 그대로 쓰므로 로직 변경이 없다.
 5. 프로필 이미지: 현재 `registerGoogleMember`가 `picture` 클레임을 사용한다. Authentik 기본 스코프가 이 클레임을 주지 않을 수 있으므로, 없을 때 `profile_image_url`이 `null`로 저장되어도 가입이 깨지지 않는지 확인한다. 필요하면 Authentik 스코프 매핑으로 추가한다.
 

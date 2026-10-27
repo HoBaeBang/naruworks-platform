@@ -17,6 +17,7 @@ public class ExternalApiLoggingInterceptor implements ClientHttpRequestIntercept
 
     static final String LOGGER_NAME = "naruworks.external-api";
     private static final Logger LOGGER = Logger.getLogger(LOGGER_NAME);
+    private static final String DIVIDER = "[EXTERNAL-API] " + "-".repeat(60);
 
     private final String provider;
 
@@ -44,12 +45,14 @@ public class ExternalApiLoggingInterceptor implements ClientHttpRequestIntercept
 
     private void log(Level level, HttpRequest request, String status, long startedAt, String error) {
         long elapsedMs = (System.nanoTime() - startedAt) / 1_000_000;
-        LOGGER.log(level, "[EXTERNAL-API] provider=" + provider
+        // 시작·끝 구분선을 한 레코드로 묶어, 동시에 찍히는 다른 로그와 섞이지 않게 한다.
+        LOGGER.log(level, DIVIDER + "\n[EXTERNAL-API] provider=" + provider
                 + " method=" + request.getMethod()
                 + " url=" + safeUrl(request.getURI())
                 + " status=" + status
                 + " elapsedMs=" + elapsedMs
-                + (error == null ? "" : " error=" + error));
+                + (error == null ? "" : " error=" + error)
+                + "\n" + DIVIDER);
     }
 
     private Level levelOf(int status) {

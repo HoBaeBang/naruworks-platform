@@ -59,10 +59,22 @@ class ExternalApiLoggingInterceptorTest {
 
         assertThat(records).hasSize(1);
         assertThat(records.get(0).getLevel()).isEqualTo(Level.INFO);
-        assertThat(records.get(0).getMessage()).matches(
+        assertThat(records.get(0).getMessage().lines().toList().get(1)).matches(
                 "\\[EXTERNAL-API\\] provider=GOOGLE_CALENDAR method=POST "
                         + "url=https://oauth2.googleapis.com/token status=200 elapsedMs=\\d+"
         );
+    }
+
+    @Test
+    @DisplayName("한 번의 호출 기록은 시작과 끝에 구분선을 둔 한 덩어리로 남아 다른 로그와 섞이지 않는다")
+    void logsWithDividers() throws Exception {
+        call("POST", "https://oauth2.googleapis.com/token", HttpStatus.OK);
+
+        List<String> lines = records.get(0).getMessage().lines().toList();
+
+        assertThat(lines).hasSize(3);
+        assertThat(lines.get(0)).isEqualTo("[EXTERNAL-API] " + "-".repeat(60));
+        assertThat(lines.get(2)).isEqualTo(lines.get(0));
     }
 
     @Test

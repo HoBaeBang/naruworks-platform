@@ -8,6 +8,7 @@ import com.naruworks.core.model.GoogleCalendarOAuthToken;
 import com.naruworks.core.model.GoogleCalendarEvent;
 import com.naruworks.core.model.GoogleCalendarSyncResult;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
+import com.naruworks.infrastructure.http.ExternalApiLoggingInterceptor;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +50,9 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     );
 
     private final GoogleCalendarOAuthProperties properties;
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient = RestClient.builder()
+            .requestInterceptor(new ExternalApiLoggingInterceptor("GOOGLE_CALENDAR"))
+            .build();
 
     @Override
     public String createAuthorizationUrl(String state) {

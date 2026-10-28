@@ -28,7 +28,7 @@ class OidcLogoutUrlResolverTest {
                     "id-token-value",
                     Instant.now(),
                     Instant.now().plusSeconds(60),
-                    Map.of("sub", "authentik-sub")
+                    Map.of("sub", "idp-sub")
             )
     );
 
@@ -37,11 +37,11 @@ class OidcLogoutUrlResolverTest {
     void resolvesLogoutUrl() {
         OidcLogoutUrlResolver resolver = resolverWith(
                 registration(Map.of("end_session_endpoint",
-                        "https://idp.naruworks.com/application/o/naru-api/end-session/"))
+                        "https://idp.naruworks.com/realms/naruworks/protocol/openid-connect/logout"))
         );
 
         assertThat(resolver.resolve(oidcUser)).hasValue(
-                "https://idp.naruworks.com/application/o/naru-api/end-session/"
+                "https://idp.naruworks.com/realms/naruworks/protocol/openid-connect/logout"
                         + "?id_token_hint=id-token-value"
                         + "&post_logout_redirect_uri=https://app.naruworks.com/"
         );
@@ -86,11 +86,11 @@ class OidcLogoutUrlResolverTest {
     }
 
     private ClientRegistration registration(Map<String, Object> configurationMetadata) {
-        return ClientRegistration.withRegistrationId("authentik")
+        return ClientRegistration.withRegistrationId("idp")
                 .clientId("client-id")
                 .clientSecret("client-secret")
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://api.naruworks.com/login/oauth2/code/authentik")
+                .redirectUri("https://api.naruworks.com/login/oauth2/code/idp")
                 .authorizationUri("https://idp.naruworks.com/application/o/authorize/")
                 .tokenUri("https://idp.naruworks.com/application/o/token/")
                 .providerConfigurationMetadata(configurationMetadata)

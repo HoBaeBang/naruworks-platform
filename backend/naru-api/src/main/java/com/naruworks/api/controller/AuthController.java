@@ -38,7 +38,7 @@ public class AuthController {
 
     @GetMapping("/login")
     public void login(HttpServletResponse response) throws IOException {
-        response.sendRedirect("/oauth2/authorization/authentik");
+        response.sendRedirect("/oauth2/authorization/idp");
     }
 
     @PostMapping("/logout")
@@ -69,7 +69,7 @@ public class AuthController {
             request.getSession(true)
                     .setAttribute(AuthSessionAttribute.PENDING_REFERRAL_CODE, referralCode);
 
-            response.sendRedirect("/oauth2/authorization/authentik");
+            response.sendRedirect("/oauth2/authorization/idp");
         } catch (IllegalArgumentException exception) {
             response.sendRedirect(frontendBaseUrl + "/join?error=invalid-referral-code");
         }

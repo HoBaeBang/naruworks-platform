@@ -11,6 +11,12 @@ public interface DriveEntriesJpaRepository extends JpaRepository<DriveEntriesEnt
 
     Optional<DriveEntriesEntity> findByIdAndOwnerMemberIdAndDeletedAtIsNull(Long id, Long ownerMemberId);
 
+    boolean existsByOwnerMemberIdAndParentIdAndNameAndDeletedAtIsNull(
+            Long ownerMemberId,
+            Long parentId,
+            String name
+    );
+
     /**
      * 소유자의 활성 항목 중 지정한 부모의 바로 아래 항목을 조회한다.
      * parentId가 없으면 루트 항목을, 있으면 해당 폴더의 자식 항목을 조회하며 폴더를 파일보다 먼저 이름순으로 정렬한다.

@@ -134,6 +134,30 @@ class DriveEntriesJpaRepositoryTest {
         assertThat(names).containsExactly("photo.jpg");
     }
 
+    @Test
+    @DisplayName("활성 항목 존재 검사는 루트와 하위 폴더를 구분하고 휴지통 항목은 제외한다")
+    void existsActiveByOwnerMemberIdAndParentIdAndName() {
+        Long travelFolderId = saveEntry(
+                OWNER_A,
+                "travel",
+                DriveEntryType.FOLDER,
+                null,
+                null
+        ).toDomain().getId();
+        saveEntry(OWNER_A, "photo.jpg", DriveEntryType.FILE, travelFolderId, null);
+        saveEntry(OWNER_A, "photo.jpg", DriveEntryType.FILE, null, LocalDateTime.now());
+
+        assertThat(driveEntriesJpaRepository.existsByOwnerMemberIdAndParentIdAndNameAndDeletedAtIsNull(
+                OWNER_A, travelFolderId, "photo.jpg"
+        )).isTrue();
+        assertThat(driveEntriesJpaRepository.existsByOwnerMemberIdAndParentIdAndNameAndDeletedAtIsNull(
+                OWNER_A, null, "photo.jpg"
+        )).isFalse();
+        assertThat(driveEntriesJpaRepository.existsByOwnerMemberIdAndParentIdAndNameAndDeletedAtIsNull(
+                2L, travelFolderId, "photo.jpg"
+        )).isFalse();
+    }
+
     private DriveEntriesEntity saveEntry(
             Long ownerMemberId,
             String name,

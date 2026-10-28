@@ -6,6 +6,13 @@
 - private `naru-drive` 버킷 자동 생성
 - Docker named volume 기반 테스트 저장소
 - S3 endpoint와 credential 환경 변수 자리
+- #47 Drive migration, 도메인 모델, persistence adapter와 repository 테스트
+
+## 현재 구현 이슈
+
+- #49 개인 Drive의 목록 조회와 폴더 생성 API
+  - `GET /api/drive/entries`, `POST /api/drive/folders`
+  - 소유권·상위 폴더·동명 이름 검증과 Service·Controller 테스트
 
 ## 다음 구현 이슈
 

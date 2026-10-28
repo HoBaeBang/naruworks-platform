@@ -1,5 +1,9 @@
 # 중앙 인증(IdP) 도입 설계: Authentik + OIDC
 
+> **상태 (2026-10-28): Authentik은 폐기되고 Keycloak으로 교체 중이다 (이슈 #58).**
+> Authentik은 로그인 흐름 화면이 JavaScript로 이동하는 방식이라 사용자에게 "Welcome to authentik! Loading" 화면이 나갈 때와 Google에서 돌아올 때 두 번 보인다. 요건 R1(사용자에게 IdP 화면이 보이면 안 된다)을 충족하지 못해 폐기했다(15장). Keycloak은 로컬 시험에서 R1과 R2를 충족했다.
+> 이 문서의 1~12장은 Authentik 기준의 원래 설계이고, 앱이 표준 OIDC만 쓰는 구조(3, 5, 6, 8장)는 IdP가 바뀌어도 유효하다. Keycloak 기준 갱신은 이슈 #58에서 진행한다. 13~18장은 도입 과정에서 확인한 내용과 인계 메모다.
+
 ## 1. 목적과 결정
 
 NaruWorks는 Calendar, Drive에 이어 여러 서비스를 추가할 예정이고, 일부는 오픈소스를 그대로 붙여 운영한다. 서비스마다 로그인 방식이 달라지면 사용자는 계정을 따로 관리해야 하고, 서비스를 추가할 때마다 인증 문제를 다시 풀어야 한다.
@@ -14,6 +18,13 @@ NaruWorks는 Calendar, Drive에 이어 여러 서비스를 추가할 예정이�
 ```
 
 이 문서는 첫 단계로 기존 Spring 서비스(`naru-api`)의 Google 직접 로그인을 Authentik 경유 로그인으로 바꾸는 범위를 다룬다. 다른 서비스(Node 기반 오픈소스 등)를 붙이는 방법은 같은 패턴의 반복이므로 11장에서 방향만 정리한다.
+
+### 추가된 필수 요건
+
+도입 후 서비스 관점에서 다음 요건이 추가되었고, 상세는 14장에 있다. 이 요건을 충족하지 못하면 IdP 선택을 다시 평가한다.
+
+- 사용자에게 Authentik 로그인 화면이 보이면 안 된다.
+- Authentik 설정은 저장소의 파일로 재현할 수 있어야 한다.
 
 ### 결정하지 않은 것
 
@@ -63,7 +74,7 @@ flowchart TB
 ```text
 1. 사용자가 로그인을 시작한다. (GET /api/auth/login 또는 초대 링크의 /api/auth/google?ref=...)
 2. Spring이 사용자를 Authentik의 authorize 주소로 보낸다.
-3. Authentik이 로그인 화면을 보여주고 사용자가 Google로 로그인한다.
+3. Authentik이 사용자를 곧바로 Google 로그인으로 보낸다. Authentik 자체 로그인 화면은 보이지 않는 것이 목표 흐름이다(14장 R1). 로컬에서 수동 설정으로 확인했고 저장소의 설정 파일로는 아직 재현되지 않는다(15장).
 4. Authentik이 사용자를 Spring의 콜백 주소로 되돌리며 일회용 code를 전달한다.
 5. Spring이 code를 토큰으로 교환하고, ID 토큰의 sub, email, name으로 사용자를 확인한다.
 6. 기존 OAuth2LoginSuccessHandler가 회원 상태에 따라 화면을 분기하고 서버 세션을 만든다.
@@ -135,6 +146,8 @@ flowchart TB
 최초 관리자는 `NARU_INITIAL_ADMIN_EMAIL`과 `hasNoMember()` 조건으로 결정된다. 이미 관리자 회원이 존재하므로 이전이 잘못되면 로그인할 수 없고 신규 가입 경로로도 관리자가 복구되지 않는다. 이전 직전에 해당 행의 기존 `provider_user_id`를 기록해 두어 되돌릴 수 있게 한다.
 
 ## 7. 운영 구성
+
+이 장은 운영 구성의 방향을 기록한 것이다. 14장의 필수 요건이 충족되기 전에는 운영 반영을 진행하지 않는다.
 
 ### 같은 compose에 넣는 결정
 
@@ -212,3 +225,102 @@ Litpage는 README 기준으로 OIDC 지원 여부를 확인하지 못했다. 도
 - Authentik 스코프에서 `picture`를 제공할지 여부
 - 이미지 태그 버전 고정 값과 업그레이드 주기
 - `AuthProvider` 이름 정리 작업의 시점
+- 14장 필수 요건의 충족 여부와 IdP 재평가 여부는 이슈 #56에서 판단한다. 18장에 알려진 부채를 모았다.
+
+## 13. 진행 상태 (2026-10-27 기준)
+
+### 머지된 작업
+
+- #51: Authentik 도입 설계, `naru-api`의 OIDC 로그인과 로그아웃, 홈서버 compose의 Authentik 서비스
+- #53: 만료된 Google Calendar 연동이 서버 오류(500) 대신 재연결 안내(409)를 반환
+- #55: 외부 API 호출을 `[EXTERNAL-API]` 한 덩어리 로그로 기록
+
+### 로컬에서 확인한 것
+
+- Authentik을 경유한 Google 로그인과 Spring 콜백이 동작한다.
+- 기존 회원의 `provider_user_id`를 Authentik 사용자 UUID로 바꾸면 기존 회원으로 로그인된다. 로컬 회원은 2명이었다.
+- 최초 관리자 가입은 `email_verified`가 `true`인 이메일에서만 허용된다(코드와 테스트).
+
+### 로컬에서 확인하지 못한 것
+
+- 로그아웃 후 홈 화면(`http://localhost:3000/`)으로 돌아오는 전체 흐름. 설정은 고쳤지만 브라우저에서 끝까지 확인하지 못했다.
+- 로그아웃 후 다시 로그인할 때 Google 선택을 다시 묻는지.
+
+### 이번 작업에서 알게 된 것
+
+- Spring의 토큰 요청이 평문 HTTP에서 HTTP/2 업그레이드(`Upgrade: h2c`)를 시도하면 Authentik이 요청 본문을 읽지 못해 `400`을 반환한다. 토큰 요청을 HTTP/1.1로 고정해서 해결했다(`OAuth2TokenClientConfig`). 로컬의 `http://localhost`에서 생기는 현상이고 운영(HTTPS)에서도 생기는지는 확인하지 못했다.
+- 앱의 Invalidation flow가 `default-provider-invalidation-flow`이면 로그아웃 단계가 없어 Authentik 세션이 끊기지 않는다. `default-invalidation-flow`를 써야 한다.
+- `post_logout_redirect_uri`는 Redirect URIs 중 **Logout 종류**로 등록된 주소에서만 인정된다.
+- Authentik의 기본 `email` 스코프 매핑은 `email_verified`를 항상 `false`로 내보낸다. 검증된 이메일에만 `true`를 내보내는 커스텀 매핑(`email-verified`)이 필요하다.
+- Google 소스로 처음 로그인한 사용자는 Authentik에서 external 유형으로 만들어지고, external 사용자는 Authentik 자체 화면에 들어갈 수 없다. 앱 로그인에는 문제가 없다.
+
+## 14. 추가된 필수 요건과 재평가 기준
+
+| 번호 | 요건 | 이유 |
+| --- | --- | --- |
+| R1 | 사용자에게 Authentik 로그인 화면이 보이지 않는다. 로그인을 누르면 곧바로 Google 로그인으로 이동한다. | 사용자는 IdP의 존재를 알 필요가 없다. |
+| R2 | Authentik의 앱, 공급자, 스코프 매핑, 로그인 흐름, 소셜 소스, 브랜딩이 저장소의 파일로 재현된다. | 클릭으로 만든 설정은 운영에서 재현할 수 없고 변경 이력도 남지 않는다. |
+| R3 | 관리자가 비밀번호로 들어갈 수 있는 별도 경로가 유지된다. | Google 연동이 고장 났을 때 관리자가 복구할 수 있어야 한다. |
+| R4 | 비밀값은 저장소에 두지 않고 환경 변수로 주입한다. | 보안. |
+
+R1이나 R2를 충족할 수 없으면 IdP를 다시 선택한다. 이 경우 후보는 Keycloak, Zitadel 등이다. Keycloak은 로그인 힌트(`kc_idp_hint`)로 소셜 로그인으로 곧바로 이동할 수 있다고 알려져 있지만 이 프로젝트에서 검증하지 않았다. 앱 쪽이 표준 OIDC 설정만 사용하므로 IdP를 바꿔도 Spring 변경은 설정값 수준이다(4장).
+
+## 15. 검증한 내용
+
+### R1: 로그인 화면 생략은 서버 쪽으로는 되지만, 화면은 여전히 보인다 (정정)
+
+아래 첫 번째 확인은 서버 이벤트 기록만 본 것이었다. 브라우저로 직접 보니 **Authentik의 "Welcome to authentik! Loading" 화면이 사용자에게 보인다.** R1은 충족되지 않았다.
+
+- 원인: Authentik의 로그인 흐름 화면은 서버가 HTTP 302로 넘기는 방식이 아니라, 먼저 흐름 화면(스피너가 있는 HTML)을 내려 준 뒤 브라우저의 JavaScript가 API로 단계를 조회하고 그때 소스로 이동하는 방식이다. 확인한 내용: 앱의 authorize 요청은 `302 → /if/flow/naru-google-login/`이고, 그 화면의 첫 응답이 `ak-stage-identification`(소스 버튼 `Google`의 `xak-flow-redirect`)이다.
+- 나가는 길: 앱 → Authentik 흐름 화면(스피너) → Google.
+- 돌아오는 길: Google → Authentik `default-source-authentication` 흐름 화면(스피너) → 앱. 브라우저 탭 주소가 이 흐름 주소에 머무는 것을 확인했다.
+- 나가는 길만 줄일 수 있는 방법: 앱이 Authentik의 소스 로그인 주소(`/source/oauth/login/google/?next=...`)로 직접 보낸다. 이 주소는 서버가 Google로 곧바로 302하는 것을 확인했다. 단 이 경우 Spring의 표준 OIDC 로그인 흐름을 벗어나는 개조가 필요하다.
+- 돌아오는 길의 스피너 화면은 이 방법으로 없앨 수 없다(코드 경로상 `default-source-authentication` 흐름을 거침). 로고, 문구, 배경을 NaruWorks로 바꿔 Authentik처럼 보이지 않게 하는 정도가 한계로 보인다. 이 브랜딩 효과는 확인하지 못했다.
+- 결론: Authentik으로 "화면이 전혀 보이지 않는" 로그인은 만들 수 없을 가능성이 높다. R1을 엄격하게 지켜야 하면 IdP 재평가가 필요하다. Keycloak은 서버가 렌더링하는 로그인 화면과 `kc_idp_hint`로 소셜 로그인에 곧바로 이동할 수 있다고 알려져 있으나 이 프로젝트에서 검증하지 않았다.
+
+### R1: 처음 확인한 내용 (서버 이벤트 기준, 사용자 화면은 보지 않음)
+
+
+- 공식 문서(Identification stage)는 사용자 필드를 하나도 고르지 않고, 소스를 하나만 설정하고, Passwordless flow를 설정하지 않으면 해당 소스로 자동 리다이렉트한다고 설명한다. 이 내용은 문서 페이지의 요약으로 확인했고 도입 버전은 문서에 없다.
+- 구성: 사용자 필드가 없고 소스가 `google` 하나뿐인 Identification stage(`naru-google-only-identification`)와, 그 단계 하나만 가진 인증 흐름(`naru-google-login`)을 만들고 `Provider for naru-api`의 인증 흐름(`authentication_flow`)으로 지정했다. 기본 `default-authentication-flow`는 그대로라서 Authentik 루트에서 관리자는 비밀번호로 로그인할 수 있다(R3).
+- 확인: Authentik에서 로그아웃한 뒤 앱의 authorize 주소로 접속했을 때, 클릭 없이 `naru-google-login` 흐름을 거쳐 Google 소스 로그인(`login Google`) 이벤트가 기록되고 앱 콜백까지 도달했다.
+- 한계: 시험한 브라우저에는 Google 세션이 있어서 Google 화면 없이 통과했다. Google 세션이 없는 브라우저에서 사용자가 처음 보는 화면이 Google의 로그인 화면뿐인지, 첫 가입 중에 Authentik 화면이 끼어들지는 확인하지 못했다.
+
+### R2: 설정 코드화는 가능한 것으로 보인다
+
+- `ak export_blueprint`의 결과에 다음 객체가 포함된다: `naru-api` 앱, `Provider for naru-api`(Redirect URI의 `authorization`/`logout` 종류, `sub_mode: user_uuid`, `authentication_flow`, `invalidation_flow`), 스코프 매핑 `email-verified`, Google 소스, 위의 Identification stage와 로그인 흐름.
+- Authentik의 기본 blueprint(`bootstrap.yaml`)가 `!Env` 태그로 환경 변수를 읽는다. 사용자 blueprint는 컨테이너의 `/blueprints/custom`에 두는 방식이다.
+- 확인하지 못한 것: 브랜딩(Brand) 객체를 blueprint로 만들 수 있는지, Google 소스의 클라이언트 시크릿을 `!Env`로 넣는 구체적인 방법, 공급자의 Client ID/Secret을 고정값으로 지정할 수 있는지(Spring 설정과 맞추려면 필요), blueprint 적용 실패 시 동작, 빈 `user_fields`의 표현 방식.
+
+## 16. 다음 작업 (이슈 #56)
+
+브랜치는 `develop`에서 분기하고 PR 대상도 `develop`이다.
+
+1. compose의 `authentik-server`, `authentik-worker`에 `infra/authentik/blueprints/`를 `/blueprints/custom`으로 읽기 전용 마운트한다.
+2. `ak export_blueprint` 결과에서 이 프로젝트의 객체만 골라 blueprint 파일로 작성한다. 파일을 나누는 기준은 앱·공급자·매핑·로그인 흐름과 Google 소스다. 시크릿은 `!Env`로 읽는다.
+3. 공급자의 Client ID/Secret을 환경 변수 값으로 고정해 Spring의 `AUTHENTIK_CLIENT_ID`, `AUTHENTIK_CLIENT_SECRET`과 같은 값을 쓰게 한다. 불가능하면 대안을 문서에 기록한다.
+4. 브랜딩(로고, 제목, 로그인 배경)을 blueprint로 적용할 수 있는지 확인한다.
+5. 관리자 계정은 `AUTHENTIK_BOOTSTRAP_PASSWORD` 등 부트스트랩 환경 변수로 만들고, 기본 인증 흐름은 그대로 둔다.
+6. 검증: 로컬 Authentik 볼륨을 지우고 다시 띄워서 blueprint만으로 같은 상태가 재현되는지, 그리고 Google 세션이 없는 브라우저에서 Authentik 화면 없이 로그인되는지, 로그아웃이 홈으로 돌아오는지 확인한다.
+7. R1이나 R2를 충족할 수 없으면 충족하지 못한 항목과 이유를 정리하고 IdP 재평가 문서를 작성한다.
+
+운영 반영(서버 `.env`, Cloudflare Tunnel, Cloudflare Access, 운영 Google OAuth 클라이언트, 회원 이전)은 이 작업의 범위가 아니고, 요건이 충족된 뒤 별도 작업으로 진행한다.
+
+## 17. 로컬 환경과 인계 메모
+
+- 로컬 Authentik에는 이번 작업 중 관리자 화면과 셸로 직접 만든 설정이 남아 있다(앱, 스코프 매핑, 로그인 흐름, Google 소스, 사용자). blueprint 검증 때는 이 설정과 섞이지 않게 Authentik 볼륨(`naruworks-platform_naruworks-authentik-data`, `naruworks-platform_naruworks-authentik-postgres-data`)을 지우고 처음부터 재현한다.
+- Authentik 사용자는 관리자 `akadmin`과, Google 로그인으로 만들어진 `hobae`(external)가 있다. 앱 로그인에는 `hobae`가 쓰이고, 로컬 회원 1번의 `provider_user_id`는 이 사용자의 UUID로 바꿔 두었다.
+- 루트 `.env`는 gitignore 대상이다. Authentik용 `AUTHENTIK_SECRET_KEY`, `AUTHENTIK_PG_PASSWORD`, `AUTHENTIK_HOST_PORT`와 함께 `NARU_DRIVE_S3_ACCESS_KEY`, `NARU_DRIVE_S3_SECRET_KEY`가 없으면 `docker compose`의 모든 명령이 변수 누락 오류로 실패한다(`.env.example`의 값을 복사한다).
+- 로컬 실행: Authentik은 `http://localhost:9100`이다. backend는 IntelliJ의 환경 변수에 `AUTHENTIK_CLIENT_ID`, `AUTHENTIK_CLIENT_SECRET`, `NARU_INITIAL_ADMIN_EMAIL`을 넣고 실행한다. frontend는 `NEXT_PUBLIC_API_BASE_URL=http://localhost:8081 npm run dev`다. backend는 시작할 때 `issuer-uri`로 Authentik의 설정을 가져오므로 Authentik이 먼저 켜져 있어야 한다.
+- 홈 디렉터리의 `~/authentik-poc`는 개념 체험용 별도 환경이고 이 프로젝트와 무관하다.
+- 작업 규칙: 기능 브랜치는 `develop`에서 분기하고 PR 대상도 `develop`이다(`docs/development/github-workflow.md`). GitHub의 이슈와 PR은 번호를 공유하므로 이슈 #N의 PR은 보통 N+1이다.
+
+## 18. 알려진 부채
+
+- Google 소스를 켜면 Google 계정이 있는 누구나 Authentik 사용자가 만들어질 수 있다. NaruWorks는 초대 코드로 막지만, 앞으로 다른 서비스를 붙이기 전에 사전 등록된 사용자만 허용하는 방법을 정해야 한다.
+- `AuthProvider`의 `GOOGLE` 값이 실제로는 Authentik 경유 로그인에도 쓰인다. 이름 정리가 필요하다.
+- `infra/README.md`의 로그인 안내가 아직 Google 직접 로그인 기준이다.
+- 6장의 "회원 1명" 가정은 로컬에서 맞지 않았다(2명). 운영 DB의 회원 수를 확인한 뒤 이전 방식을 다시 정해야 한다.
+- Authentik에서 사용자를 삭제했다가 다시 만들면 UUID(`sub`)가 바뀌어 회원 연결이 끊긴다. 정지는 삭제가 아니라 비활성화로 한다. 다른 소셜 로그인을 추가할 때 같은 사람을 하나의 사용자로 묶는 정책도 필요하다.
+- Cloudflare Access의 요금제와 사용자 수 한도는 확인하지 못했다.
+- 캘린더: 만료된 학교 계정 연동(로컬 2번)의 정리, 만료 시 재연결을 안내하는 화면, 스케줄러가 30분마다 같은 스택트레이스를 남기는 문제.

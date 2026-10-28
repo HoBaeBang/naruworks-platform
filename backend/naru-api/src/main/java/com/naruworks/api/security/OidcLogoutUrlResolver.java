@@ -12,7 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class OidcLogoutUrlResolver {
 
-    private static final String REGISTRATION_ID = "authentik";
+    private static final String REGISTRATION_ID = "idp";
     private static final String END_SESSION_ENDPOINT = "end_session_endpoint";
 
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepository;

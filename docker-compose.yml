@@ -32,10 +32,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-naruworks_local}
       POSTGRES_USER: ${POSTGRES_USER:-naruworks_local}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_password}
-      AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
-      AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}
-      AUTHENTIK_LOGIN_REDIRECT_URI: ${AUTHENTIK_LOGIN_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/authentik}
-      AUTHENTIK_ISSUER_URI: ${AUTHENTIK_ISSUER_URI:-https://idp.naruworks.com/application/o/naru-api/}
+      IDP_CLIENT_ID: ${IDP_CLIENT_ID:-naru-api}
+      IDP_CLIENT_SECRET: ${KEYCLOAK_NARU_API_SECRET:?KEYCLOAK_NARU_API_SECRET is required}
+      IDP_LOGIN_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/idp}
+      IDP_ISSUER_URI: ${IDP_ISSUER_URI:-https://idp.naruworks.com/realms/naruworks}
       GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID:-}
       GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET:-}
       GOOGLE_CALENDAR_REDIRECT_URI: ${GOOGLE_CALENDAR_REDIRECT_URI:-https://api.naruworks.com/api/calendar/integrations/google/callback}
@@ -69,55 +69,51 @@ services:
     depends_on:
       - backend
 
-  authentik-postgres:
+  keycloak-postgres:
     image: postgres:16-alpine
-    container_name: naruworks-authentik-postgres
+    container_name: naruworks-keycloak-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: authentik
-      POSTGRES_USER: authentik
-      POSTGRES_PASSWORD: ${AUTHENTIK_PG_PASSWORD:?AUTHENTIK_PG_PASSWORD is required}
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_PG_PASSWORD:?KEYCLOAK_PG_PASSWORD is required}
     volumes:
-      - naruworks-authentik-postgres-data:/var/lib/postgresql/data
+      - naruworks-keycloak-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U authentik -d authentik"]
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  authentik-server:
-    image: ghcr.io/goauthentik/server:2026.8.5
-    container_name: naruworks-authentik-server
+  # realm 파일은 realm이 아직 없을 때만 가져온다. 이미 있는 realm의 설정 변경은 관리 콘솔이나 별도 절차로 반영한다.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    container_name: naruworks-keycloak
     restart: unless-stopped
-    command: server
-    environment: &authentik-env
-      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?AUTHENTIK_SECRET_KEY is required}
-      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
-      AUTHENTIK_POSTGRESQL__NAME: authentik
-      AUTHENTIK_POSTGRESQL__USER: authentik
-      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_PG_PASSWORD}
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_PG_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-https://idp.naruworks.com}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # realm JSON의 ${...} 치환에 쓰는 값
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+      KEYCLOAK_NARU_API_SECRET: ${KEYCLOAK_NARU_API_SECRET:?KEYCLOAK_NARU_API_SECRET is required}
+      KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/idp}
+      KEYCLOAK_POST_LOGOUT_REDIRECT_URI: ${KEYCLOAK_POST_LOGOUT_REDIRECT_URI:-https://app.naruworks.com/}
     ports:
-      - "127.0.0.1:${AUTHENTIK_HOST_PORT:-9100}:9000"
+      - "127.0.0.1:${KEYCLOAK_HOST_PORT:-8180}:8080"
     volumes:
-      - naruworks-authentik-data:/data
+      - ./infra/keycloak/realm:/opt/keycloak/data/import:ro
     depends_on:
-      authentik-postgres:
+      keycloak-postgres:
         condition: service_healthy
-
-  authentik-worker:
-    image: ghcr.io/goauthentik/server:2026.8.5
-    container_name: naruworks-authentik-worker
-    restart: unless-stopped
-    command: worker
-    environment: *authentik-env
-    volumes:
-      - naruworks-authentik-data:/data
-    depends_on:
-      authentik-postgres:
-        condition: service_healthy
-      # 같은 볼륨을 두 컨테이너가 동시에 처음 만들면 /data/media 링크 생성이 충돌하므로 server 생성 이후에 시작한다.
-      authentik-server:
-        condition: service_started
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -190,6 +186,5 @@ services:
 
 volumes:
   naruworks-postgres-data:
-  naruworks-authentik-postgres-data:
-  naruworks-authentik-data:
+  naruworks-keycloak-postgres-data:
   naruworks-drive-data:

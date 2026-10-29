@@ -1,5 +1,6 @@
 package com.naruworks.api.security;
 
+import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.core.port.InitialAdminPolicy;
 import com.naruworks.core.service.MemberService;
 import com.naruworks.domain.model.Member;
@@ -8,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,12 +25,16 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(OAuth2LoginSuccessHandler.class);
+
     private final MemberService memberService;
 
     @Value("${naru.frontend-base-url}")
     private String frontendBaseUrl;
 
     private final InitialAdminPolicy initialAdminPolicy;
+
+    private final IdentityProviderUserWriter identityProviderUserWriter;
 
     @Override
     public void onAuthenticationSuccess(
@@ -56,7 +63,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
 
         new SecurityContextLogoutHandler().logout(request, response, authentication);
+        deleteIdentityProviderUser(providerUserId);
         response.sendRedirect(frontendBaseUrl + "/join?error=invitation-required");
+    }
+
+    // 회원이 아닌 사람의 정보를 IdP에 남기지 않는다. 실패해도 로그인 거절 응답은 막지 않는다.
+    private void deleteIdentityProviderUser(String providerUserId) {
+        try {
+            identityProviderUserWriter.deleteUser(providerUserId);
+        } catch (RuntimeException exception) {
+            log.warn("비회원의 IdP 사용자 삭제에 실패했다. sub={}", providerUserId, exception);
+        }
     }
 
     private String getRedirectUrl(MemberStatus status) {

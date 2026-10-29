@@ -2,8 +2,11 @@ package com.naruworks.api.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.lenient;
 
+import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.core.port.InitialAdminPolicy;
 import com.naruworks.core.service.MemberService;
 import java.util.Map;
@@ -34,11 +37,14 @@ class OAuth2LoginSuccessHandlerTest {
     @Mock
     private InitialAdminPolicy initialAdminPolicy;
 
+    @Mock
+    private IdentityProviderUserWriter identityProviderUserWriter;
+
     private OAuth2LoginSuccessHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new OAuth2LoginSuccessHandler(memberService, initialAdminPolicy);
+        handler = new OAuth2LoginSuccessHandler(memberService, initialAdminPolicy, identityProviderUserWriter);
         ReflectionTestUtils.setField(handler, "frontendBaseUrl", FRONTEND_BASE_URL);
 
         given(memberService.findAndUpdateExistingGoogleMember("idp-sub"))
@@ -53,11 +59,25 @@ class OAuth2LoginSuccessHandlerTest {
         MockHttpServletResponse response = login(true);
 
         assertThat(response.getRedirectedUrl()).isEqualTo(FRONTEND_BASE_URL + "/join/terms");
+        verify(identityProviderUserWriter, never()).deleteUser("idp-sub");
     }
 
     @Test
     @DisplayName("이메일이 검증되지 않았으면 최초 관리자 이메일이어도 가입할 수 없다")
     void unverifiedInitialAdminCandidateIsRejected() throws Exception {
+        MockHttpServletResponse response = login(false);
+
+        assertThat(response.getRedirectedUrl())
+                .isEqualTo(FRONTEND_BASE_URL + "/join?error=invitation-required");
+        verify(identityProviderUserWriter).deleteUser("idp-sub");
+    }
+
+    @Test
+    @DisplayName("IdP 사용자 삭제가 실패해도 로그인 거절 응답은 나간다")
+    void rejectionIsNotBlockedByCleanupFailure() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalStateException("down"))
+                .when(identityProviderUserWriter).deleteUser("idp-sub");
+
         MockHttpServletResponse response = login(false);
 
         assertThat(response.getRedirectedUrl())

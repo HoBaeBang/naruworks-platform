@@ -86,6 +86,26 @@
         "post.logout.redirect.uris": "${KEYCLOAK_POST_LOGOUT_REDIRECT_URI}",
         "pkce.code.challenge.method": "S256"
       }
+    },
+    {
+      "clientId": "naru-api-admin",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${KEYCLOAK_ADMIN_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-naru-api-admin",
+      "enabled": true,
+      "serviceAccountClientId": "naru-api-admin",
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
     }
   ]
 }

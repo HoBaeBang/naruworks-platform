@@ -157,7 +157,18 @@ flowchart TB
 
 - Spring은 서버 앱이므로 `confidential` 클라이언트로 등록하고 시크릿을 사용한다. PKCE `S256`을 요구한다.
 - 리다이렉트 주소는 정확히 일치하는 값만 허용한다.
-- Keycloak의 사용자 셀프 가입은 끈다(`registrationAllowed: false`). 다만 Google로 로그인한 사람은 Keycloak에 사용자가 만들어진다. 즉 **Google 계정이 있는 누구나 Keycloak 사용자가 될 수 있다.** NaruWorks는 초대 코드로 가입을 막지만, 앞으로 다른 서비스를 붙일 때는 그 서비스가 자체 접근 제어를 해야 한다. 사전 등록된 사용자만 허용하는 방법은 아직 정하지 않았다.
+- Keycloak의 사용자 셀프 가입은 끈다(`registrationAllowed: false`). 다만 Google로 로그인한 사람은 Keycloak에 사용자가 만들어진다. 즉 **Google 계정이 있는 누구나 Keycloak 사용자가 될 수 있다.** NaruWorks는 초대 코드로 가입을 막지만, 앞으로 다른 서비스를 붙일 때는 그 서비스가 자체 접근 제어를 해야 한다. 그래서 회원이 아닌 사람이 NaruWorks 로그인을 시도하면 backend가 그 Keycloak 사용자를 바로 삭제한다(아래 "비회원 사용자 정리").
+
+### 비회원 사용자 정리
+
+초대 코드 없이 로그인한 비회원은 `OAuth2LoginSuccessHandler`가 세션을 끊고 가입 안내로 돌려보낸다. 이때 `IdentityProviderUserWriter`(구현: `KeycloakUserAdminAdapter`)로 Keycloak 사용자를 삭제한다. 삭제가 실패해도 거절 응답은 나가고, 실패는 `WARN`으로 남는다. 시크릿이 비어 있으면 삭제하지 않고 같은 경고를 남긴다.
+
+- 서비스 계정 클라이언트 `naru-api-admin`(client credentials)에 `realm-management`의 `manage-users` 역할을 준다. 이 역할은 realm 전체 사용자를 관리할 수 있어 범위가 넓다. backend가 침해되면 사용자 관리 권한이 노출되므로 시크릿을 backend 환경 변수로만 둔다. 더 좁은 권한 방법은 확인하지 않았다.
+- backend는 `/admin`이 공개 주소에서 막혀 있으므로 compose 내부 주소(`IDP_ADMIN_BASE_URL`, 기본 `http://keycloak:8080`)로 호출한다.
+- 환경 변수 `KEYCLOAK_ADMIN_CLIENT_SECRET`(새로 생성)을 Keycloak(realm 가져오기)과 backend(`IDP_ADMIN_CLIENT_SECRET`)가 함께 읽는다.
+- **이미 만들어진 realm에는 realm 파일이 적용되지 않는다.** 운영 Keycloak에는 관리 콘솔(서버 localhost)에서 같은 클라이언트를 직접 만든다: 클라이언트 `naru-api-admin`(Client authentication 켬, Standard flow 끔, Service accounts roles 켬), Credentials 탭의 시크릿을 `KEYCLOAK_ADMIN_CLIENT_SECRET` 값으로 맞춤, Service account roles 탭에서 `realm-management`의 `manage-users` 추가.
+- 로컬 검증: 임시 Keycloak(`start-dev --import-realm`)에 realm 파일을 가져와 서비스 계정 토큰 발급, 사용자 삭제(204), 같은 사용자 재삭제(404), 잘못된 시크릿(401)을 확인했다. 실제 Google 로그인으로 비회원을 거절하는 전체 흐름은 브라우저로 확인하지 않았다.
+- 남은 한계: 초대 링크로 들어와 Google 로그인까지 하고 약관 동의 전에 그만둔 사람의 Keycloak 사용자는 남는다(회원이 아니고 거절 경로도 타지 않음).
 - 최초 관리자 가입은 `email_verified`가 `true`일 때만 허용한다(`OAuth2LoginSuccessHandler`, 테스트 있음). `trustEmail`로 Google이 검증한 이메일만 `true`가 된다.
 - 관리 콘솔 계정은 서비스 전체를 장악할 수 있다. 공개 경로에서 분리하고 강한 비밀번호와 2단계 인증을 쓴다.
 - 로그에 토큰과 시크릿이 남지 않는지 확인한다.
@@ -207,7 +218,7 @@ cd frontend && NEXT_PUBLIC_API_BASE_URL=http://localhost:8081 npm run dev
 ## 12. 알려진 부채
 
 - `AuthProvider`의 `GOOGLE` 값이 실제로는 Keycloak 경유 로그인에도 쓰인다. 이름 정리가 필요하다.
-- Google 사용자가 자동으로 Keycloak 사용자가 되는 문제(9장). 다른 서비스를 붙이기 전에 정한다.
+- 가입을 끝내지 않은 초대 사용자의 Keycloak 사용자 정리(9장 "비회원 사용자 정리"). 다른 서비스는 가입을 마친 회원만 쓰게 접근 제어(역할 등)를 추가로 정해야 한다.
 - 다른 소셜 로그인을 추가할 때 같은 사람을 하나의 사용자로 묶는 정책이 필요하다.
 - Keycloak 사용자 삭제와 DB 재생성 시 `sub`가 바뀌는 문제(8장).
 - 캘린더: 만료된 학교 계정 연동(로컬 2번)의 정리, 만료 시 재연결을 안내하는 화면, 스케줄러가 30분마다 같은 스택트레이스를 남기는 문제.

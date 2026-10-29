@@ -187,6 +187,19 @@ cd frontend && NEXT_PUBLIC_API_BASE_URL=http://localhost:8081 npm run dev
 - 로그아웃 후 홈으로 돌아오는지, 다시 로그인하면 Google 계정 선택이 다시 나오는지.
 - 운영 모드(`start`)에서 HTTPS 뒤(Cloudflare Tunnel)의 동작과 메모리 사용량.
 
+### 운영 반영 중 발생한 로그인 장애 (2026-10-29)
+
+운영 반영 직후 로그인이 두 단계로 실패했다. 둘 다 로컬(`localhost`, 터널 없음)에서는 나오지 않았다.
+
+| 증상 | 원인 | 조치 |
+| --- | --- | --- |
+| Keycloak 로그인 후 `/login?error`(Spring 기본 "Invalid credentials") | ID 토큰 검증에 쓰는 공개키(JWKS)를 공개 도메인 `idp.naruworks.com`으로 가져오다 `Read timed out`. 토큰 교환은 성공했다. 같은 URL을 컨테이너에서 `wget`으로 호출하면 성공했고, Java 클라이언트만 타임아웃인 이유는 확정하지 못했다. | `jwk-set-uri`를 compose 내부 주소 `http://keycloak:8080/...`로 지정한다. issuer 검증은 그대로 `issuer-uri`(공개 주소) 기준이다. |
+| 위를 고친 뒤 `http://api.naruworks.com/oauth2/authorization/idp`로 이동하며 Chrome 보안 경고 | `AuthController`의 상대 경로 리다이렉트를, 터널 뒤에서 http로 인식한 backend가 `http://` 절대 주소로 바꿨다. | `server.forward-headers-strategy=framework`로 `X-Forwarded-*`를 읽는다. |
+
+배제한 원인: 서버 시계 어긋남, issuer 불일치, client secret·redirect URI. 토큰 교환은 성공했으므로 Keycloak 쪽 설정은 정상이다.
+
+확인하지 못한 것: Keycloak 로그의 `IDENTITY_PROVIDER_LOGIN_ERROR cookie_not_found`(1회). 이후 로그인은 정상이다.
+
 ## 11. 운영 반영 (이 작업의 범위가 아님)
 
 서버 `.env`, Cloudflare Tunnel(`idp.naruworks.com`), 공개 경로 제한(`/admin/` 차단 또는 Cloudflare Access, 요금제 한도는 확인하지 못함), 운영용 Google OAuth 클라이언트(리다이렉트 URI 추가), 운영 회원 이전은 로컬 검증이 끝난 뒤 별도 작업으로 한다.

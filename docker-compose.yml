@@ -32,9 +32,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-naruworks_local}
       POSTGRES_USER: ${POSTGRES_USER:-naruworks_local}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_password}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/google}
+      IDP_CLIENT_ID: ${IDP_CLIENT_ID:-naru-api}
+      IDP_CLIENT_SECRET: ${KEYCLOAK_NARU_API_SECRET:?KEYCLOAK_NARU_API_SECRET is required}
+      IDP_LOGIN_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/idp}
+      IDP_ISSUER_URI: ${IDP_ISSUER_URI:-https://idp.naruworks.com/realms/naruworks}
       GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID:-}
       GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET:-}
       GOOGLE_CALENDAR_REDIRECT_URI: ${GOOGLE_CALENDAR_REDIRECT_URI:-https://api.naruworks.com/api/calendar/integrations/google/callback}
@@ -43,6 +44,10 @@ services:
       NARU_GOOGLE_CALENDAR_SYNC_INITIAL_DELAY: ${NARU_GOOGLE_CALENDAR_SYNC_INITIAL_DELAY:-PT1M}
       NARU_GOOGLE_CALENDAR_SYNC_FIXED_DELAY: ${NARU_GOOGLE_CALENDAR_SYNC_FIXED_DELAY:-PT30M}
       NARU_INITIAL_ADMIN_EMAIL: ${NARU_INITIAL_ADMIN_EMAIL:-}
+      NARU_DRIVE_S3_ENDPOINT: ${NARU_DRIVE_S3_ENDPOINT:-http://rustfs:9000}
+      NARU_DRIVE_S3_BUCKET: ${NARU_DRIVE_S3_BUCKET:-naru-drive}
+      NARU_DRIVE_S3_ACCESS_KEY: ${NARU_DRIVE_S3_ACCESS_KEY:-}
+      NARU_DRIVE_S3_SECRET_KEY: ${NARU_DRIVE_S3_SECRET_KEY:-}
     ports:
       - "8081:8080"
     depends_on:
@@ -64,6 +69,52 @@ services:
     depends_on:
       - backend
 
+  keycloak-postgres:
+    image: postgres:16-alpine
+    container_name: naruworks-keycloak-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_PG_PASSWORD:?KEYCLOAK_PG_PASSWORD is required}
+    volumes:
+      - naruworks-keycloak-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # realm 파일은 realm이 아직 없을 때만 가져온다. 이미 있는 realm의 설정 변경은 관리 콘솔이나 별도 절차로 반영한다.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    container_name: naruworks-keycloak
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_PG_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-https://idp.naruworks.com}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # realm JSON의 ${...} 치환에 쓰는 값
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+      KEYCLOAK_NARU_API_SECRET: ${KEYCLOAK_NARU_API_SECRET:?KEYCLOAK_NARU_API_SECRET is required}
+      KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-https://api.naruworks.com/login/oauth2/code/idp}
+      KEYCLOAK_POST_LOGOUT_REDIRECT_URI: ${KEYCLOAK_POST_LOGOUT_REDIRECT_URI:-https://app.naruworks.com/}
+    ports:
+      - "127.0.0.1:${KEYCLOAK_HOST_PORT:-8180}:8080"
+    volumes:
+      - ./infra/keycloak/realm:/opt/keycloak/data/import:ro
+    depends_on:
+      keycloak-postgres:
+        condition: service_healthy
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: naruworks-cloudflared
@@ -72,5 +123,68 @@ services:
     depends_on:
       - frontend
 
+  rustfs-volume-permission:
+    image: alpine:3.22
+    container_name: naruworks-rustfs-volume-permission
+    restart: "no"
+    command: ["sh", "-ec", "chown -R 10001:10001 /data"]
+    volumes:
+      - naruworks-drive-data:/data
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.6
+    container_name: naruworks-rustfs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      rustfs-volume-permission:
+        condition: service_completed_successfully
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${NARU_DRIVE_S3_ACCESS_KEY:?NARU_DRIVE_S3_ACCESS_KEY is required}
+      RUSTFS_SECRET_KEY: ${NARU_DRIVE_S3_SECRET_KEY:?NARU_DRIVE_S3_SECRET_KEY is required}
+    ports:
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - naruworks-drive-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-ec",
+          "curl -fsS http://127.0.0.1:9000/health && curl -fsS http://127.0.0.1:9001/rustfs/console/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  rustfs-bucket-init:
+    image: amazon/aws-cli:2.36.44
+    container_name: naruworks-rustfs-bucket-init
+    restart: "no"
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${NARU_DRIVE_S3_ACCESS_KEY:?NARU_DRIVE_S3_ACCESS_KEY is required}
+      AWS_SECRET_ACCESS_KEY: ${NARU_DRIVE_S3_SECRET_KEY:?NARU_DRIVE_S3_SECRET_KEY is required}
+      AWS_DEFAULT_REGION: us-east-1
+      NARU_DRIVE_S3_BUCKET: ${NARU_DRIVE_S3_BUCKET:-naru-drive}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        endpoint=http://rustfs:9000
+        if ! aws --endpoint-url "$${endpoint}" s3api head-bucket --bucket "$${NARU_DRIVE_S3_BUCKET}" >/dev/null 2>&1; then
+          aws --endpoint-url "$${endpoint}" s3api create-bucket --bucket "$${NARU_DRIVE_S3_BUCKET}"
+        fi
+
 volumes:
   naruworks-postgres-data:
+  naruworks-keycloak-postgres-data:
+  naruworks-drive-data:

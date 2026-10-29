@@ -3,9 +3,13 @@ package com.naruworks.infrastructure.calendar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 class GoogleCalendarOAuthAdapterTest {
 
@@ -48,5 +52,26 @@ class GoogleCalendarOAuthAdapterTest {
         assertThat(uri.getRawQuery()).contains("syncToken=sync+token%2F%2B");
         assertThat(uri.getRawQuery()).contains("pageToken=next+page");
         assertThat(uri.getRawQuery()).doesNotContain("timeMin");
+    }
+
+    @Test
+    @DisplayName("Google이 invalid_grant로 응답한 refresh token 오류만 재연결 필요로 판별한다")
+    void isInvalidGrant() {
+        assertThat(GoogleCalendarOAuthAdapter.isInvalidGrant(
+                tokenError(HttpStatus.BAD_REQUEST, "{\"error\": \"invalid_grant\", \"error_description\": \"Bad Request\"}")
+        )).isTrue();
+        assertThat(GoogleCalendarOAuthAdapter.isInvalidGrant(
+                tokenError(HttpStatus.BAD_REQUEST, "{\"error\": \"invalid_client\"}")
+        )).isFalse();
+        assertThat(GoogleCalendarOAuthAdapter.isInvalidGrant(
+                tokenError(HttpStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"invalid_grant\"}")
+        )).isFalse();
+    }
+
+    private HttpClientErrorException tokenError(HttpStatus status, String body) {
+        return HttpClientErrorException.create(
+                status, status.getReasonPhrase(), new HttpHeaders(), body.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
     }
 }

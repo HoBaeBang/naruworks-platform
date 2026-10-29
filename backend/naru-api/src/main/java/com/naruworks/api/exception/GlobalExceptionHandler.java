@@ -1,6 +1,7 @@
 package com.naruworks.api.exception;
 
 import com.naruworks.core.exception.AuthorizationException;
+import com.naruworks.core.exception.GoogleCalendarReconnectRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -23,6 +24,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFoundException(NotFoundException exception) {
+        return Map.of(
+                "message", exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(GoogleCalendarReconnectRequiredException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> handleGoogleCalendarReconnectRequired(
+            GoogleCalendarReconnectRequiredException exception
+    ) {
         return Map.of(
                 "message", exception.getMessage()
         );

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.naruworks.api.security.CurrentMemberArgumentResolver;
+import com.naruworks.core.exception.GoogleCalendarReconnectRequiredException;
 import com.naruworks.core.service.CalendarIntegrationService;
 import com.naruworks.core.service.ExternalCalendarEventService;
 import com.naruworks.core.model.GoogleCalendarSelection;
@@ -132,5 +133,17 @@ class GoogleCalendarIntegrationControllerWebMvcTest {
                 .andExpect(status().isNoContent());
 
         then(calendarIntegrationService).should().disconnectGoogleCalendar(1L, 10L);
+    }
+
+    @Test
+    @DisplayName("Google refresh token이 만료된 계정의 캘린더 목록 조회는 서버 오류 대신 재연결 안내를 반환한다")
+    void getGoogleCalendarsWhenReconnectRequired() throws Exception {
+        given(calendarIntegrationService.findGoogleCalendars(1L, 2L))
+                .willThrow(new GoogleCalendarReconnectRequiredException());
+
+        mockMvc.perform(get("/api/calendar/integrations/google/accounts/2/calendars"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("Google 계정 연결이 만료되었습니다. 다시 연결해주세요."));
     }
 }

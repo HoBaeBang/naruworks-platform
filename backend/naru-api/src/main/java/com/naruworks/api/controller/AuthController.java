@@ -1,8 +1,10 @@
 package com.naruworks.api.controller;
 
 import com.naruworks.api.dto.request.MemberRegistrationRequest;
+import com.naruworks.api.dto.response.LogoutResponse;
 import com.naruworks.api.dto.response.MemberRegistrationResponse;
 import com.naruworks.api.security.AuthSessionAttribute;
+import com.naruworks.api.security.OidcLogoutUrlResolver;
 import com.naruworks.core.service.InvitationService;
 import com.naruworks.core.service.MemberRegistrationService;
 import com.naruworks.domain.model.Member;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -28,23 +31,30 @@ public class AuthController {
 
     private final InvitationService invitationService;
     private final MemberRegistrationService memberRegistrationService;
+    private final OidcLogoutUrlResolver oidcLogoutUrlResolver;
 
     @Value("${naru.frontend-base-url}")
     private String frontendBaseUrl;
 
     @GetMapping("/login")
     public void login(HttpServletResponse response) throws IOException {
-        response.sendRedirect("/oauth2/authorization/google");
+        response.sendRedirect("/oauth2/authorization/idp");
     }
 
     @PostMapping("/logout")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(HttpServletRequest request) {
+    @ResponseBody
+    public LogoutResponse logout(
+            @AuthenticationPrincipal OidcUser oidcUser,
+            HttpServletRequest request
+    ) {
+        String logoutUrl = oidcLogoutUrlResolver.resolve(oidcUser).orElse(null);
         HttpSession session = request.getSession(false);
 
         if (session != null) {
             session.invalidate();
         }
+
+        return new LogoutResponse(logoutUrl);
     }
 
     @GetMapping("/google")
@@ -59,7 +69,7 @@ public class AuthController {
             request.getSession(true)
                     .setAttribute(AuthSessionAttribute.PENDING_REFERRAL_CODE, referralCode);
 
-            response.sendRedirect("/oauth2/authorization/google");
+            response.sendRedirect("/oauth2/authorization/idp");
         } catch (IllegalArgumentException exception) {
             response.sendRedirect(frontendBaseUrl + "/join?error=invalid-referral-code");
         }

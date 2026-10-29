@@ -32,7 +32,7 @@ export async function getCurrentMember(): Promise<MemberProfile | null> {
   return response.json() as Promise<MemberProfile>;
 }
 
-export async function logoutMember(): Promise<void> {
+export async function logoutMember(): Promise<string | null> {
   const response = await fetch(`${apiBaseUrl}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
@@ -42,4 +42,10 @@ export async function logoutMember(): Promise<void> {
     const error = (await response.json().catch(() => ({}))) as ErrorResponse;
     throw new Error(error.message ?? "로그아웃하지 못했습니다.");
   }
+
+  const body = (await response.json().catch(() => ({}))) as {
+    logoutUrl?: string | null;
+  };
+
+  return body.logoutUrl ?? null;
 }

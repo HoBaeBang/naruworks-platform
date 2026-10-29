@@ -1,12 +1,14 @@
 package com.naruworks.infrastructure.calendar;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.naruworks.core.exception.GoogleCalendarReconnectRequiredException;
 import com.naruworks.core.model.GoogleCalendar;
 import com.naruworks.core.model.GoogleCalendarAccount;
 import com.naruworks.core.model.GoogleCalendarOAuthToken;
 import com.naruworks.core.model.GoogleCalendarEvent;
 import com.naruworks.core.model.GoogleCalendarSyncResult;
 import com.naruworks.core.port.GoogleCalendarOAuthClient;
+import com.naruworks.infrastructure.http.ExternalApiLoggingInterceptor;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -48,7 +50,9 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
     );
 
     private final GoogleCalendarOAuthProperties properties;
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient = RestClient.builder()
+            .requestInterceptor(new ExternalApiLoggingInterceptor("GOOGLE_CALENDAR"))
+            .build();
 
     @Override
     public String createAuthorizationUrl(String state) {
@@ -115,17 +119,31 @@ public class GoogleCalendarOAuthAdapter implements GoogleCalendarOAuthClient {
         form.add("refresh_token", refreshToken);
         form.add("grant_type", "refresh_token");
 
-        GoogleTokenRefreshResponse response = restClient.post()
-                .uri(TOKEN_URI)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(GoogleTokenRefreshResponse.class);
+        GoogleTokenRefreshResponse response;
+        try {
+            response = restClient.post()
+                    .uri(TOKEN_URI)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(GoogleTokenRefreshResponse.class);
+        } catch (RestClientResponseException exception) {
+            if (isInvalidGrant(exception)) {
+                throw new GoogleCalendarReconnectRequiredException();
+            }
+            throw exception;
+        }
 
         if (response == null || response.accessToken() == null) {
             throw new IllegalStateException("Google Calendar access token 갱신에 실패했습니다.");
         }
         return response.accessToken();
+    }
+
+    /** refresh token이 만료되었거나 철회되면 Google은 400과 invalid_grant로 응답한다. */
+    static boolean isInvalidGrant(RestClientResponseException exception) {
+        return exception.getStatusCode().value() == 400
+                && exception.getResponseBodyAsString().contains("\"invalid_grant\"");
     }
 
     @Override

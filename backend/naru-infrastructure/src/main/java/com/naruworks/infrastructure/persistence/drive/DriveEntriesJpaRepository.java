@@ -1,13 +1,24 @@
 package com.naruworks.infrastructure.persistence.drive;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface DriveEntriesJpaRepository extends JpaRepository<DriveEntriesEntity, Long> {
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update DriveEntriesEntity entry
+            set entry.name = :name, entry.updatedAt = :updatedAt
+            where entry.id = :id and entry.ownerMemberId = :ownerId and entry.deletedAt is null
+            """)
+    int renameActive(@Param("id") Long id, @Param("ownerId") Long ownerId,
+                     @Param("name") String name, @Param("updatedAt") LocalDateTime updatedAt);
 
     Optional<DriveEntriesEntity> findByIdAndOwnerMemberIdAndDeletedAtIsNull(Long id, Long ownerMemberId);
 

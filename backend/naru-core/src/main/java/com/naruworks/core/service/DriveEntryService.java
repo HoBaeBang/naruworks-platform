@@ -54,6 +54,25 @@ public class DriveEntryService {
         ));
     }
 
+    @Transactional
+    public DriveEntry renameEntry(Long ownerMemberId, Long entryId, String name) {
+        DriveEntry entry = driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)
+                .orElseThrow(() -> new NotFoundException("항목을 찾을 수 없습니다."));
+        String normalizedName = normalizeName(name);
+        if (entry.getName().equals(normalizedName)) {
+            return entry;
+        }
+        if (driveEntryReader.existsActiveByOwnerMemberIdAndParentIdAndName(
+                ownerMemberId, entry.getParentId(), normalizedName)) {
+            throw new DriveEntryAlreadyExistsException("같은 폴더에 동일한 이름의 항목이 이미 존재합니다.");
+        }
+        if (!driveEntryWriter.renameActive(entryId, ownerMemberId, normalizedName)) {
+            throw new NotFoundException("항목을 찾을 수 없습니다.");
+        }
+        return driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)
+                .orElseThrow(() -> new NotFoundException("항목을 찾을 수 없습니다."));
+    }
+
     private DriveEntry findActiveFolder(Long ownerMemberId, Long entryId) {
         DriveEntry entry = driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)
                 .orElseThrow(() -> new NotFoundException("폴더를 찾을 수 없습니다."));

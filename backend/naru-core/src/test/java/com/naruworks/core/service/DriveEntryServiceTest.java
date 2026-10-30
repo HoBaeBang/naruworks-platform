@@ -121,6 +121,43 @@ class DriveEntryServiceTest {
         then(driveEntryWriter).shouldHaveNoInteractions();
     }
 
+    @Test
+    void renameEntry_updatesOwnedEntry() {
+        DriveEntry original = entry(10L, null, DriveEntryType.FILE, "old.pdf");
+        DriveEntry renamed = entry(10L, null, DriveEntryType.FILE, "new.pdf");
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L))
+                .willReturn(Optional.of(original), Optional.of(renamed));
+        given(driveEntryWriter.renameActive(10L, 1L, "new.pdf")).willReturn(true);
+        assertThat(service().renameEntry(1L, 10L, " new.pdf ").getName()).isEqualTo("new.pdf");
+    }
+
+    @Test
+    void renameEntry_sameNameDoesNotWrite() {
+        DriveEntry original = entry(10L, null, DriveEntryType.FOLDER, "여행");
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L)).willReturn(Optional.of(original));
+        assertThat(service().renameEntry(1L, 10L, "여행")).isSameAs(original);
+        then(driveEntryWriter).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void renameEntry_rejectsMissingOrOtherOwnersEntry() {
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service().renameEntry(1L, 10L, "new"))
+                .isInstanceOf(NotFoundException.class);
+        then(driveEntryWriter).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void renameEntry_rejectsDuplicate() {
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L))
+                .willReturn(Optional.of(entry(10L, null, DriveEntryType.FOLDER, "old")));
+        given(driveEntryReader.existsActiveByOwnerMemberIdAndParentIdAndName(1L, null, "new"))
+                .willReturn(true);
+        assertThatThrownBy(() -> service().renameEntry(1L, 10L, "new"))
+                .isInstanceOf(DriveEntryAlreadyExistsException.class);
+        then(driveEntryWriter).shouldHaveNoInteractions();
+    }
+
     private DriveEntryService service() {
         return new DriveEntryService(driveEntryReader, driveEntryWriter, driveFileReader);
     }

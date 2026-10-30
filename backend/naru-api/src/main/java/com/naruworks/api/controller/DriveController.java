@@ -1,6 +1,7 @@
 package com.naruworks.api.controller;
 
 import com.naruworks.api.dto.request.DriveFolderCreateRequest;
+import com.naruworks.api.dto.request.DriveEntryRenameRequest;
 import com.naruworks.api.dto.response.DriveEntryListResponse;
 import com.naruworks.api.dto.response.DriveEntryResponse;
 import com.naruworks.api.security.CurrentMember;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,5 +45,14 @@ public class DriveController {
                 driveEntryService.createFolder(member.getId(), request.parentId(), request.name()),
                 null
         );
+    }
+
+    @PatchMapping("/entries/{entryId}")
+    public DriveEntryResponse renameEntry(
+            @CurrentMember Member member,
+            @PathVariable Long entryId,
+            @Valid @RequestBody DriveEntryRenameRequest request
+    ) {
+        return DriveEntryResponse.from(driveEntryService.renameEntry(member.getId(), entryId, request.name()), null);
     }
 }

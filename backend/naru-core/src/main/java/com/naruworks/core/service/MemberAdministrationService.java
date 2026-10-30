@@ -55,7 +55,8 @@ public class MemberAdministrationService {
                 targetMember.changeOperationalStatus(status)
         );
 
-        memberRoleSynchronizer.sync(changedMember);
+        // 실패하면 트랜잭션이 되돌려져 상태 변경도 취소된다(정지했는데 IdP 역할이 남는 것을 막는다).
+        memberRoleSynchronizer.syncOrThrow(changedMember);
 
         Member referrer = changedMember.getReferrerMemberId() == null
                 ? null

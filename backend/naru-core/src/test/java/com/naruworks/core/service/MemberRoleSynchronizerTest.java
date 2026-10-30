@@ -1,6 +1,7 @@
 package com.naruworks.core.service;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doThrow;
 
@@ -40,6 +41,15 @@ class MemberRoleSynchronizerTest {
 
         assertThatCode(() -> new MemberRoleSynchronizer(identityProviderUserWriter)
                 .sync(member(MemberStatus.APPROVED))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("syncOrThrow는 IdP 호출 실패를 그대로 던진다")
+    void syncOrThrowPropagates() {
+        doThrow(new IllegalStateException("down")).when(identityProviderUserWriter).setMemberRole("sub-1", false);
+
+        assertThatThrownBy(() -> new MemberRoleSynchronizer(identityProviderUserWriter)
+                .syncOrThrow(member(MemberStatus.SUSPENDED))).isInstanceOf(IllegalStateException.class);
     }
 
     private static Member member(MemberStatus status) {

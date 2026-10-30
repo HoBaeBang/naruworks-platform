@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.MemberStatus;
 import com.naruworks.domain.value.ReferralCode;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
@@ -31,6 +33,10 @@ class AdminMemberApiIntegrationTest {
 
     private static final String ADMIN_PROVIDER_USER_ID = "google-admin-member-management";
     private static final String USER_PROVIDER_USER_ID = "google-user-member-management";
+
+    // 상태 변경은 IdP 역할 반영이 실패하면 취소되므로 실제 Keycloak 호출을 대체한다.
+    @MockitoBean
+    private IdentityProviderUserWriter identityProviderUserWriter;
 
     @Autowired
     private MockMvc mockMvc;

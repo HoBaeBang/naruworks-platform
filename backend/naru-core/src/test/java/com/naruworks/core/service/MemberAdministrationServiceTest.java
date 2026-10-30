@@ -35,6 +35,9 @@ class MemberAdministrationServiceTest {
     @Mock
     private MemberWriter memberWriter;
 
+    @Mock
+    private MemberRoleSynchronizer memberRoleSynchronizer;
+
     @Test
     @DisplayName("회원 목록을 최신 가입 순서와 추천인 정보로 조회한다")
     void getMembers() {
@@ -86,7 +89,7 @@ class MemberAdministrationServiceTest {
     }
 
     private MemberAdministrationService service() {
-        return new MemberAdministrationService(memberReader, memberWriter);
+        return new MemberAdministrationService(memberReader, memberWriter, memberRoleSynchronizer);
     }
 
     private Member member(Long id, MemberStatus status) {

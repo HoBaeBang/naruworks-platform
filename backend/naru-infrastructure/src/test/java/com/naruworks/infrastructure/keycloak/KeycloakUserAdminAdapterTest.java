@@ -1,6 +1,7 @@
 package com.naruworks.infrastructure.keycloak;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -74,6 +75,75 @@ class KeycloakUserAdminAdapterTest {
                 new KeycloakUserAdminAdapter(properties(BASE_URL, ""), RestClient.builder().build());
 
         assertThatThrownBy(() -> unconfigured.deleteUser("user-1")).isInstanceOf(IllegalStateException.class);
+    }
+
+    private static final String MAPPING_URL = USER_URL + "/role-mappings/realm";
+    private static final String MEMBER_ROLE_JSON = "[{\"id\":\"role-1\",\"name\":\"member\"}]";
+    private static final String OTHER_ROLE_JSON = "[{\"id\":\"role-2\",\"name\":\"default-roles-naruworks\"}]";
+
+    @Test
+    @DisplayName("승인 회원 역할이 없으면 available 목록에서 찾아 부여한다")
+    void grantMemberRole() {
+        expectToken();
+        server.expect(requestTo(MAPPING_URL)).andRespond(withSuccess(OTHER_ROLE_JSON, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MAPPING_URL + "/available"))
+                .andRespond(withSuccess(MEMBER_ROLE_JSON, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MAPPING_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json(MEMBER_ROLE_JSON))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        adapter.setMemberRole("user-1", true);
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("이미 승인 회원 역할이 있으면 아무것도 보내지 않는다")
+    void grantMemberRoleAlreadyGranted() {
+        expectToken();
+        server.expect(requestTo(MAPPING_URL)).andRespond(withSuccess(MEMBER_ROLE_JSON, MediaType.APPLICATION_JSON));
+
+        adapter.setMemberRole("user-1", true);
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("realm에 승인 회원 역할이 없으면 예외를 던진다")
+    void grantMemberRoleMissingRole() {
+        expectToken();
+        server.expect(requestTo(MAPPING_URL)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MAPPING_URL + "/available")).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> adapter.setMemberRole("user-1", true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("승인 회원 역할이 있으면 제거한다")
+    void revokeMemberRole() {
+        expectToken();
+        server.expect(requestTo(MAPPING_URL)).andRespond(withSuccess(MEMBER_ROLE_JSON, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MAPPING_URL))
+                .andExpect(method(HttpMethod.DELETE))
+                .andExpect(content().json(MEMBER_ROLE_JSON))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        adapter.setMemberRole("user-1", false);
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("승인 회원 역할이 없으면 제거 요청을 보내지 않는다")
+    void revokeMemberRoleNotGranted() {
+        expectToken();
+        server.expect(requestTo(MAPPING_URL)).andRespond(withSuccess(OTHER_ROLE_JSON, MediaType.APPLICATION_JSON));
+
+        adapter.setMemberRole("user-1", false);
+
+        server.verify();
     }
 
     private void expectToken() {

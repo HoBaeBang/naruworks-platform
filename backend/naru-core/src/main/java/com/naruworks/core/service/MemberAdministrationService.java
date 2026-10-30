@@ -23,6 +23,7 @@ public class MemberAdministrationService {
 
     private final MemberReader memberReader;
     private final MemberWriter memberWriter;
+    private final MemberRoleSynchronizer memberRoleSynchronizer;
 
     @Transactional(readOnly = true)
     public List<MemberAdministrationMember> getMembers() {
@@ -53,6 +54,8 @@ public class MemberAdministrationService {
         Member changedMember = memberWriter.save(
                 targetMember.changeOperationalStatus(status)
         );
+
+        memberRoleSynchronizer.sync(changedMember);
 
         Member referrer = changedMember.getReferrerMemberId() == null
                 ? null

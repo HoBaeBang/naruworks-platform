@@ -169,6 +169,18 @@ flowchart TB
 - **이미 만들어진 realm에는 realm 파일이 적용되지 않는다.** 운영 Keycloak에는 관리 콘솔(서버 localhost)에서 같은 클라이언트를 직접 만든다: 클라이언트 `naru-api-admin`(Client authentication 켬, Standard flow 끔, Service accounts roles 켬), Credentials 탭의 시크릿을 `KEYCLOAK_ADMIN_CLIENT_SECRET` 값으로 맞춤, Service account roles 탭에서 `realm-management`의 `manage-users` 추가.
 - 로컬 검증: 임시 Keycloak(`start-dev --import-realm`)에 realm 파일을 가져와 서비스 계정 토큰 발급, 사용자 삭제(204), 같은 사용자 재삭제(404), 잘못된 시크릿(401)을 확인했다. 실제 Google 로그인으로 비회원을 거절하는 전체 흐름은 브라우저로 확인하지 않았다.
 - 남은 한계: 초대 링크로 들어와 Google 로그인까지 하고 약관 동의 전에 그만둔 사람의 Keycloak 사용자는 남는다(회원이 아니고 거절 경로도 타지 않음).
+
+### 승인 회원 역할 동기화
+
+Keycloak 사용자라고 해서 모두 승인된 회원은 아니다(정지된 회원도 사용자는 남는다). 그래서 다른 서비스가 접근을 제한할 수 있게, backend가 회원 상태를 Keycloak realm 역할 `member`에 반영한다. 회원 상태의 기준은 우리 DB이고 Keycloak은 결과만 가진다.
+
+- 상태가 `APPROVED`면 `member` 역할을 부여하고, 그 외(`SUSPENDED` 등)면 제거한다.
+- 반영 시점: 회원 가입 등록, 관리자의 상태 변경, 기존 회원의 로그인(이전 실패와 기존 회원 보정). 로그인 때 맞추므로 기존 회원은 별도 작업 없이 다음 로그인에서 역할이 생긴다.
+- 호출이 실패해도 회원 처리는 막지 않고 `WARN`만 남긴다. 다음 로그인 때 다시 맞춘다.
+- `naru-api-admin`(`manage-users`)은 역할 이름 조회(`roles/{name}`)가 403이라, 사용자별 `role-mappings/realm`과 `.../available`에서 역할 id를 찾는다. 부여·제거 호출은 여러 번 보내도 결과가 같다. 이 동작은 임시 Keycloak으로 확인했다.
+- `member` 역할은 realm 파일에 있지만, **이미 만들어진 realm에는 적용되지 않는다.** 로컬과 운영 Keycloak 관리 콘솔에서 realm 역할 `member`를 직접 만든다. 이 계정은 역할을 만들 권한(`manage-realm`)이 없어서 backend가 만들 수 없다. 역할이 없으면 backend 로그에 `'member' 역할이 없다` 경고가 남는다.
+- 정지해도 이미 로그인된 서비스 세션은 그 서비스가 세션을 닫을 때까지 남을 수 있다. 즉시 차단이 필요한 서비스는 따로 정한다.
+- 서비스별 접근 제한(역할 없으면 거부)은 서비스를 붙일 때 정한다. 클라이언트별 거부 로그인 흐름은 아직 검증하지 않았다.
 - 최초 관리자 가입은 `email_verified`가 `true`일 때만 허용한다(`OAuth2LoginSuccessHandler`, 테스트 있음). `trustEmail`로 Google이 검증한 이메일만 `true`가 된다.
 - 관리 콘솔 계정은 서비스 전체를 장악할 수 있다. 공개 경로에서 분리하고 강한 비밀번호와 2단계 인증을 쓴다.
 - 로그에 토큰과 시크릿이 남지 않는지 확인한다.

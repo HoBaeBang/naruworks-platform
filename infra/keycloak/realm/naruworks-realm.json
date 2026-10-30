@@ -70,6 +70,14 @@
       }
     }
   ],
+  "roles": {
+    "realm": [
+      {
+        "name": "member",
+        "description": "NaruWorks 승인 회원. 상태가 APPROVED일 때만 backend가 부여한다"
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "naru-api",

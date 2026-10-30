@@ -1,5 +1,6 @@
 package com.naruworks.infrastructure.persistence.drive;
 
+import com.naruworks.domain.model.DriveFile;
 import com.naruworks.domain.type.UploadStatus;
 import jakarta.persistence.*;
 
@@ -38,5 +39,17 @@ public class DriveFilesEntity {
 
     @Column(name = "upload_started_at", nullable = false)
     private LocalDateTime uploadStartedAt;
+
+    public DriveFile toDomain() {
+        return DriveFile.builder()
+                .driveEntryId(driveEntryId)
+                .storageKey(storageKey)
+                .sizeBytes(sizeBytes)
+                .contentType(contentType)
+                .sha256(sha256)
+                .uploadStatus(uploadStatus)
+                .uploadStartedAt(uploadStartedAt)
+                .build();
+    }
 }
 

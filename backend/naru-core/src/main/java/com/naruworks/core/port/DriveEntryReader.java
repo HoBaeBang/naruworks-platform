@@ -17,4 +17,10 @@ public interface DriveEntryReader {
             Long parentId
     );
 
+    boolean existsActiveByOwnerMemberIdAndParentIdAndName(
+            Long ownerMemberId,
+            Long parentId,
+            String name
+    );
+
 }

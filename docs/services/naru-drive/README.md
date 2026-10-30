@@ -9,7 +9,7 @@ Naru Drive는 NaruWorks 회원이 자신의 파일과 폴더를 관리하고, �
 | [MVP 도메인 모델](mvp-domain-model.md) | 파일·폴더 ERD, 제약, 권한과 휴지통 정책 | 확정 |
 | [MVP API 계약](mvp-api-contract.md) | 폴더·파일 목록, 업로드·다운로드 API와 오류 규칙 | 초안 확정 |
 | [저장소와 전송 정책](storage-and-transfer.md) | RustFS, backend 중계 업로드, 객체 키, quota | 확정 |
-| [구현 로드맵](implementation-roadmap.md) | 작은 이슈 단위의 구현 순서와 제외 범위 | 진행 예정 |
+| [구현 로드맵](implementation-roadmap.md) | 작은 이슈 단위의 구현 순서와 제외 범위 | #49 진행 중 |
 
 ## MVP 범위
 

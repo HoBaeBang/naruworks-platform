@@ -1,6 +1,7 @@
 package com.naruworks.api.exception;
 
 import com.naruworks.core.exception.AuthorizationException;
+import com.naruworks.core.exception.DriveEntryAlreadyExistsException;
 import com.naruworks.core.exception.GoogleCalendarReconnectRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,16 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> handleGoogleCalendarReconnectRequired(
             GoogleCalendarReconnectRequiredException exception
+    ) {
+        return Map.of(
+                "message", exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(DriveEntryAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> handleDriveEntryAlreadyExistsException(
+            DriveEntryAlreadyExistsException exception
     ) {
         return Map.of(
                 "message", exception.getMessage()

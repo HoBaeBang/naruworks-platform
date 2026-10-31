@@ -8,7 +8,12 @@ import static org.mockito.Mockito.lenient;
 
 import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.core.port.InitialAdminPolicy;
+import com.naruworks.core.service.MemberRoleSynchronizer;
 import com.naruworks.core.service.MemberService;
+import com.naruworks.domain.model.Member;
+import com.naruworks.domain.type.AuthProvider;
+import com.naruworks.domain.type.MemberRole;
+import com.naruworks.domain.type.MemberStatus;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,15 +45,19 @@ class OAuth2LoginSuccessHandlerTest {
     @Mock
     private IdentityProviderUserWriter identityProviderUserWriter;
 
+    @Mock
+    private MemberRoleSynchronizer memberRoleSynchronizer;
+
     private OAuth2LoginSuccessHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new OAuth2LoginSuccessHandler(memberService, initialAdminPolicy, identityProviderUserWriter);
+        handler = new OAuth2LoginSuccessHandler(
+                memberService, initialAdminPolicy, identityProviderUserWriter, memberRoleSynchronizer);
         ReflectionTestUtils.setField(handler, "frontendBaseUrl", FRONTEND_BASE_URL);
 
-        given(memberService.findAndUpdateExistingGoogleMember("idp-sub"))
-                .willReturn(Optional.empty());
+        lenient().when(memberService.findAndUpdateExistingGoogleMember("idp-sub"))
+                .thenReturn(Optional.empty());
         lenient().when(initialAdminPolicy.matches(ADMIN_EMAIL)).thenReturn(true);
         lenient().when(memberService.hasNoMember()).thenReturn(true);
     }
@@ -59,6 +68,26 @@ class OAuth2LoginSuccessHandlerTest {
         MockHttpServletResponse response = login(true);
 
         assertThat(response.getRedirectedUrl()).isEqualTo(FRONTEND_BASE_URL + "/join/terms");
+        verify(identityProviderUserWriter, never()).deleteUser("idp-sub");
+    }
+
+    @Test
+    @DisplayName("기존 회원이 로그인하면 IdP 회원 역할을 맞추고 삭제하지 않는다")
+    void existingMemberRoleIsSynchronized() throws Exception {
+        Member member = Member.builder()
+                .id(1L)
+                .email(ADMIN_EMAIL)
+                .provider(AuthProvider.GOOGLE)
+                .providerUserId("idp-sub")
+                .role(MemberRole.USER)
+                .status(MemberStatus.APPROVED)
+                .build();
+        given(memberService.findAndUpdateExistingGoogleMember("idp-sub")).willReturn(Optional.of(member));
+
+        MockHttpServletResponse response = login(true);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo(FRONTEND_BASE_URL + "/");
+        verify(memberRoleSynchronizer).sync(member);
         verify(identityProviderUserWriter, never()).deleteUser("idp-sub");
     }
 

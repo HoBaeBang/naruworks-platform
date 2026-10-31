@@ -23,6 +23,7 @@ public class MemberAdministrationService {
 
     private final MemberReader memberReader;
     private final MemberWriter memberWriter;
+    private final MemberRoleSynchronizer memberRoleSynchronizer;
 
     @Transactional(readOnly = true)
     public List<MemberAdministrationMember> getMembers() {
@@ -53,6 +54,9 @@ public class MemberAdministrationService {
         Member changedMember = memberWriter.save(
                 targetMember.changeOperationalStatus(status)
         );
+
+        // 실패하면 트랜잭션이 되돌려져 상태 변경도 취소된다(정지했는데 IdP 역할이 남는 것을 막는다).
+        memberRoleSynchronizer.syncOrThrow(changedMember);
 
         Member referrer = changedMember.getReferrerMemberId() == null
                 ? null

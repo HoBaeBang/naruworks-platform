@@ -2,6 +2,7 @@ package com.naruworks.api.security;
 
 import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.core.port.InitialAdminPolicy;
+import com.naruworks.core.service.MemberRoleSynchronizer;
 import com.naruworks.core.service.MemberService;
 import com.naruworks.domain.model.Member;
 import com.naruworks.domain.type.MemberStatus;
@@ -36,6 +37,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final IdentityProviderUserWriter identityProviderUserWriter;
 
+    private final MemberRoleSynchronizer memberRoleSynchronizer;
+
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
@@ -53,6 +56,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         );
 
         if (member.isPresent()) {
+            // 기존 회원의 역할을 로그인 때 맞춘다(이전 동기화 실패와 기존 회원 보정).
+            memberRoleSynchronizer.sync(member.get());
             response.sendRedirect(getRedirectUrl(member.get().getStatus()));
             return;
         }

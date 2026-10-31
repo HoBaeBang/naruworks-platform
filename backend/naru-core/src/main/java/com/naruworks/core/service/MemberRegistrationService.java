@@ -31,6 +31,7 @@ public class MemberRegistrationService {
     private final MemberTermsAgreementWriter memberTermsAgreementWriter;
     private final InvitationService invitationService;
     private final InitialAdminPolicy initialAdminPolicy;
+    private final MemberRoleSynchronizer memberRoleSynchronizer;
     private final Clock clock;
 
     @Transactional
@@ -54,6 +55,7 @@ public class MemberRegistrationService {
         );
 
         saveTermsAgreements(savedMember.getId(), now);
+        memberRoleSynchronizer.sync(savedMember);
 
         return savedMember;
     }

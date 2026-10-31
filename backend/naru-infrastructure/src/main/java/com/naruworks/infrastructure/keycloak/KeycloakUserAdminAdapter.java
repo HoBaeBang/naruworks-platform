@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.naruworks.core.port.IdentityProviderUserWriter;
 import com.naruworks.infrastructure.http.ExternalApiLoggingInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,6 +20,8 @@ import org.springframework.web.client.RestClient;
  */
 @Component
 public class KeycloakUserAdminAdapter implements IdentityProviderUserWriter {
+
+    private static final String MEMBER_ROLE = "member";
 
     private final KeycloakAdminProperties properties;
     private final RestClient restClient;
@@ -34,9 +40,7 @@ public class KeycloakUserAdminAdapter implements IdentityProviderUserWriter {
 
     @Override
     public void deleteUser(String userId) {
-        if (!properties.isConfigured()) {
-            throw new IllegalStateException("Keycloak Admin 설정(naru.idp.admin.*)이 비어 있어 사용자를 삭제하지 못했다.");
-        }
+        requireConfigured();
 
         try {
             restClient.delete()
@@ -49,7 +53,60 @@ public class KeycloakUserAdminAdapter implements IdentityProviderUserWriter {
         }
     }
 
-    // shortcut: 삭제 때마다 토큰을 새로 받는다. 호출이 거절된 로그인 때만 일어나므로 캐시하지 않고, 잦아지면 캐시한다.
+    // 서비스 계정(manage-users)은 역할 이름 조회(roles/{name})가 403이라, 사용자별 매핑 목록에서 역할 id를 찾는다.
+    @Override
+    public void setMemberRole(String userId, boolean member) {
+        requireConfigured();
+
+        String accessToken = fetchAccessToken();
+        String mappingUri = properties.getBaseUrl() + "/admin/realms/{realm}/users/{id}/role-mappings/realm";
+        Object[] variables = {properties.getRealm(), userId};
+
+        if (member) {
+            if (findRole(accessToken, mappingUri, variables).isPresent()) {
+                return;
+            }
+            RoleRepresentation role = findRole(accessToken, mappingUri + "/available", variables)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Keycloak realm에 '" + MEMBER_ROLE + "' 역할이 없다. 관리 콘솔에서 만들어야 한다."));
+            restClient.post()
+                    .uri(mappingUri, variables)
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(List.of(role))
+                    .retrieve()
+                    .toBodilessEntity();
+            return;
+        }
+
+        findRole(accessToken, mappingUri, variables).ifPresent(role -> restClient.method(HttpMethod.DELETE)
+                .uri(mappingUri, variables)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(List.of(role))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    private Optional<RoleRepresentation> findRole(String accessToken, String uri, Object[] variables) {
+        RoleRepresentation[] roles = restClient.get()
+                .uri(uri, variables)
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .retrieve()
+                .body(RoleRepresentation[].class);
+
+        return roles == null
+                ? Optional.empty()
+                : Arrays.stream(roles).filter(role -> MEMBER_ROLE.equals(role.name())).findFirst();
+    }
+
+    private void requireConfigured() {
+        if (!properties.isConfigured()) {
+            throw new IllegalStateException("Keycloak Admin 설정(naru.idp.admin.*)이 비어 있어 IdP를 호출하지 못했다.");
+        }
+    }
+
+    // shortcut: 호출마다 토큰을 새로 받는다. 로그인과 상태 변경 때만 호출되므로 캐시하지 않고, 잦아지면 캐시한다.
     private String fetchAccessToken() {
         LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "client_credentials");
@@ -67,6 +124,9 @@ public class KeycloakUserAdminAdapter implements IdentityProviderUserWriter {
             throw new IllegalStateException("Keycloak 토큰 응답에 access_token이 없다.");
         }
         return response.accessToken();
+    }
+
+    private record RoleRepresentation(String id, String name) {
     }
 
     private record TokenResponse(@JsonProperty("access_token") String accessToken) {

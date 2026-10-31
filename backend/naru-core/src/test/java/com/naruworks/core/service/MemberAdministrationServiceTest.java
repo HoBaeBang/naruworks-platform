@@ -35,6 +35,9 @@ class MemberAdministrationServiceTest {
     @Mock
     private MemberWriter memberWriter;
 
+    @Mock
+    private MemberRoleSynchronizer memberRoleSynchronizer;
+
     @Test
     @DisplayName("회원 목록을 최신 가입 순서와 추천인 정보로 조회한다")
     void getMembers() {
@@ -71,6 +74,19 @@ class MemberAdministrationServiceTest {
         then(memberWriter).should().save(savedMember.capture());
         assertThat(savedMember.getValue().getStatus()).isEqualTo(MemberStatus.SUSPENDED);
         assertThat(result.member().getStatus()).isEqualTo(MemberStatus.SUSPENDED);
+        then(memberRoleSynchronizer).should().syncOrThrow(savedMember.getValue());
+    }
+
+    @Test
+    @DisplayName("IdP 역할 반영이 실패하면 상태 변경도 실패한다(트랜잭션이 되돌려진다)")
+    void changeMemberStatus_idpFailure() {
+        given(memberReader.findById(1L)).willReturn(Optional.of(member(1L, MemberStatus.APPROVED)));
+        given(memberWriter.save(any(Member.class))).willAnswer(invocation -> invocation.getArgument(0));
+        org.mockito.Mockito.doThrow(new IllegalStateException("down"))
+                .when(memberRoleSynchronizer).syncOrThrow(any(Member.class));
+
+        assertThatThrownBy(() -> service().changeMemberStatus(1L, MemberStatus.SUSPENDED))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -86,7 +102,7 @@ class MemberAdministrationServiceTest {
     }
 
     private MemberAdministrationService service() {
-        return new MemberAdministrationService(memberReader, memberWriter);
+        return new MemberAdministrationService(memberReader, memberWriter, memberRoleSynchronizer);
     }
 
     private Member member(Long id, MemberStatus status) {

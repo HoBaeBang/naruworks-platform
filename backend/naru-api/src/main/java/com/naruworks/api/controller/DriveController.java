@@ -27,6 +27,11 @@ public class DriveController {
 
     private final DriveEntryService driveEntryService;
 
+    /**
+     * 로그인 회원의 루트 또는 지정한 폴더의 바로 아래 항목을 조회한다.
+     * @param member 현재 로그인한 회원
+     * @param parentId 상위 폴더 ID. 생략하면 개인 루트를 조회한다.
+     */
     @GetMapping("/entries")
     public DriveEntryListResponse getEntries(
             @CurrentMember Member member,
@@ -35,6 +40,11 @@ public class DriveController {
         return DriveEntryListResponse.from(driveEntryService.findEntries(member.getId(), parentId));
     }
 
+    /**
+     * 로그인 회원의 루트 또는 지정한 폴더 아래에 폴더를 생성한다.
+     * @param member 현재 로그인한 회원
+     * @param request 생성할 폴더 이름과 선택적인 상위 폴더 ID
+     */
     @PostMapping("/folders")
     @ResponseStatus(HttpStatus.CREATED)
     public DriveEntryResponse createFolder(
@@ -47,6 +57,12 @@ public class DriveController {
         );
     }
 
+    /**
+     * 로그인 회원이 소유한 파일 또는 폴더의 이름을 변경한다.
+     * @param member 현재 로그인한 회원
+     * @param entryId 이름을 변경할 파일 또는 폴더 ID
+     * @param request 변경할 이름
+     */
     @PatchMapping("/entries/{entryId}")
     public DriveEntryResponse renameEntry(
             @CurrentMember Member member,

@@ -11,6 +11,11 @@ import java.time.LocalDateTime;
 
 public interface DriveEntriesJpaRepository extends JpaRepository<DriveEntriesEntity, Long> {
 
+    /**
+     * 지정한 소유자의 활성 항목만 이름과 변경 시각을 갱신한다.
+     * 벌크 갱신 전 변경 사항을 반영하고 이후 영속성 컨텍스트를 비워 오래된 엔티티를 사용하지 않는다.
+     * @return 갱신된 행 수
+     */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
             update DriveEntriesEntity entry

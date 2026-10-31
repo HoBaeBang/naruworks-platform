@@ -54,6 +54,7 @@ public class DriveEntryService {
         ));
     }
 
+    /** 소유한 활성 항목의 이름을 검증하고 중복되지 않으면 변경한다. */
     @Transactional
     public DriveEntry renameEntry(Long ownerMemberId, Long entryId, String name) {
         DriveEntry entry = driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)

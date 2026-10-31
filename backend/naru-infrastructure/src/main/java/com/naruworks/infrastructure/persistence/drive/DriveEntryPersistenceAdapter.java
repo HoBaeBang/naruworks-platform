@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 @RequiredArgsConstructor
@@ -45,7 +46,28 @@ public class DriveEntryPersistenceAdapter implements DriveEntryReader, DriveEntr
         try {
             return driveEntriesJpaRepository.saveAndFlush(DriveEntriesEntity.from(entry)).toDomain();
         } catch (DataIntegrityViolationException exception) {
-            throw new DriveEntryAlreadyExistsException("같은 폴더에 동일한 이름의 항목이 이미 존재합니다.");
+            throw translateConflict(exception);
         }
+    }
+
+    @Override
+    public boolean renameActive(Long entryId, Long ownerMemberId, String name) {
+        try {
+            return driveEntriesJpaRepository.renameActive(entryId, ownerMemberId, name, LocalDateTime.now()) == 1;
+        } catch (DataIntegrityViolationException exception) {
+            throw translateConflict(exception);
+        }
+    }
+
+    private RuntimeException translateConflict(DataIntegrityViolationException exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException violation
+                    && "uk_drive_entries_active_sibling_name".equalsIgnoreCase(violation.getConstraintName())) {
+                return new DriveEntryAlreadyExistsException("같은 폴더에 동일한 이름의 항목이 이미 존재합니다.");
+            }
+            cause = cause.getCause();
+        }
+        return exception;
     }
 }

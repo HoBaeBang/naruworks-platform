@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | `GET /api/drive/entries?parentId={id}` | 루트 또는 특정 폴더의 활성 항목 목록 | 폴더 소유자 |
 | `POST /api/drive/folders` | 폴더 생성 | 상위 폴더 소유자 |
-| `PATCH /api/drive/entries/{entryId}` | 이름 변경 또는 이동 | entry·새 상위 폴더 소유자 |
+| `PATCH /api/drive/entries/{entryId}` | 이름 변경 | entry 소유자 |
+| `POST /api/drive/entries/{entryId}/move` | 항목 이동 | entry·새 상위 폴더 소유자 |
 | `POST /api/drive/entries/{entryId}/trash` | 파일 또는 폴더를 휴지통으로 이동 | entry 소유자 |
 | `GET /api/drive/trash` | 휴지통 항목 목록 | 소유자 |
 | `POST /api/drive/entries/{entryId}/restore` | 휴지통 항목 복원 | entry 소유자 |
@@ -59,6 +60,10 @@
 ```
 
 성공 시 `200`과 변경된 항목의 `id`, `type`, `name`, `updatedAt`을 반환한다. 같은 이름은 변경 없이 성공한다. 다른 소유자·없는 항목·휴지통 항목은 `404`, 유효하지 않은 이름은 `400`, 같은 폴더의 활성 항목과 충돌하면 `409`다. 파일의 저장 객체 키와 실제 객체는 바뀌지 않는다.
+
+### `POST /api/drive/entries/{entryId}/move`
+
+루트는 `{ "destination": "ROOT" }`, 폴더는 `{ "destination": "FOLDER", "parentId": 12 }`로 명시한다. 목적지가 없거나 형식이 맞지 않으면 `400`이며 기존 위치는 유지된다. 자신의 하위 폴더로 이동할 수 없고 같은 위치로의 이동은 변경 없이 성공한다. 없는 항목이나 타인 소유 항목은 `404`, 중복 이름은 `409`다. 저장 객체는 이동하지 않는다.
 
 ## 파일 전송
 

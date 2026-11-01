@@ -132,6 +132,29 @@ class DriveControllerWebMvcTest {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void moveEntry_rejectsMissingOrInconsistentDestination() throws Exception {
+        mockMvc.perform(post("/api/drive/entries/10/move").contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/drive/entries/10/move").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"destination\":\"FOLDER\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/drive/entries/10/move").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"destination\":\"ROOT\",\"parentId\":12}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void moveEntry_explicitRoot() throws Exception {
+        given(driveEntryService.moveEntry(1L, 10L, null))
+                .willReturn(entry(10L, null, DriveEntryType.FOLDER, "여행"));
+        mockMvc.perform(post("/api/drive/entries/10/move").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"destination\":\"ROOT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10));
+    }
+
     private DriveEntry entry(Long id, Long parentId, DriveEntryType type, String name) {
         return DriveEntry.builder()
                 .id(id)

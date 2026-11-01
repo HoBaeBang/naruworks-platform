@@ -158,6 +158,37 @@ class DriveEntryServiceTest {
         then(driveEntryWriter).shouldHaveNoInteractions();
     }
 
+    @Test
+    void moveEntry_movesToRoot() {
+        DriveEntry original = entry(10L, 20L, DriveEntryType.FILE, "photo.jpg");
+        DriveEntry moved = entry(10L, null, DriveEntryType.FILE, "photo.jpg");
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L))
+                .willReturn(Optional.of(original), Optional.of(moved));
+        given(driveEntryWriter.moveActive(10L, 1L, null)).willReturn(true);
+        assertThat(service().moveEntry(1L, 10L, null).getParentId()).isNull();
+    }
+
+    @Test
+    void moveEntry_rejectsMovingFolderIntoDescendant() {
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L))
+                .willReturn(Optional.of(entry(10L, null, DriveEntryType.FOLDER, "부모")));
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(20L, 1L))
+                .willReturn(Optional.of(entry(20L, 10L, DriveEntryType.FOLDER, "자식")));
+        assertThatThrownBy(() -> service().moveEntry(1L, 10L, 20L))
+                .isInstanceOf(IllegalArgumentException.class);
+        then(driveEntryWriter).should(org.mockito.Mockito.never()).moveActive(any(), any(), any());
+    }
+
+    @Test
+    void moveEntry_rejectsDuplicateName() {
+        given(driveEntryReader.findActiveByIdAndOwnerMemberId(10L, 1L))
+                .willReturn(Optional.of(entry(10L, 20L, DriveEntryType.FILE, "photo.jpg")));
+        given(driveEntryReader.existsActiveByOwnerMemberIdAndParentIdAndName(1L, null, "photo.jpg"))
+                .willReturn(true);
+        assertThatThrownBy(() -> service().moveEntry(1L, 10L, null))
+                .isInstanceOf(DriveEntryAlreadyExistsException.class);
+    }
+
     private DriveEntryService service() {
         return new DriveEntryService(driveEntryReader, driveEntryWriter, driveFileReader);
     }

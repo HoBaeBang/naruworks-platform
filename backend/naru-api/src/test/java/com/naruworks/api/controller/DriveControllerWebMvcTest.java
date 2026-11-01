@@ -114,6 +114,7 @@ class DriveControllerWebMvcTest {
     }
 
     @Test
+    @DisplayName("이름 변경에 성공하면 변경된 이름을 반환한다")
     void renameEntry_returnsUpdatedName() throws Exception {
         given(driveEntryService.renameEntry(1L, 10L, "새 이름"))
                 .willReturn(entry(10L, null, DriveEntryType.FOLDER, "새 이름"));
@@ -124,6 +125,7 @@ class DriveControllerWebMvcTest {
     }
 
     @Test
+    @DisplayName("이름 변경 시 중복 항목이 있으면 409를 반환한다")
     void renameEntry_returnsConflict() throws Exception {
         given(driveEntryService.renameEntry(1L, 10L, "중복"))
                 .willThrow(new DriveEntryAlreadyExistsException("중복"));
@@ -133,6 +135,7 @@ class DriveControllerWebMvcTest {
     }
 
     @Test
+    @DisplayName("이동 목적지가 누락되거나 서로 맞지 않으면 400을 반환한다")
     void moveEntry_rejectsMissingOrInconsistentDestination() throws Exception {
         mockMvc.perform(post("/api/drive/entries/10/move").contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -146,6 +149,7 @@ class DriveControllerWebMvcTest {
     }
 
     @Test
+    @DisplayName("명시적으로 루트 이동을 요청하면 이동된 항목을 반환한다")
     void moveEntry_explicitRoot() throws Exception {
         given(driveEntryService.moveEntry(1L, 10L, null))
                 .willReturn(entry(10L, null, DriveEntryType.FOLDER, "여행"));

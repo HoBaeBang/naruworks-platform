@@ -2,6 +2,7 @@ package com.naruworks.api.controller;
 
 import com.naruworks.api.dto.request.DriveFolderCreateRequest;
 import com.naruworks.api.dto.request.DriveEntryRenameRequest;
+import com.naruworks.api.dto.request.DriveEntryMoveRequest;
 import com.naruworks.api.dto.response.DriveEntryListResponse;
 import com.naruworks.api.dto.response.DriveEntryResponse;
 import com.naruworks.api.security.CurrentMember;
@@ -70,5 +71,15 @@ public class DriveController {
             @Valid @RequestBody DriveEntryRenameRequest request
     ) {
         return DriveEntryResponse.from(driveEntryService.renameEntry(member.getId(), entryId, request.name()), null);
+    }
+
+    /** 지정한 파일 또는 폴더를 명시적으로 선택한 루트나 폴더로 이동한다. */
+    @PostMapping("/entries/{entryId}/move")
+    public DriveEntryResponse moveEntry(
+            @CurrentMember Member member,
+            @PathVariable Long entryId,
+            @Valid @RequestBody DriveEntryMoveRequest request
+    ) {
+        return DriveEntryResponse.from(driveEntryService.moveEntry(member.getId(), entryId, request.parentId()), null);
     }
 }

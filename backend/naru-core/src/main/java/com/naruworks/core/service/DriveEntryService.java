@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +71,36 @@ public class DriveEntryService {
             throw new DriveEntryAlreadyExistsException("같은 폴더에 동일한 이름의 항목이 이미 존재합니다.");
         }
         if (!driveEntryWriter.renameActive(entryId, ownerMemberId, normalizedName)) {
+            throw new NotFoundException("항목을 찾을 수 없습니다.");
+        }
+        return driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)
+                .orElseThrow(() -> new NotFoundException("항목을 찾을 수 없습니다."));
+    }
+
+    /** 소유자의 파일 또는 폴더를 순환 없이 지정한 부모로 이동한다. */
+    @Transactional
+    public DriveEntry moveEntry(Long ownerMemberId, Long entryId, Long parentId) {
+        driveEntryWriter.lockOwnerForMove(ownerMemberId);
+        DriveEntry entry = driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)
+                .orElseThrow(() -> new NotFoundException("항목을 찾을 수 없습니다."));
+        if (parentId != null) {
+            DriveEntry ancestor = findActiveFolder(ownerMemberId, parentId);
+            Set<Long> visited = new HashSet<>();
+            while (ancestor != null) {
+                if (ancestor.getId().equals(entryId) || !visited.add(ancestor.getId())) {
+                    throw new IllegalArgumentException("자기 자신 또는 하위 폴더로 이동할 수 없습니다.");
+                }
+                ancestor = ancestor.getParentId() == null ? null
+                        : findActiveFolder(ownerMemberId, ancestor.getParentId());
+            }
+        }
+        if (Objects.equals(entry.getParentId(), parentId)) {
+            return entry;
+        }
+        if (driveEntryReader.existsActiveByOwnerMemberIdAndParentIdAndName(ownerMemberId, parentId, entry.getName())) {
+            throw new DriveEntryAlreadyExistsException("같은 폴더에 동일한 이름의 항목이 이미 존재합니다.");
+        }
+        if (!driveEntryWriter.moveActive(entryId, ownerMemberId, parentId)) {
             throw new NotFoundException("항목을 찾을 수 없습니다.");
         }
         return driveEntryReader.findActiveByIdAndOwnerMemberId(entryId, ownerMemberId)

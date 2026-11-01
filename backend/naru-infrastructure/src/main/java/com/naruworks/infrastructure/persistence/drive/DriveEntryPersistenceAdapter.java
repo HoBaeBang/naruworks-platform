@@ -59,6 +59,21 @@ public class DriveEntryPersistenceAdapter implements DriveEntryReader, DriveEntr
         }
     }
 
+    @Override
+    public void lockOwnerForMove(Long ownerMemberId) {
+        driveEntriesJpaRepository.lockOwnerForMove(ownerMemberId)
+                .orElseThrow(() -> new com.naruworks.core.exception.NotFoundException("회원을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public boolean moveActive(Long entryId, Long ownerMemberId, Long parentId) {
+        try {
+            return driveEntriesJpaRepository.moveActive(entryId, ownerMemberId, parentId, LocalDateTime.now()) == 1;
+        } catch (DataIntegrityViolationException exception) {
+            throw translateConflict(exception);
+        }
+    }
+
     private RuntimeException translateConflict(DataIntegrityViolationException exception) {
         Throwable cause = exception;
         while (cause != null) {

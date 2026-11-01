@@ -8,11 +8,11 @@
 - S3 endpoint와 credential 환경 변수 자리
 - #47 Drive migration, 도메인 모델, persistence adapter와 repository 테스트
 
-## 현재 구현 이슈
+## 완료 및 진행 중
 
-- #49 개인 Drive의 목록 조회와 폴더 생성 API
-  - `GET /api/drive/entries`, `POST /api/drive/folders`
-  - 소유권·상위 폴더·동명 이름 검증과 Service·Controller 테스트
+- #49 개인 Drive 목록 조회와 폴더 생성 API 완료
+- #70 파일·폴더 이름 변경 API 완료
+- #74 파일·폴더 이동 API 진행 중
 
 ## 다음 구현 이슈
 

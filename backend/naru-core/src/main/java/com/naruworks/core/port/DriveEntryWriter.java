@@ -7,4 +7,8 @@ public interface DriveEntryWriter {
     DriveEntry save(DriveEntry entry);
 
     boolean renameActive(Long entryId, Long ownerMemberId, String name);
+
+    void lockOwnerForMove(Long ownerMemberId);
+
+    boolean moveActive(Long entryId, Long ownerMemberId, Long parentId);
 }

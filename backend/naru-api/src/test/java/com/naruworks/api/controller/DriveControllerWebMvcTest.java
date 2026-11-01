@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,6 +111,25 @@ class DriveControllerWebMvcTest {
                         .content("{\"name\":\"여행\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("같은 폴더에 동일한 이름의 항목이 이미 존재합니다."));
+    }
+
+    @Test
+    void renameEntry_returnsUpdatedName() throws Exception {
+        given(driveEntryService.renameEntry(1L, 10L, "새 이름"))
+                .willReturn(entry(10L, null, DriveEntryType.FOLDER, "새 이름"));
+        mockMvc.perform(patch("/api/drive/entries/10").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"새 이름\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("새 이름"));
+    }
+
+    @Test
+    void renameEntry_returnsConflict() throws Exception {
+        given(driveEntryService.renameEntry(1L, 10L, "중복"))
+                .willThrow(new DriveEntryAlreadyExistsException("중복"));
+        mockMvc.perform(patch("/api/drive/entries/10").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"중복\"}"))
+                .andExpect(status().isConflict());
     }
 
     private DriveEntry entry(Long id, Long parentId, DriveEntryType type, String name) {

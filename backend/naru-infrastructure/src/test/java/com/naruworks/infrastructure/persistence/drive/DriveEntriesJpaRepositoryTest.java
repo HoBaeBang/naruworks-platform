@@ -158,6 +158,18 @@ class DriveEntriesJpaRepositoryTest {
         )).isFalse();
     }
 
+    @Test
+    void renameActive_updatesOnlyActiveOwnedEntry() {
+        Long id = saveEntry(OWNER_A, "old", DriveEntryType.FOLDER, null, null).toDomain().getId();
+        LocalDateTime time = LocalDateTime.of(2026, 10, 30, 12, 0);
+        assertThat(driveEntriesJpaRepository.renameActive(id, 2L, "other", time)).isZero();
+        assertThat(driveEntriesJpaRepository.renameActive(id, OWNER_A, "new", time)).isEqualTo(1);
+        DriveEntry result = driveEntriesJpaRepository.findByIdAndOwnerMemberIdAndDeletedAtIsNull(id, OWNER_A)
+                .orElseThrow().toDomain();
+        assertThat(result.getName()).isEqualTo("new");
+        assertThat(result.getUpdatedAt()).isEqualTo(time);
+    }
+
     private DriveEntriesEntity saveEntry(
             Long ownerMemberId,
             String name,

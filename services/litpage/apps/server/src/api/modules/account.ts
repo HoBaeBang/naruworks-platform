@@ -6,7 +6,7 @@ import { isSpaceMember } from '@nc/shared/permissions.ts';
 import type { SpaceRecord, SpaceViewRecord, UserRecord, UserRootRecord } from '@nc/shared/records.ts';
 import { db, findUserIdByEmail, getRecord } from '../../db.ts';
 import { checkPassword, clearSessionCookie, createSession, devLoginCodesEnabled, hasPassword, sessionCookie } from '../../auth.ts';
-import { ApiError, type Ctx } from '../handlers.ts';
+import { ApiError, SIGN_IN_DISABLED, type Ctx } from '../handlers.ts';
 import { RecordMapBuilder } from '../../records.ts';
 import { exemptIp, hit, RateLimitError } from '../../ratelimit.ts';
 import { saveRecord } from '../../seed.ts';
@@ -199,18 +199,8 @@ export const handlers: Record<string, Handler> = {
     return { backupCodes: codes };
   },
   /** Login step 2 ("Verify your identity"): the token from signInWithEmail plus an authenticator or backup code. */
-  loginWithMfa(ctx, { mfaToken, code, method }) {
-    if (!exemptIp(ctx.ip) && !hit(`mfa-login:ip:${ctx.ip}`, 60, 3600_000)) throw new RateLimitError('Too many login attempts. Try again later.');
-    let res: { userId: string; method: 'totp' | 'backup' };
-    try {
-      res = completeLoginChallenge(String(mfaToken ?? ''), String(code ?? ''), method === 'backup' ? 'backup' : method === 'totp' ? 'totp' : 'any');
-    } catch (e) {
-      rethrow(e);
-    }
-    const token = createSession(res.userId);
-    ctx.setCookie(sessionCookie(token, !!ctx.secure));
-    auditAccount('login', res.userId, { ip: ctx.ip, data: { authType: 'mfa', mfaMethod: res.method } });
-    return { userId: res.userId, isNewUser: false, backupCodesRemaining: res.method === 'backup' ? backupCodesRemaining(res.userId) : undefined };
+  loginWithMfa() {
+    throw new ApiError(SIGN_IN_DISABLED, 410); // NaruWorks: sessions come only from oidc.ts
   },
 
   // ---------------------------------------------------------------- passkeys (passkeys.ts: WebAuthn verification)
@@ -240,19 +230,11 @@ export const handlers: Record<string, Handler> = {
     return { passkeys: listPasskeys(uid) };
   },
   /** Login page › Passkey: options for a discoverable-credential sign-in (no email needed). */
-  passkeyLoginOptions(ctx) {
-    if (!exemptIp(ctx.ip) && !hit(`passkey-login:ip:${ctx.ip}`, 60, 15 * 60_000)) throw new RateLimitError('Too many login attempts. Try again later.');
-    return pk(() => passkeyLoginOpts(ctx.origin));
+  passkeyLoginOptions() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
-  /** A passkey is a phishing-resistant second factor in itself: no authenticator code is asked after it. */
-  loginWithPasskey(ctx, { challengeId, credential }) {
-    if (!exemptIp(ctx.ip) && !hit(`passkey-verify:ip:${ctx.ip}`, 60, 15 * 60_000)) throw new RateLimitError('Too many login attempts. Try again later.');
-    const { userId } = pk(() => verifyAssertion(challengeId, credential ?? {}));
-    if (!getRecord('lit_user', userId)) throw new ApiError('This passkey isn’t registered to a Litpage account.', 401);
-    const token = createSession(userId);
-    ctx.setCookie(sessionCookie(token, !!ctx.secure));
-    auditAccount('login', userId, { ip: ctx.ip, data: { authType: 'passkey' } });
-    return { userId, isNewUser: false };
+  loginWithPasskey() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
 
   // ---------------------------------------------------------------- password

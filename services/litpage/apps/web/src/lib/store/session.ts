@@ -70,10 +70,9 @@ export const useSession = create<SessionState>((set, get) => ({
     set({ spaceId });
   },
   async logout() {
-    await api('signOut');
     disconnectRealtime();
     set({ status: 'anonymous', userId: null, spaceId: null, demoMode: { enabled: false } });
-    location.href = '/login';
+    location.href = '/auth/logout'; // NaruWorks: ends the Litpage session, then the Keycloak one
   },
 }));
 

@@ -3,8 +3,9 @@ import { basename, dirname, resolve } from 'node:path';
 
 export const DEMO_MESSAGE = 'This is turned off in the public demo.';
 
+// NaruWorks: the public demo (visitor sandboxes with their own sessions) is off for good.
 export function isDemoMode(): boolean {
-  return process.env.NC_DEMO_MODE === '1';
+  return false;
 }
 
 export function demoResetHours(): number | null {

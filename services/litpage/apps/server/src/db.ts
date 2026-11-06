@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires INTEGER NOT NULL
 );
 
+-- NaruWorks: sign-in by login code / password is disabled (handlers answer 410); the tables stay so older code still runs
 CREATE TABLE IF NOT EXISTS login_codes (
   email TEXT PRIMARY KEY,
   code TEXT NOT NULL,
@@ -59,6 +60,13 @@ CREATE TABLE IF NOT EXISTS passwords (
   user_id TEXT PRIMARY KEY,
   hash TEXT NOT NULL,
   salt TEXT NOT NULL
+);
+
+-- NaruWorks: Keycloak user (sub) → Litpage user; the only sign-in path (oidc.ts)
+CREATE TABLE IF NOT EXISTS idp_identities (
+  sub TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL UNIQUE,
+  created_time INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS files (

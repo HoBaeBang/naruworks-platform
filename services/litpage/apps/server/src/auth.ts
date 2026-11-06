@@ -3,7 +3,8 @@ import { randomBytes, scryptSync, timingSafeEqual, randomInt } from 'node:crypto
 import type { IncomingMessage } from 'node:http';
 import { db } from './db.ts';
 
-const SESSION_DAYS = 365;
+// NaruWorks: sessions are created only by oidc.ts after a Keycloak login; they last 7 days.
+const SESSION_DAYS = 7;
 const CODE_TTL_MS = 15 * 60_000;
 /** Wrong codes accepted per issued code; re-requesting a code does not reset the counter while it is valid. */
 export const MAX_CODE_ATTEMPTS = 5;

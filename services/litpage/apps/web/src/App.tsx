@@ -36,7 +36,7 @@ function rememberAfterLogin(path: string) {
 }
 
 
-const ANONYMOUS_ROUTES = new Set(['login', 'signup', 'public', 'form', 'site']);
+const ANONYMOUS_ROUTES = new Set(['public', 'form', 'site']);
 
 export function App() {
   const status = useSession((s) => s.status);
@@ -66,9 +66,8 @@ export function App() {
       return;
     }
     if (status === 'anonymous' && !ANONYMOUS_ROUTES.has(route.name)) {
-      // invite links keep their own detour (above); the bare root has nothing to come back to
-      if (route.name !== 'root' && route.name !== 'invite' && route.name !== 'teamInvite') rememberAfterLogin(location.pathname + location.search + location.hash);
-      navigate('/login', { replace: true });
+      // NaruWorks: there is no login page; the server sends the browser to Keycloak and back to this path
+      location.replace(`/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`);
     }
     if (status === 'onboarding' && route.name !== 'onboarding') navigate('/onboarding', { replace: true });
     if (status === 'ready' && (route.name === 'login' || route.name === 'signup' || route.name === 'onboarding')) navigate(takeAfterLogin() ?? '/', { replace: true });
@@ -79,7 +78,7 @@ export function App() {
   else if (route.name === 'form') body = <PublicFormPage viewId={route.viewId} />;
   else if (route.name === 'site') body = <SiteRoot domain={route.domain} />;
   else if (status === 'loading') body = <div className="nc-boot" />;
-  else if (status === 'anonymous') body = <LoginPage mode={route.name === 'signup' ? 'signup' : 'login'} />;
+  else if (status === 'anonymous') body = <div className="nc-boot" />;
   else if (route.name === 'teamInvite' && (status === 'ready' || status === 'onboarding')) body = <TeamInvitePage code={route.code} />;
   else if (status === 'onboarding') body = <OnboardingPage />;
   else body = <Workspace />;

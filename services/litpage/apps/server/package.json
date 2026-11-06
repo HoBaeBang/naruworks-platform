@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.135.0",
-    "@nc/shared": "workspace:*",
     "@hono/node-server": "2.1.5",
+    "@nc/shared": "workspace:*",
     "hono": "4.13.13",
+    "jose": "6.1.0",
     "ws": "8.22.0"
   },
   "devDependencies": {

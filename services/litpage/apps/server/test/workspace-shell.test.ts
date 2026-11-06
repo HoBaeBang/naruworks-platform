@@ -377,11 +377,7 @@ describe('notification emails and the mail outbox', () => {
     void n;
   });
 
-  it('login codes and workspace invites are mailed; login codes are marked sensitive', async () => {
-    await call(null, 'sendSignInCode', { email: 'newbie@ws.test' });
-    const m = mail.listMail({ to: 'newbie@ws.test', kind: 'login_code' });
-    expect(m).toHaveLength(1);
-    expect(m[0].subject).toMatch(/^Litpage sign-in code: \d{6}$/);
+  it('workspace invites are mailed (login codes are no longer sent: NaruWorks uses Keycloak)', async () => {
     await call(ids.alice, 'inviteMembers', { spaceId: ids.space, emails: ['invitee@ws.test'] });
     expect(mail.listMail({ to: 'invitee@ws.test', kind: 'workspace_invite' })[0].subject).toBe('Alice asked you to join Acme');
     // page invite to an unknown address: placeholder account + immediate email

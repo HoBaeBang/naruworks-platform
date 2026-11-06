@@ -19,6 +19,7 @@ import { redactDatabaseRecord } from './propaccess.ts';
 import { extraHandlers } from './api/extra.ts';
 import { registerAiRoutes } from './aiStream.ts';
 import { registerMailRoutes } from './mail.ts';
+import { registerOidcRoutes } from './oidc.ts';
 import { registerPublicApi } from './publicApi/routes.ts';
 import { cleanFileName, cleanMime, fileHeaders, fileRow, storeFile } from './content/files.ts';
 import { hit } from './ratelimit.ts';
@@ -149,6 +150,8 @@ app.post('/api/rpc/:name', bodyLimit({ maxSize: MAX_JSON_BYTES, onError: tooLarg
   }
 });
 
+// NaruWorks sign-in (Keycloak OIDC): GET /auth/login, /auth/callback, /auth/logout
+registerOidcRoutes(app, { isHttps, clientIp });
 // AI streaming (SSE): POST /api/ai/stream
 registerAiRoutes(app);
 // dev mail outbox viewer: GET /api/dev/mail (404 in production)
@@ -233,6 +236,10 @@ app.get('*', (c) => {
   }
   let file = resolve(WEB_DIST, `.${pathname}`);
   if (!(file + sep).startsWith(WEB_DIST + sep) || !existsSync(file) || statSync(file).isDirectory()) file = join(WEB_DIST, 'index.html');
+  // NaruWorks: the app shell is for signed-in members; only shared-link pages (/public/…) open without a session
+  if (file === join(WEB_DIST, 'index.html') && !pathname.startsWith('/public/') && !userForToken(parseCookies(c.req.header('cookie')).lit_session)) {
+    return c.redirect(`/auth/login?next=${encodeURIComponent(pathname + url.search)}`, 302);
+  }
   const type = MIME[extname(file)] ?? 'application/octet-stream';
   const cache = file.includes(`${sep}assets${sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache';
   const body = readFileSync(file);

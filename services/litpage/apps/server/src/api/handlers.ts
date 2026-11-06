@@ -54,6 +54,9 @@ export class ApiError extends Error {
   }
 }
 
+/** NaruWorks: the only sign-in is Keycloak (GET /auth/login in oidc.ts). */
+export const SIGN_IN_DISABLED = 'This sign-in method is turned off. Sign in with your NaruWorks account.';
+
 type Handler = (ctx: Ctx, body: any) => any | Promise<any>;
 
 function requireUser(ctx: Ctx): string {
@@ -189,56 +192,15 @@ function addCollectionRecords(col: CollectionRecord | undefined, rm: RecordMapBu
 
 export const handlers: Record<string, Handler> = {
   // ---------- auth ----------
-  checkSignInMethods(ctx, { email }) {
-    if (!exemptIp(ctx.ip) && !hit(`login-options:ip:${ctx.ip}`, 120, 3600_000)) throw new RateLimitError();
-    const id = email ? findUserIdByEmail(String(email)) : null;
-    return { hasAccount: !!id, passwordSignIn: id ? hasPassword(id) : false, mustReverify: false };
+  // NaruWorks: login code / password sign-in and self sign-up are removed; sessions come only from oidc.ts (/auth/login)
+  checkSignInMethods() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
-  sendSignInCode(ctx, { email }) {
-    const e = String(email ?? '').trim().toLowerCase();
-    if (!e || e.length > 254 || !EMAIL_RE.test(e)) throw new ApiError('Please provide a valid email address.');
-    // login codes: 5 per address per 15 minutes and 20 per day; 60 per client address per hour
-    if (!exemptIp(ctx.ip) && !hit(`login-code:ip:${ctx.ip}`, 60, 3600_000)) throw new RateLimitError();
-    if (!hit(`login-code:email:${e}`, 5, 15 * 60_000) || !hit(`login-code:email-day:${e}`, 20, 86_400_000)) {
-      throw new RateLimitError('Too many login codes were requested for this email. Try again later.');
-    }
-    const code = issueLoginCode(e);
-    sendLoginCodeEmail(e, code); // mail outbox (SMTP only when NC_SMTP_URL is set)
-    const dev = devLoginCodesEnabled();
-    if (dev) console.log(`[auth] login code for ${e}: ${code}`); // never logged unless dev login codes are on
-    return { csrfState: newId(), ...(dev ? { devCode: code } : {}) };
+  sendSignInCode() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
-  signInWithEmail(ctx, { email, code, password }) {
-    const e = String(email ?? '').trim().toLowerCase();
-    if (!e || e.length > 254) throw new ApiError('Please provide a valid email address.');
-    // attempts: 10 per address and 100 per client address per hour (a code also locks after 5 wrong tries)
-    const failKey = `login-fail:email:${e}`;
-    const emailLimited = !isDemoAccountEmail(e);
-    if ((emailLimited && !hit(failKey, 10, 3600_000)) || (!exemptIp(ctx.ip) && !hit(`login-fail:ip:${ctx.ip}`, 100, 3600_000))) {
-      throw new RateLimitError('Too many login attempts. Try again later.');
-    }
-    let userId = findUserIdByEmail(e);
-    if (password) {
-      if (!userId || !checkPassword(userId, String(password))) throw new ApiError('Incorrect password.', 401);
-    } else if (!verifyLoginCode(e, String(code ?? ''))) {
-      throw new ApiError('Invalid or expired login code.', 401);
-    }
-    if (emailLimited) reset(failKey);
-    let isNewUser = false;
-    if (!userId) {
-      userId = newId();
-      createUser(userId, e);
-      isNewUser = true;
-      autoJoinAllowedDomains(userId, e); // Settings › General › Allowed email domains
-    }
-    // two-factor authentication: no session until loginWithMfa gets a valid code (Settings › Account)
-    if (!isNewUser && mfaEnabled(userId)) {
-      return { mfaRequired: true, mfaToken: createLoginChallenge(userId), factors: listFactors(userId).map((f) => ({ id: f.id, name: f.name })) };
-    }
-    const token = createSession(userId);
-    ctx.setCookie(sessionCookie(token, !!ctx.secure));
-    auditAccount('login', userId, { ip: ctx.ip, data: { authType: password ? 'password' : 'email' } });
-    return { userId, isNewUser };
+  signInWithEmail() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
   signOut(ctx) {
     if (ctx.userId) auditAccount('logout', ctx.userId, { ip: ctx.ip });
@@ -246,19 +208,8 @@ export const handlers: Record<string, Handler> = {
     ctx.setCookie(clearSessionCookie(!!ctx.secure));
     return {};
   },
-  changePassword(ctx, { password, currentPassword }) {
-    const uid = requireUser(ctx);
-    const problem = passwordProblem(String(password ?? ''));
-    if (problem) throw new ApiError(problem);
-    // changing an existing password needs the current one (a stolen session can't lock the owner out)
-    const had = hasPassword(uid);
-    if (had) {
-      if (!hit(`pw-check:user:${uid}`, 10, 15 * 60_000)) throw new RateLimitError();
-      if (!checkPassword(uid, String(currentPassword ?? ''))) throw new ApiError('Incorrect password.', 401);
-    }
-    setPassword(uid, String(password));
-    auditAccount(had ? 'password_changed' : 'password_set', uid, { ip: ctx.ip });
-    return {};
+  changePassword() {
+    throw new ApiError(SIGN_IN_DISABLED, 410);
   },
   hasPassword(ctx) {
     return { hasPassword: hasPassword(requireUser(ctx)) };

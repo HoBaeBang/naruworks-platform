@@ -107,76 +107,6 @@ describe('TOTP (RFC 4226 / 6238)', () => {
   });
 });
 
-describe('password rules and changes', () => {
-  it('enforces Litpage password rules and requires the current password to change it', async () => {
-    expect(policy.passwordProblem('short1')).toMatch(/longer/);
-    expect(policy.passwordProblem('aaaaaaaa1')).toMatch(/4 different/);
-    expect(policy.passwordProblem('abcdefgh')).toMatch(/letters and numbers/);
-    expect(policy.passwordProblem('correct horse battery')).toBeNull(); // 15+ characters: no mix needed
-    expect(await status(() => call(ids.member, 'changePassword', { password: 'abcdefgh' }))).toBe(400);
-    expect(await status(() => call(ids.member, 'changePassword', { password: 'Secret123' }))).toBe(200);
-    expect(await status(() => call(ids.member, 'changePassword', { password: 'Other4567' }))).toBe(401); // no current password
-    expect(await status(() => call(ids.member, 'changePassword', { password: 'Other4567', currentPassword: 'wrong' }))).toBe(401);
-    expect(await status(() => call(ids.member, 'changePassword', { password: 'Other4567', currentPassword: 'Secret123' }))).toBe(200);
-    expect(await status(() => call(ids.member, 'removePassword', { currentPassword: 'nope' }))).toBe(401);
-    expect(await status(() => call(ids.member, 'removePassword', { currentPassword: 'Other4567' }))).toBe(200);
-    expect((await call(ids.member, 'hasPassword')).hasPassword).toBe(false);
-  });
-});
-
-describe('two-step authentication', () => {
-  let secret = '';
-  let backup: string[] = [];
-  it('needs a password, then enrolls an authenticator and returns 6 backup codes once', async () => {
-    expect(await status(() => call(ids.admin, 'startTotpEnrollment'))).toBe(400);
-    await call(ids.admin, 'changePassword', { password: 'Admin12345' });
-    const start = await call(ids.admin, 'startTotpEnrollment');
-    expect(start.uri).toMatch(/^otpauth:\/\/totp\/Litpage%3Aadmin%40set\.test\?secret=/);
-    secret = start.secret;
-    expect(await status(() => call(ids.admin, 'completeTotpEnrollment', { enrollmentId: start.enrollmentId, name: 'Phone', code: '000000' }))).toBe(400);
-    expect(await status(() => call(ids.admin, 'completeTotpEnrollment', { enrollmentId: start.enrollmentId, name: '', code: mfa.totp(secret) }))).toBe(400);
-    const done = await call(ids.admin, 'completeTotpEnrollment', { enrollmentId: start.enrollmentId, name: 'Phone', code: mfa.totp(secret) });
-    expect(done.backupCodes).toHaveLength(6);
-    backup = done.backupCodes;
-    const sec = await call(ids.admin, 'getAccountSecurity');
-    expect(sec.mfa.enabled).toBe(true);
-    expect(sec.mfa.factors.map((f: any) => f.name)).toEqual(['Phone']);
-    expect(sec.mfa.backupCodesRemaining).toBe(6);
-    // a second authenticator needs a code from the first one
-    expect(await status(() => call(ids.admin, 'startTotpEnrollment', { code: '111111' }))).toBe(401);
-  });
-  it('asks for a code at login: no session until loginWithMfa succeeds; codes are single-use', async () => {
-    cookies.length = 0;
-    const first = await call(null, 'signInWithEmail', { email: 'admin@set.test', password: 'Admin12345' });
-    expect(first.mfaRequired).toBe(true);
-    expect(first.factors.map((f: any) => f.name)).toEqual(['Phone']);
-    expect(cookies.some((c) => c.startsWith('lit_session=') && !c.startsWith('lit_session=;'))).toBe(false);
-    expect(await status(() => call(null, 'loginWithMfa', { mfaToken: first.mfaToken, code: '000000' }))).toBe(401);
-    expect(await status(() => call(null, 'loginWithMfa', { mfaToken: 'bogus', code: '000000' }))).toBe(400);
-    const ok = await call(null, 'loginWithMfa', { mfaToken: first.mfaToken, code: backup[0] });
-    expect(ok.userId).toBe(ids.admin);
-    expect(ok.backupCodesRemaining).toBe(5);
-    expect(cookies.some((c) => /^lit_session=[0-9a-f]{64};/.test(c))).toBe(true);
-    // the same backup code can't be used again; the challenge token is single-use too
-    const second = await call(null, 'signInWithEmail', { email: 'admin@set.test', password: 'Admin12345' });
-    expect(await status(() => call(null, 'loginWithMfa', { mfaToken: second.mfaToken, code: backup[0], method: 'backup' }))).toBe(401);
-    expect(await status(() => call(null, 'loginWithMfa', { mfaToken: first.mfaToken, code: backup[1] }))).toBe(400);
-    // five wrong codes lock the challenge
-    const third = await call(null, 'signInWithEmail', { email: 'admin@set.test', password: 'Admin12345' });
-    for (let i = 0; i < 5; i++) await status(() => call(null, 'loginWithMfa', { mfaToken: third.mfaToken, code: '000000' }));
-    expect(await status(() => call(null, 'loginWithMfa', { mfaToken: third.mfaToken, code: backup[2] }))).toBe(429);
-  });
-  it('turning 2FA off needs a code; deleting the last authenticator turns it off', async () => {
-    expect(await status(() => call(ids.admin, 'disableMfa', { code: '000000' }))).toBe(401);
-    const factors = (await call(ids.admin, 'getAccountSecurity')).mfa.factors;
-    const res = await call(ids.admin, 'deleteMfaFactor', { factorId: factors[0].id, code: backup[3], method: 'backup' });
-    expect(res.enabled).toBe(false);
-    expect((await call(ids.admin, 'getAccountSecurity')).mfa.backupCodesRemaining).toBe(0);
-    const login = await call(null, 'signInWithEmail', { email: 'admin@set.test', password: 'Admin12345' });
-    expect(login.mfaRequired).toBeUndefined();
-  });
-});
-
 describe('secondary emails', () => {
   it('verifies, logs in to the same account, makes primary and refuses addresses of other accounts', async () => {
     expect(await status(() => call(ids.member, 'addSecondaryEmail', { email: 'owner@set.test' }))).toBe(400);
@@ -332,7 +262,7 @@ describe('audit log, analytics and content search authorization', () => {
     }
     const log = await call(ids.owner, 'getAuditLog', { spaceId: ids.space, limit: 200 });
     const events = new Set(log.entries.map((e: any) => e.event));
-    for (const ev of ['team_created', 'page_permission_updated', 'page_shared_to_web', 'export_toggled', 'public_page_sharing_toggled', 'team_creation_admins_setting_toggled', 'password_set', 'mfa_totp_toggled', 'login']) {
+    for (const ev of ['team_created', 'page_permission_updated', 'page_shared_to_web', 'export_toggled', 'public_page_sharing_toggled', 'team_creation_admins_setting_toggled']) {
       expect(events.has(ev), ev).toBe(true);
     }
     // nothing from other workspaces
@@ -341,9 +271,9 @@ describe('audit log, analytics and content search authorization', () => {
     expect(await status(() => call(ids.owner, 'getAuditLog', { spaceId: ids.otherSpace }))).toBe(403);
   });
   it('filters by event, person and request, and exports CSV', async () => {
-    const pw = await call(ids.owner, 'getAuditLog', { spaceId: ids.space, events: ['password_set'] });
+    const pw = await call(ids.owner, 'getAuditLog', { spaceId: ids.space, events: ['export_toggled'] });
     expect(pw.entries.length).toBeGreaterThan(0);
-    expect(pw.entries.every((e: any) => e.event === 'password_set')).toBe(true);
+    expect(pw.entries.every((e: any) => e.event === 'export_toggled')).toBe(true);
     const byMember = await call(ids.owner, 'getAuditLog', { spaceId: ids.space, actorIds: [ids.member] });
     expect(byMember.entries.every((e: any) => e.actorId === ids.member)).toBe(true);
     const small = await call(ids.owner, 'getAuditLog', { spaceId: ids.space, limit: 2 });
@@ -648,96 +578,7 @@ describe('connections (Settings › Connections › Manage)', () => {
   });
 });
 
-describe('passkeys (WebAuthn)', () => {
-  // minimal CBOR encoder for test vectors (authenticator side)
-  function cbor(v: any): Buffer {
-    const head = (major: number, n: number) => {
-      if (n < 24) return Buffer.from([(major << 5) | n]);
-      if (n < 256) return Buffer.from([(major << 5) | 24, n]);
-      if (n < 65536) return Buffer.from([(major << 5) | 25, n >> 8, n & 255]);
-      const b = Buffer.alloc(5);
-      b[0] = (major << 5) | 26;
-      b.writeUInt32BE(n, 1);
-      return b;
-    };
-    if (typeof v === 'number') return v >= 0 ? head(0, v) : head(1, -1 - v);
-    if (typeof v === 'string') { const b = Buffer.from(v); return Buffer.concat([head(3, b.length), b]); }
-    if (v instanceof Uint8Array) return Buffer.concat([head(2, v.length), Buffer.from(v)]);
-    const entries: [any, any][] = v instanceof Map ? [...v] : Object.entries(v);
-    return Buffer.concat([head(5, entries.length), ...entries.flatMap(([k, x]) => [cbor(k), cbor(x)])]);
-  }
-  const ORIGIN = 'http://localhost:5451';
-  it('registers a passkey and signs in with it; replays, other sites and cloned counters are refused', async () => {
-    const { generateKeyPairSync, createHash, sign, randomBytes } = await import('node:crypto');
-    const sha = (b: Buffer | string) => createHash('sha256').update(b).digest();
-    const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-    const jwk = publicKey.export({ format: 'jwk' }) as { x: string; y: string };
-    const cose = new Map<any, any>([[1, 2], [3, -7], [-1, 1], [-2, Buffer.from(jwk.x, 'base64url')], [-3, Buffer.from(jwk.y, 'base64url')]]);
-    const credId = randomBytes(32);
-    const user = ids.member;
-    const pctx = (u: string | null, origin = ORIGIN) => ({ userId: u, ip: '10.9.8.7', origin, userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/140.0', setCookie: (c: string) => cookies.push(c) });
-
-    // 127.0.0.1 can't be an RP ID
-    expect(await status(() => H.passkeyRegistrationOptions(pctx(user, 'http://127.0.0.1:5451'), {}))).toBe(400);
-    const opts = H.passkeyRegistrationOptions(pctx(user), {});
-    expect(opts.publicKey.rp.id).toBe('localhost');
-    expect(opts.publicKey.authenticatorSelection.residentKey).toBe('required');
-    const authData = Buffer.concat([sha('localhost'), Buffer.from([0x45]), Buffer.from([0, 0, 0, 0]), Buffer.alloc(16), Buffer.from([0, 32]), credId, cbor(cose)]);
-    const regClient = Buffer.from(JSON.stringify({ type: 'webauthn.create', challenge: opts.publicKey.challenge, origin: ORIGIN }));
-    const credential = { id: credId.toString('base64url'), rawId: credId.toString('base64url'), type: 'public-key', response: { clientDataJSON: regClient.toString('base64url'), attestationObject: cbor({ fmt: 'none', attStmt: new Map(), authData }).toString('base64url'), transports: ['internal'] } };
-    // another user can't complete my registration
-    expect(await status(() => H.registerPasskey(pctx(ids.admin), { challengeId: opts.challengeId, credential }))).toBe(400);
-    const opts2 = H.passkeyRegistrationOptions(pctx(user), {});
-    const client2 = Buffer.from(JSON.stringify({ type: 'webauthn.create', challenge: opts2.publicKey.challenge, origin: ORIGIN }));
-    const reg = H.registerPasskey(pctx(user), { challengeId: opts2.challengeId, credential: { ...credential, response: { ...credential.response, clientDataJSON: client2.toString('base64url') } } });
-    expect(reg.passkey).toMatchObject({ id: credId.toString('base64url'), name: 'Chrome on macOS' });
-    expect(H.getPasskeys(pctx(user), {}).passkeys).toHaveLength(1);
-
-    const assertion = (challenge: string, count: number, origin = ORIGIN, key = privateKey) => {
-      const ad = Buffer.concat([sha('localhost'), Buffer.from([0x05]), Buffer.from([0, 0, 0, count])]);
-      const cd = Buffer.from(JSON.stringify({ type: 'webauthn.get', challenge, origin }));
-      const signature = sign('sha256', Buffer.concat([ad, sha(cd)]), key);
-      return { id: credId.toString('base64url'), rawId: credId.toString('base64url'), type: 'public-key', response: { clientDataJSON: cd.toString('base64url'), authenticatorData: ad.toString('base64url'), signature: signature.toString('base64url'), userHandle: Buffer.from(user).toString('base64url') } };
-    };
-    const l1 = H.passkeyLoginOptions(pctx(null), {});
-    expect(l1.publicKey.rpId).toBe('localhost');
-    const before = cookies.length;
-    const res = H.loginWithPasskey(pctx(null), { challengeId: l1.challengeId, credential: assertion(l1.publicKey.challenge, 1) });
-    expect(res.userId).toBe(user);
-    expect(cookies.length).toBe(before + 1); // session cookie
-    // the challenge is single-use
-    expect(await status(() => H.loginWithPasskey(pctx(null), { challengeId: l1.challengeId, credential: assertion(l1.publicKey.challenge, 2) }))).toBe(400);
-    // signed for another origin
-    const l2 = H.passkeyLoginOptions(pctx(null), {});
-    expect(await status(() => H.loginWithPasskey(pctx(null), { challengeId: l2.challengeId, credential: assertion(l2.publicKey.challenge, 2, 'http://evil.localhost:5451') }))).toBe(400);
-    // a counter that doesn't grow (cloned authenticator)
-    const l3 = H.passkeyLoginOptions(pctx(null), {});
-    expect(await status(() => H.loginWithPasskey(pctx(null), { challengeId: l3.challengeId, credential: assertion(l3.publicKey.challenge, 1) }))).toBe(401);
-    // a different key
-    const other = generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey;
-    const l4 = H.passkeyLoginOptions(pctx(null), {});
-    expect(await status(() => H.loginWithPasskey(pctx(null), { challengeId: l4.challengeId, credential: assertion(l4.publicKey.challenge, 5, ORIGIN, other) }))).toBe(401);
-    // rename, delete → the passkey no longer signs in
-    H.updatePasskeyName(pctx(user), { id: credId.toString('base64url'), name: 'Work laptop' });
-    expect(H.getPasskeys(pctx(user), {}).passkeys[0].name).toBe('Work laptop');
-    expect(await status(() => H.deletePasskey(pctx(ids.admin), { id: credId.toString('base64url') }))).toBe(404);
-    H.deletePasskey(pctx(user), { id: credId.toString('base64url') });
-    const l5 = H.passkeyLoginOptions(pctx(null), {});
-    expect(await status(() => H.loginWithPasskey(pctx(null), { challengeId: l5.challengeId, credential: assertion(l5.publicKey.challenge, 6) }))).toBe(401);
-  });
-});
-
 describe('account deletion', () => {
-  it('removing the password also turns 2FA off', async () => {
-    await call(ids.outsider, 'changePassword', { password: 'Outside123' });
-    const start = await call(ids.outsider, 'startTotpEnrollment');
-    await call(ids.outsider, 'completeTotpEnrollment', { enrollmentId: start.enrollmentId, name: 'Key', code: mfa.totp(start.secret) });
-    expect(mfa.mfaEnabled(ids.outsider)).toBe(true);
-    expect(await status(() => call(ids.outsider, 'removePassword', { currentPassword: 'nope' }))).toBe(401);
-    await call(ids.outsider, 'removePassword', { currentPassword: 'Outside123' });
-    expect(mfa.mfaEnabled(ids.outsider)).toBe(false);
-    expect((await call(ids.outsider, 'hasPassword')).hasPassword).toBe(false);
-  });
   it('needs the email, and explicit confirmation for workspaces with other members that will be deleted', async () => {
     const preview = await call(ids.owner, 'getAccountDeletionPreview');
     expect(preview.toDelete.find((s: any) => s.id === ids.space)).toMatchObject({ otherMembers: 2 });

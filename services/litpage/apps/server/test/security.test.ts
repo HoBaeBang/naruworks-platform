@@ -413,16 +413,6 @@ describe('S-11 CSRF / origin checks', () => {
 });
 
 describe('S-12 login', () => {
-  it('dev login codes need NODE_ENV!=production and NC_DEV_LOGIN_CODES=1', async () => {
-    const auth = await import('../src/auth.ts');
-    expect((await call(null, 'sendSignInCode', { email: 'nodev@sec.test' })).devCode).toBeUndefined();
-    process.env.NC_DEV_LOGIN_CODES = '1';
-    process.env.NODE_ENV = 'production';
-    expect(auth.devLoginCodesEnabled()).toBe(false);
-    process.env.NODE_ENV = 'test';
-    expect(auth.devLoginCodesEnabled()).toBe(true);
-    delete process.env.NC_DEV_LOGIN_CODES;
-  });
   it('a code locks after 5 wrong attempts; asking again does not reset the budget', async () => {
     const auth = await import('../src/auth.ts');
     const email = 'brute@sec.test';
@@ -432,10 +422,8 @@ describe('S-12 login', () => {
     const again = auth.issueLoginCode(email);
     expect(auth.verifyLoginCode(email, again)).toBe(false);
   });
-  it('code requests are rate limited per address', async () => {
-    const email = 'flood@sec.test';
-    for (let i = 0; i < 5; i++) await call(null, 'sendSignInCode', { email });
-    expect(await status(() => call(null, 'sendSignInCode', { email }))).toBe(429);
+  it('code requests are refused: the sign-in code path is turned off (NaruWorks)', async () => {
+    expect(await status(() => call(null, 'sendSignInCode', { email: 'flood@sec.test' }))).toBe(410);
   });
   it('session cookie flags', async () => {
     const auth = await import('../src/auth.ts');

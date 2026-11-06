@@ -1,0 +1,25 @@
+{
+  "name": "@nc/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NC_DEV_LOGIN_CODES=1 NC_DEV_ALLOW_LOOPBACK_FETCH=1 node --import ./src/loadEnv.ts --watch --watch-path=src --watch-path=../../packages/shared/src src/main.ts",
+    "start": "NODE_ENV=production node src/main.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
+    "@nc/shared": "workspace:*",
+    "@hono/node-server": "2.1.5",
+    "hono": "4.13.13",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/ws": "8.18.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

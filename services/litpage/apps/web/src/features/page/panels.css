@@ -1,0 +1,114 @@
+/* Right panel (div.lit-update-sidebar): 385px, full height, a flex sibling of .lit-frame so the
+   frame shrinks. Overrides the older absolute positioning in shell.css. */
+.lit-cursor-listener > .nc-right-panel.lit-update-sidebar {
+  position: relative; inset: auto; top: auto; right: auto; bottom: auto; order: 4; flex: 0 0 385px; width: 385px; height: 100%;
+  display: flex; flex-direction: column; background: var(--lp-bg-primary); box-shadow: none; border-inline-start: 1px solid var(--lp-border-secondary); z-index: 1; min-width: 0;
+}
+.nc-right-panel-resizer { position: absolute; top: -1px; bottom: -1px; inset-inline-start: 1px; width: 12px; z-index: 3; cursor: col-resize; outline: none; }
+.nc-right-panel-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; inset-inline-start: -2px; width: 2px; background: transparent; transition: background 150ms; }
+.nc-right-panel-resizer:hover::after, .nc-right-panel-resizer:focus-visible::after { background: var(--lp-border-primary); }
+/* the frame's own topbar actions move into the panel header */
+.lit-cursor-listener:has(> .nc-right-panel) > .lit-frame .lit-topbar-action-buttons { display: none; }
+/* the table-of-contents rail hides while Updates & analytics / All discussions is docked (it stays next to the
+   docked AI chat) */
+.lit-cursor-listener:has(> .nc-right-panel) > .lit-frame .nc-toc-margin { display: none; }
+
+/* header: » "Close panel" 24×24 at panel+10, actions right-aligned 10px in */
+.nc-right-panel-topbar { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 10px 0 9px; flex-shrink: 0; }
+.nc-right-panel-topbar .nc-right-panel-close { width: 24px; height: 24px; }
+.nc-right-panel-topbar .actions { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.nc-right-panel-body { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.nc-right-panel-body.flush { padding: 0; }
+
+/* tabs: Updates | Analytics — 28px tabs, 2px underline on the header divider */
+.nc-panel-tabs { display: flex; align-items: flex-start; height: 52px; padding: 12px 8px 0 6px; flex-shrink: 0; border-bottom: 1px solid var(--lp-border-secondary); }
+.nc-panel-tab {
+  position: relative; display: flex; align-items: center; height: 28px; padding: 0 8px; border-radius: 6px; font-size: 14px; line-height: 20px; color: var(--lp-text-secondary);
+  cursor: pointer; user-select: none; transition: background 0.1s ease-in-out;
+}
+.nc-panel-tab:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-panel-tab.active { color: var(--lp-text-primary); }
+.nc-panel-tab.active::after { content: ''; position: absolute; inset-inline: 8px; bottom: -12px; height: 2px; background: var(--lp-text-primary); }
+
+.nc-panel-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 48px 16px; text-align: center; min-height: 80px; }
+.nc-panel-empty.small { padding: 16px; }
+.nc-panel-empty .title { font-size: 14px; font-weight: 500; color: var(--lp-text-secondary); }
+.nc-panel-empty .sub { font-size: 12px; color: var(--lp-text-tertiary); }
+.nc-panel-footer { flex-shrink: 0; border-top: 1px solid var(--lp-border-secondary); padding: 10px 12px; }
+.nc-panel-learn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 6px; color: var(--lp-text-secondary); font-size: 14px; text-decoration: none; }
+.nc-panel-learn:hover { background: var(--lp-bg-interactive-transparent); }
+
+/* --- Updates --- */
+.nc-updates { display: flex; flex-direction: column; }
+.nc-update { position: relative; display: flex; gap: 12px; padding: 20px 20px 20px 20px; border-bottom: 1px solid var(--lp-border-secondary); }
+.nc-update.clickable { cursor: pointer; }
+.nc-update.clickable:hover { background: var(--lp-bg-secondary-transparent); }
+.nc-update .main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.nc-update .line1 { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; font-size: 14px; line-height: 22px; color: var(--lp-text-primary); padding-inline-end: 24px; }
+.nc-update .line1 .page { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.nc-update .line1 .page b { font-weight: 600; }
+.nc-update .when { font-size: 12px; line-height: 18px; color: var(--lp-text-tertiary); margin-top: 2px; }
+.nc-update .history { position: absolute; top: 18px; inset-inline-end: 16px; color: var(--lp-icon-secondary); }
+.nc-update-diff { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+.nc-update-prop { display: flex; flex-direction: column; gap: 6px; }
+.nc-update-prop .label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--lp-text-secondary); }
+.nc-update-prop .change { display: flex; align-items: center; gap: 8px; min-height: 26px; }
+.nc-update-prop .change .cover { width: 64px; height: 28px; object-fit: cover; border-radius: 4px; }
+.nc-update-prop .change .none { font-size: 14px; color: var(--lp-text-tertiary); }
+.nc-update-prop .removed-text { color: var(--lp-text-tertiary); text-decoration: line-through; font-size: 14px; }
+.nc-update-prop .added-text { color: var(--lp-blue-text-accent, #818cf8); font-size: 14px; }
+.nc-update-block {
+  display: flex; align-items: flex-start; gap: 6px; font-size: 14px; line-height: 20px; padding: 4px 2px; border-radius: 2px; min-width: 0;
+  white-space: pre-wrap; word-break: break-word;
+}
+.nc-update-block .text { min-width: 0; flex: 1 1 auto; }
+.nc-update-block.added, .nc-update-block.edited { background: rgba(129, 140, 248, 0.14); color: var(--lp-blue-text-accent, #818cf8); }
+.nc-update-block.added a, .nc-update-block.edited a, .nc-update-block.added .lit-link-token { color: inherit; }
+.nc-update-block.removed { background: rgba(224, 62, 62, 0.08); color: var(--lp-text-tertiary); text-decoration: line-through; }
+.nc-update-block .bullet { flex-shrink: 0; min-width: 14px; text-align: center; }
+.nc-update-block.type-header .text { font-size: 16px; font-weight: 600; }
+.nc-update-block.type-sub_header .text, .nc-update-block.type-sub_sub_header .text, .nc-update-block.type-header_4 .text { font-weight: 600; }
+.nc-update-block.type-code .text { font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+.nc-update-block.type-quote .text { border-inline-start: 2px solid currentColor; padding-inline-start: 8px; }
+.nc-update-block.type-page .text, .nc-update-block.type-collection_view_page .text { font-weight: 500; }
+.nc-update-block hr { flex: 1; border: 0; border-top: 1px solid currentColor; opacity: 0.4; }
+.nc-update-more { font-size: 14px; color: var(--lp-text-secondary); padding: 6px 2px 0; cursor: pointer; align-self: flex-start; }
+.nc-update-more:hover { color: var(--lp-text-primary); }
+.nc-update-comment { margin-top: 8px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+.nc-update-comment .ctx { display: flex; font-size: 13px; color: var(--lp-text-secondary); line-height: 18px; min-width: 0; }
+.nc-update-comment .ctx .bar { width: 2px; margin-inline: 1px 8px; border-radius: 4px; background: var(--nc-discussion-bar, rgba(255, 203, 0, 0.64)); flex-shrink: 0; }
+.nc-update-comment .txt { white-space: pre-wrap; word-break: break-word; line-height: 20px; }
+.nc-update-comment .resolved { font-size: 12px; color: var(--lp-text-tertiary); }
+
+/* --- Analytics --- (header row, chart block, sections below) */
+.nc-analytics { display: flex; flex-direction: column; padding: 14px 16px 24px; }
+.nc-analytics-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.nc-analytics-head .title { display: flex; align-items: baseline; gap: 6px; font-size: 14px; font-weight: 500; }
+.nc-analytics-head .muted { font-weight: 400; color: var(--lp-text-secondary); }
+/* "Last 28 Days ▾": 24px fully rounded blue pill, 12px calendar, narrow chevron */
+.nc-analytics-range {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 10px; border-radius: 12px; font-size: 14px; cursor: pointer; user-select: none;
+  background: rgba(129, 140, 248, 0.07); color: var(--lp-blue-text-accent, #818cf8); white-space: nowrap;
+}
+.nc-analytics-range:hover { background: rgba(129, 140, 248, 0.12); }
+.nc-analytics-chart { position: relative; height: 187px; }
+.nc-analytics-chart svg { display: block; overflow: visible; }
+.nc-analytics-chart .axis { stroke: var(--lp-border-accent, #818cf8); stroke-width: 1; shape-rendering: crispEdges; }
+.nc-analytics-chart .tick, .nc-analytics-chart .label { font-size: 12px; fill: var(--lp-text-primary); }
+.nc-analytics-chart .bar.total { fill: var(--lp-blue-bg-accent, #818cf8); }
+.nc-analytics-chart .bar.unique { fill: color-mix(in srgb, var(--lp-yellow-bg-accent, #fbbf24) 60%, var(--lp-text-secondary)); }
+.nc-analytics-tip { position: absolute; top: -6px; inset-inline-end: 0; font-size: 12px; color: var(--lp-text-secondary); background: var(--lp-bg-primary); padding: 0 4px; }
+.nc-analytics-section { font-size: 14px; line-height: 20px; font-weight: 600; margin: 29px 0 13px; }
+.nc-analytics-card {
+  display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-radius: 12px; background: var(--lp-bg-secondary); margin-bottom: 9px;
+}
+.nc-analytics-card .text { flex: 1 1 auto; min-width: 0; }
+.nc-analytics-card .t { font-size: 14px; font-weight: 500; line-height: 20px; }
+.nc-analytics-card .d { font-size: 14px; line-height: 20px; color: var(--lp-text-secondary); margin-top: 2px; }
+.nc-analytics-card .d a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.nc-analytics-allow { gap: 4px; flex-shrink: 0; }
+.nc-analytics-label { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--lp-text-tertiary); margin: 14.5px 0 3px; }
+.nc-analytics-section + .nc-analytics-label { margin-top: 0; }
+.nc-analytics-person { display: flex; align-items: center; gap: 8px; height: 36px; font-size: 14px; }
+.nc-analytics-person .name { flex: 1; min-width: 0; font-weight: 500; }
+.nc-analytics-person .when { font-size: 14px; color: var(--lp-text-secondary); white-space: nowrap; }

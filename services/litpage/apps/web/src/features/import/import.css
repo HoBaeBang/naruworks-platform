@@ -1,0 +1,78 @@
+/* Import panel layout: 48px section gaps; 28px pills; grouped headings; an 8px drop zone; and cards in a responsive grid. */
+.nc-import { display: flex; flex-direction: column; gap: 48px; color: var(--lp-text-primary); word-break: keep-all; overflow-wrap: break-word; }
+.nc-import-tabs { display: flex; gap: 6px; padding: 6px; margin: -6px; overflow-x: auto; scrollbar-width: none; }
+.nc-import-pill {
+  user-select: none; cursor: pointer; display: inline-flex; align-items: center; white-space: nowrap; font-weight: 500; line-height: 1.2; height: 28px;
+  padding: 0 10px; border-radius: 9999px; font-size: 14px; color: var(--lp-text-secondary); transition: background .1s ease-in-out; flex-shrink: 0;
+}
+.nc-import-pill:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-import-pill.selected { color: var(--lp-text-primary); background: var(--lp-bg-interactive-transparent); outline: 1px solid var(--lp-border-primary); outline-offset: -1px; }
+.nc-import-body { display: flex; flex-direction: column; gap: 48px; }
+.nc-import-group { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+.nc-import-head { display: flex; flex-direction: column; gap: 6px; }
+.nc-import-h { color: var(--lp-text-primary); font-size: 14px; line-height: 20px; font-weight: 500; }
+.nc-import-sub { color: var(--lp-text-secondary); font-size: 12px; line-height: 16px; font-weight: 400; }
+.nc-import-drop {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; border-radius: 8px; border: 1px dashed var(--lp-blue-border-accent);
+  background: var(--lp-blue-bg-primary-transparent); padding: 32px; transition: background .15s, border-color .15s;
+}
+.nc-import-drop.over { background: var(--lp-blue-bg-secondary-transparent); }
+.nc-import-drop-title { color: var(--lp-text-primary); font-size: 14px; line-height: 20px; font-weight: 600; }
+.nc-import-drop-line { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; font-size: 12px; line-height: 20px; color: var(--lp-text-secondary); }
+.nc-import-choose { color: var(--lp-blue-text-accent); font-size: 12px; margin-inline-start: 5px; cursor: pointer; }
+.nc-import-choose:hover { text-decoration: underline; }
+.nc-import-drop-note { font-size: 12px; line-height: 20px; color: var(--lp-text-tertiary); }
+.nc-import-error { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--lp-red-text-primary); }
+.nc-import-progress { width: min(320px, 80%); height: 4px; border-radius: 2px; background: var(--lp-gray-bg-secondary-transparent); overflow: hidden; }
+.nc-import-progress > div { height: 100%; background: var(--lp-blue-bg-accent); transition: width .2s ease; }
+.nc-import-spin { animation: nc-spin 900ms linear infinite; }
+.nc-import-results { display: flex; flex-direction: column; gap: 2px; width: min(360px, 100%); }
+.nc-import-result { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: left; background: var(--lp-bg-primary); box-shadow: var(--lp-shadow-outset-small); }
+.nc-import-result:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-import-result-emoji { width: 16px; font-size: 14px; line-height: 1; text-align: center; flex-shrink: 0; }
+.nc-import-link { font-size: 12px; color: var(--lp-blue-text-accent); cursor: pointer; }
+.nc-import-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 4px 20px; padding: 2px; width: 100%; }
+.nc-import-card {
+  /* Centre the wrapped [icon+title / caption] block vertically in equal-height grid rows. */
+  user-select: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; align-content: center; padding: 12px; border-radius: 4px; margin-bottom: 12px;
+  box-shadow: var(--lp-shadow-outset-small); background: var(--lp-bg-elevated); transition: background 200ms ease-out;
+}
+.nc-import-card:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-import-card-top { display: flex; align-items: center; width: 100%; }
+.nc-import-card-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 4px; margin-inline-end: 10px; display: flex; align-items: center; justify-content: center; color: var(--lp-icon-primary); }
+.nc-import-card-title { font-size: 14px; font-weight: 500; }
+.nc-import-card-caption { flex: 1 0 100%; margin-top: 6px; font-size: 12px; color: var(--lp-text-secondary); line-height: 16px; word-break: keep-all; }
+.nc-import-card.tall { min-height: 86px; }
+.nc-import-empty { color: var(--lp-text-secondary); font-size: 14px; padding: 24px 0; }
+.nc-import-history { display: flex; flex-direction: column; }
+.nc-import-history-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; box-shadow: inset 0 -1px 0 var(--lp-border-secondary); }
+.nc-import-history-main { flex: 1; min-width: 0; }
+.nc-import-history-title { font-size: 14px; font-weight: 500; }
+.nc-import-history-sub { font-size: 12px; color: var(--lp-text-secondary); }
+
+/* modal wrapper (Settings › Import screen in a dialog) */
+.nc-import-modal { padding: 0; }
+.nc-import-modal-scroll { position: relative; height: 100%; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; padding: 36px clamp(18px, 5vw, 60px) 44px; }
+.nc-import-modal-inner { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 44px; }
+.nc-import-modal-close { position: absolute; top: 12px; right: 12px; }
+.nc-import-modal-header { display: flex; flex-direction: column; gap: 8px; }
+.nc-import-modal-title { color: var(--lp-text-primary); font-size: 26px; line-height: 32px; font-weight: 600; }
+.nc-import-modal-sub { display: flex; flex-wrap: wrap; gap: 8px; font-size: 16px; line-height: 24px; color: var(--lp-text-primary); }
+.nc-import-modal-sub a { color: var(--lp-blue-text-accent); text-decoration: none; }
+.nc-import-modal-sub a:hover { text-decoration: underline; }
+
+/* CSV column mapping  */
+.nc-import-drop[data-state="mapping"] { align-items: stretch; text-align: left; padding: 16px; border-style: solid; }
+.nc-csv-mapping { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.nc-csv-mapping-title { font-size: 14px; font-weight: 600; color: var(--lp-text-primary); }
+.nc-csv-mapping-sub { font-size: 12px; color: var(--lp-text-secondary); margin-top: 2px; }
+.nc-csv-mapping-list { display: flex; flex-direction: column; max-height: 300px; overflow: auto; border: 1px solid var(--lp-border-secondary, rgba(63, 63, 70, 0.09)); border-radius: 6px; }
+.nc-csv-mapping-row { display: flex; align-items: center; gap: 12px; padding: 6px 10px; min-height: 44px; }
+.nc-csv-mapping-row + .nc-csv-mapping-row { border-top: 1px solid var(--lp-border-secondary, rgba(63, 63, 70, 0.09)); }
+.nc-csv-col { flex: 1; min-width: 0; }
+.nc-csv-col-name { font-size: 14px; color: var(--lp-text-primary); }
+.nc-csv-col-sample { font-size: 12px; color: var(--lp-text-tertiary); }
+.nc-csv-type { flex: 0 0 180px; height: 28px; border-radius: 6px; border: 1px solid var(--lp-border-primary, rgba(63, 63, 70, 0.16)); background: var(--lp-bg-primary, #fff); color: var(--lp-text-primary); font: inherit; font-size: 14px; padding: 0 6px; }
+.nc-csv-type.fixed { display: flex; align-items: center; color: var(--lp-text-secondary); border-style: dashed; }
+.nc-csv-mapping-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.nc-merge-csv-dialog { width: min(560px, calc(100vw - 48px)); padding: 20px; border-radius: 12px; background: var(--lp-bg-elevated, var(--lp-bg-primary, #fff)); box-shadow: var(--lp-shadow-outset-large, 0 14px 28px rgba(0,0,0,.18)); }

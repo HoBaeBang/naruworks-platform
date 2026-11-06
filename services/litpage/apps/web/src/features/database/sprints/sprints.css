@@ -1,0 +1,11 @@
+/* Sprints: settings panel extras, Complete sprint toolbar button and modal. */
+.nc-sprint-setup-list { margin: 0 14px 6px 30px; padding: 0; font-size: 12px; line-height: 18px; color: var(--lp-text-secondary); }
+.nc-sprint-setup-list b { color: var(--lp-text-primary); font-weight: 500; }
+.nc-sprint-complete-btn { height: 28px; padding: 0 8px; gap: 6px; font-size: 14px; margin-inline-start: 4px; display: inline-flex; align-items: center; white-space: nowrap; }
+.nc-sprint-modal { width: 420px; max-width: calc(100vw - 32px); background: var(--lp-popover-background, #fff); border-radius: 12px; box-shadow: var(--lp-shadow-outset-large); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.nc-sprint-modal-title { font-size: 18px; font-weight: 600; color: var(--lp-text-primary); }
+.nc-sprint-modal-summary { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--lp-text-primary); padding: 10px 12px; border-radius: 8px; background: var(--lp-bg-secondary, rgba(63, 63, 70, 0.04)); }
+.nc-sprint-modal-row { display: flex; flex-direction: column; gap: 4px; }
+.nc-sprint-modal-label { font-size: 12px; color: var(--lp-text-secondary); }
+.nc-sprint-modal-dates { font-size: 14px; color: var(--lp-text-primary); }
+.nc-sprint-modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }

@@ -1,0 +1,9 @@
+# never ship local data or keys
+**/node_modules
+**/.env*
+apps/server/data
+apps/web/dist
+e2e/test-results
+e2e/playwright-report
+*.log
+.git

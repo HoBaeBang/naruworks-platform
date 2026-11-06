@@ -1,0 +1,10 @@
+.nc-present-overlay { position: fixed !important; inset: 0 !important; left: 0 !important; top: 0 !important; width: 100vw; height: 100vh; animation: nc-fade-in 160ms ease; }
+.nc-present { position: fixed; inset: 0; background: var(--lp-bg-primary); color: var(--lp-text-primary); overflow: hidden; }
+.nc-present-stage { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: center; display: flex; align-items: center; justify-content: center; padding: 64px 96px; }
+.nc-present-title-slide { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; width: 100%; }
+.nc-present-title-slide h1 { font-size: 64px; line-height: 1.15; font-weight: 700; margin: 0; }
+.nc-present-slide { width: 100%; max-height: 100%; overflow: hidden; font-size: 24px; zoom: 1.5; }
+.nc-present-controls { position: absolute; right: 24px; bottom: 20px; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 8px; background: var(--lp-bg-elevated); box-shadow: var(--lp-shadow-outset-medium); opacity: 0.4; transition: opacity 150ms; }
+.nc-present-controls:hover { opacity: 1; }
+.nc-present-controls .count { font-size: 12px; color: var(--lp-text-secondary); padding: 0 6px; font-variant-numeric: tabular-nums; }
+.nc-present-controls .disabled { opacity: 0.35; pointer-events: none; }

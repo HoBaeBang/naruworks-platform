@@ -1,0 +1,33 @@
+/* View settings › Sub-items / Dependencies / Sprints pages (290px panel) and their dialogs. */
+.nc-rf-desc { padding: 2px 14px 8px; font-size: 12px; line-height: 16px; color: var(--lp-text-secondary); }
+.nc-rf-caption { padding: 4px 14px 6px; font-size: 12px; line-height: 16px; color: var(--lp-text-secondary); }
+.nc-rf-input { padding: 2px 12px 6px; }
+.nc-rf-input-label { font-size: 12px; color: var(--lp-text-secondary); margin: 0 2px 4px; }
+.nc-rf-input .nc-input input { width: 100%; }
+.nc-rf-cta { padding: 8px 12px 12px; }
+.nc-rf-cta-btn { width: 100%; justify-content: center; height: 32px; }
+.nc-rf-cta-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+.nc-rf-turnoff-choices { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 4px; }
+.nc-rf-turnoff-choice { padding: 8px 10px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--lp-border-secondary-transparent); cursor: pointer; text-align: start; }
+.nc-rf-turnoff-choice:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-rf-turnoff-title { font-size: 14px; color: var(--lp-text-primary); }
+.nc-rf-turnoff-choice.danger .nc-rf-turnoff-title { color: var(--lp-red-text-accent, #d44c47); }
+.nc-rf-turnoff-desc { font-size: 12px; color: var(--lp-text-secondary); margin-top: 2px; }
+
+/* Turn into Tasks database dialog */
+.nc-tt-dialog { width: 480px; max-width: calc(100vw - 32px); background: var(--lp-popover-background, #fff); border-radius: 12px; box-shadow: var(--lp-shadow-outset-large); padding: 24px 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+.nc-tt-title { font-size: 18px; font-weight: 600; color: var(--lp-text-primary); }
+.nc-tt-sub { font-size: 14px; color: var(--lp-text-secondary); margin-top: -8px; }
+.nc-tt-row { display: flex; flex-direction: column; gap: 4px; }
+.nc-tt-row-label { font-size: 12px; color: var(--lp-text-secondary); }
+.nc-tt-select { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--lp-border-secondary-transparent); cursor: pointer; font-size: 14px; color: var(--lp-text-primary); }
+.nc-tt-select:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-tt-select-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-tt-note { font-size: 12px; color: var(--lp-text-secondary); }
+.nc-tt-error { font-size: 12px; color: var(--lp-red-text-accent, #d44c47); }
+.nc-tt-preview { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 8px; background: var(--lp-bg-secondary, rgba(63, 63, 70, 0.04)); }
+.nc-tt-preview-title { font-size: 14px; font-weight: 500; color: var(--lp-text-primary); }
+.nc-tt-preview-desc { font-size: 12px; color: var(--lp-text-secondary); margin-top: 2px; }
+.nc-tt-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.nc-tt-learn { flex: 1; font-size: 12px; color: var(--lp-text-secondary); text-decoration: none; }

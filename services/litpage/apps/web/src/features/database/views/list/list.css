@@ -1,0 +1,24 @@
+/* List view: 30px rows with 1px margins, 6px radius, 22x22 icon box, and 14px title. */
+.lit-list-view { min-width: calc(100% - 200px); padding-bottom: 4px; }
+.nc-list-inner { padding: 4px 0; }
+.nc-list-item { margin: 1px 0; position: relative; }
+.nc-list-item.selected .nc-list-row { background: rgba(129, 140, 248, 0.14); }
+.nc-list-row { display: flex; align-items: center; height: 30px; border-radius: 6px; padding-inline-start: 4px; cursor: pointer; color: inherit; text-decoration: none; transition: background 20ms ease-in; user-select: none; }
+.nc-list-row:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-list-title-cell { display: flex; align-items: center; flex: 1 1 auto; min-width: 120px; overflow: hidden; }
+.nc-list-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-inline-end: 5px; flex-shrink: 0; }
+.nc-list-icon .lit-icon { color: var(--lp-text-tertiary) !important; }
+.nc-list-title { font-size: 14px; line-height: 1.5; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--lp-text-primary); outline: none; }
+.nc-list-title.untitled { color: var(--lp-text-tertiary); }
+.nc-list-title.editing { cursor: text; user-select: text; min-width: 60px; }
+.nc-list-props { display: flex; align-items: center; justify-content: flex-end; flex-shrink: 1; min-width: 0; overflow: hidden; }
+.nc-list-prop { padding-inline: 8px; min-width: 100px; max-width: max(150px, 50%); display: flex; justify-content: flex-end; font-size: 14px; overflow: hidden; }
+.nc-list-prop .nc-property-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-list-prop .nc-date-value, .nc-list-prop .nc-text-value { color: var(--lp-text-primary); font-size: 14px; }
+.nc-list-new { display: inline-flex; align-items: center; height: 30px; padding-inline: 6px 8px; border-radius: 6px; font-size: 14px; color: var(--lp-text-tertiary); cursor: pointer; user-select: none; }
+.nc-list-new .lit-icon { margin-inline: 1px 8px; color: var(--lp-icon-tertiary); }
+.nc-list-new:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-list-load-more { display: flex; align-items: center; gap: 6px; height: 30px; padding-inline: 6px; border-radius: 6px; color: var(--lp-text-tertiary); font-size: 14px; cursor: pointer; }
+.nc-list-load-more:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-list-group { margin-bottom: 8px; }
+.nc-list-group .nc-group-header { margin-inline-start: 0; }

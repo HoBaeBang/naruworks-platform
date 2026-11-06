@@ -1,0 +1,27 @@
+/* Map view: OpenStreetMap raster tiles and pins, with a “No location (N)” toolbar. */
+.nc-map { position: relative; }
+.nc-map-canvas { position: relative; overflow: hidden; border-radius: 8px; background: #e8ecef; box-shadow: inset 0 0 0 1px var(--lp-border-primary); cursor: grab; user-select: none; touch-action: none; }
+.lit-dark-theme .nc-map-canvas { background: #2b2f33; }
+.nc-map-canvas:active { cursor: grabbing; }
+.nc-map-canvas.pin-mode { cursor: crosshair; }
+.nc-map-tile { position: absolute; width: 256px; height: 256px; pointer-events: none; user-select: none; }
+.lit-dark-theme .nc-map-tile { filter: brightness(0.75) contrast(1.1) saturate(0.6); }
+.nc-map-pin { position: absolute; width: 26px; height: 34px; margin-left: -13px; margin-top: -33px; cursor: pointer; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)); }
+.nc-map-pin.hover { z-index: 3; transform: scale(1.08); transform-origin: 50% 100%; }
+.nc-map-pin-label { position: absolute; left: 50%; bottom: 38px; transform: translateX(-50%); white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: var(--lp-popover-background, var(--lp-bg-elevated, #fff)); box-shadow: var(--lp-shadow-outset-medium, 0 4px 12px rgba(0, 0, 0, 0.15)); font-size: 14px; font-weight: 500; color: var(--lp-text-primary); display: flex; flex-direction: column; gap: 2px; }
+.nc-map-pin-label span { font-size: 12px; font-weight: 400; color: var(--lp-text-secondary); }
+.nc-map-ui { position: absolute; z-index: 4; }
+.nc-map-toolbar { top: 10px; left: 10px; display: flex; gap: 6px; }
+.nc-map-btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 6px; background: var(--lp-bg-primary); box-shadow: var(--lp-shadow-outset-small), 0 0 0 1px var(--lp-border-primary-transparent); font-size: 14px; color: var(--lp-text-primary); cursor: pointer; white-space: nowrap; }
+.nc-map-btn.icon { padding: 0; width: 28px; justify-content: center; color: var(--lp-icon-secondary); }
+.nc-map-btn.on { color: var(--lp-blue-icon-accent, var(--lp-blue-bg-accent)); box-shadow: var(--lp-shadow-outset-small), 0 0 0 1.5px var(--lp-blue-border-accent); }
+.nc-map-btn:hover { background: var(--lp-bg-secondary); }
+.nc-map-hint { top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; padding: 6px 12px; border-radius: 8px; background: var(--lp-text-primary); color: var(--lp-bg-primary); font-size: 13px; }
+.nc-map-hint span { text-decoration: underline; cursor: pointer; opacity: 0.85; }
+.nc-map-zoom { right: 10px; top: 10px; display: flex; flex-direction: column; border-radius: 6px; overflow: hidden; background: var(--lp-bg-primary); box-shadow: var(--lp-shadow-outset-small), 0 0 0 1px var(--lp-border-primary-transparent); }
+.nc-map-zoom > div { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--lp-icon-secondary); cursor: pointer; }
+.nc-map-zoom > div + div { box-shadow: 0 -1px 0 var(--lp-border-primary); }
+.nc-map-zoom > div:hover { background: var(--lp-bg-secondary); }
+.nc-map-attr { right: 0; bottom: 0; padding: 1px 6px; font-size: 10px; color: #555; background: rgba(255, 255, 255, 0.75); border-top-left-radius: 4px; }
+.nc-map-attr a { color: inherit; }
+.nc-map-menu-head { padding: 8px 12px 2px; font-size: 12px; font-weight: 500; color: var(--lp-text-secondary); }

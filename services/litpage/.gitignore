@@ -1,0 +1,11 @@
+node_modules
+dist
+apps/server/data
+*.log
+.DS_Store
+e2e/test-results
+e2e/playwright-report
+scripts/node_modules
+# local secrets (AI provider keys and similar) are never committed
+.env.local
+.env.*.local

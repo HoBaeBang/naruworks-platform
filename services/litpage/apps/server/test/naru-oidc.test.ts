@@ -70,7 +70,9 @@ describe('GET /auth/login', () => {
 
   it('keeps only same-site return paths', () => {
     expect(oidc.safeNext('/p/abc?x=1')).toBe('/p/abc?x=1');
-    for (const bad of ['//evil.test', 'https://evil.test', '/\\evil.test', 'javascript:1', '', undefined]) expect(oidc.safeNext(bad as any)).toBe('/');
+    for (const bad of ['//evil.test', 'https://evil.test', '/\\evil.test', 'javascript:1', '', undefined, '/\t/evil.test', '/\n/evil.test', '/\r/evil.test', ' //evil.test', '/ /evil.test', '/\u0000/evil.test', '/\u007f/evil.test']) {
+      expect(oidc.safeNext(bad as any), JSON.stringify(bad)).toBe('/');
+    }
   });
 
   it('refuses to sign anyone in when the realm settings are missing', async () => {

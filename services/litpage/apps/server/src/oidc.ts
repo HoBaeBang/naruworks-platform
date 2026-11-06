@@ -62,7 +62,14 @@ const b64url = (b: Buffer) => b.toString('base64url');
 
 /** Only same-site paths: never an absolute URL or `//host`. */
 export function safeNext(next: string | undefined): string {
-  return next && /^\/(?![/\\])[^\r\n]*$/.test(next) ? next : '/';
+  // browsers drop tabs/newlines inside a URL (`/<tab>/evil.test` becomes `//evil.test`), so no control char, space or backslash at all
+  if (!next || !next.startsWith('/') || /[\x00-\x20\x7f\\]/.test(next)) return '/';
+  try {
+    const u = new URL(next, 'http://same-site.invalid');
+    return u.origin === 'http://same-site.invalid' ? u.pathname + u.search + u.hash : '/';
+  } catch {
+    return '/';
+  }
 }
 
 interface Pending { s: string; n: string; v: string; x: string }

@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': api,
       '/files': api,
-      
+      '/auth': api,
       '^/v1/': api,
       '/ws': { target: api.replace(/^http/, 'ws'), ws: true },
     },

@@ -17,6 +17,20 @@ jobs:
   backend-test:
     name: Backend Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: naru_drive_test
+          POSTGRES_USER: naru_test
+          POSTGRES_PASSWORD: naru_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U naru_test -d naru_drive_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -31,6 +45,13 @@ jobs:
           cache: gradle
       - name: Backend 테스트
         run: ./gradlew clean test
+      - name: Drive PostgreSQL 통합 테스트
+        env:
+          NARU_DRIVE_POSTGRES_TEST: 'true'
+          NARU_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/naru_drive_test
+          NARU_TEST_DATABASE_USER: naru_test
+          NARU_TEST_DATABASE_PASSWORD: naru_test
+        run: ./gradlew :naru-api:test --tests com.naruworks.api.drive.DrivePostgresIntegrationTest --rerun-tasks
 
   frontend-quality:
     name: Frontend Quality

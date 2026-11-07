@@ -65,7 +65,30 @@ describe('GET /auth/login', () => {
     expect(u.searchParams.get('redirect_uri')).toBe('https://litpage.test/auth/callback');
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
     expect(u.searchParams.get('kc_idp_hint')).toBe('google');
-    expect(res.headers.get('set-cookie')).toMatch(/^lit_oidc=.*HttpOnly/);
+    expect(res.headers.get('set-cookie')).toMatch(/^lit_oidc_[\w-]+=.*HttpOnly/);
+  });
+
+  it('keeps two overlapping login attempts apart (each has its own cookie)', async () => {
+    const a = await app.request('/auth/login');
+    const b = await app.request('/auth/login');
+    const ca = a.headers.getSetCookie()[0].split(';')[0];
+    const cb = b.headers.getSetCookie()[0].split(';')[0];
+    expect(ca.split('=')[0]).not.toBe(cb.split('=')[0]);
+    // the browser holds both cookies; the first attempt returns after the second was started and is still found
+    const res = await app.request(`/auth/callback?state=${new URL(a.headers.get('location')!).searchParams.get('state')}&code=x`, { headers: { cookie: `${ca}; ${cb}` } });
+    expect(res.status).not.toBe(400);
+  });
+
+  it('sends visitors without a session to the NaruWorks home when it is configured', async () => {
+    process.env.NC_HOME_URL = 'https://app.naru.test/';
+    try {
+      const res = await app.request('/auth/home');
+      expect(res.status).toBe(302);
+      expect(res.headers.get('location')).toBe('https://app.naru.test/');
+    } finally {
+      delete process.env.NC_HOME_URL;
+    }
+    expect(new URL((await app.request('/auth/home')).headers.get('location')!, 'http://x').pathname).toBe('/auth/login');
   });
 
   it('keeps only same-site return paths', () => {

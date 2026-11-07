@@ -238,7 +238,7 @@ app.get('*', (c) => {
   if (!(file + sep).startsWith(WEB_DIST + sep) || !existsSync(file) || statSync(file).isDirectory()) file = join(WEB_DIST, 'index.html');
   // NaruWorks: the app shell is for signed-in members; only shared-link pages (/public/…) open without a session
   if (file === join(WEB_DIST, 'index.html') && !pathname.startsWith('/public/') && !userForToken(parseCookies(c.req.header('cookie')).lit_session)) {
-    return c.redirect(`/auth/login?next=${encodeURIComponent(pathname + url.search)}`, 302);
+    return c.redirect('/auth/home', 302);
   }
   const type = MIME[extname(file)] ?? 'application/octet-stream';
   const cache = file.includes(`${sep}assets${sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache';

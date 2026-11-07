@@ -66,8 +66,8 @@ export function App() {
       return;
     }
     if (status === 'anonymous' && !ANONYMOUS_ROUTES.has(route.name)) {
-      // NaruWorks: there is no login page; the server sends the browser to Keycloak and back to this path
-      location.replace(`/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+      // NaruWorks: there is no login page; the server sends the browser to the NaruWorks home (which links to /auth/login)
+      location.replace('/auth/home');
     }
     if (status === 'onboarding' && route.name !== 'onboarding') navigate('/onboarding', { replace: true });
     if (status === 'ready' && (route.name === 'login' || route.name === 'signup' || route.name === 'onboarding')) navigate(takeAfterLogin() ?? '/', { replace: true });

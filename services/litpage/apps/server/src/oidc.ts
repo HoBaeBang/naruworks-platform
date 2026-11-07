@@ -74,12 +74,18 @@ export function safeNext(next: string | undefined): string {
 
 interface Pending { s: string; n: string; v: string; x: string }
 
-function pendingCookie(value: string, secure: boolean, maxAge = PENDING_SECONDS): string {
-  return `${PENDING_COOKIE}=${value}; Path=/auth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
+// one cookie per login attempt (named by its `state`): two overlapping attempts, e.g. a double redirect or a second tab,
+// must not overwrite each other, or the returning attempt fails with "session expired"
+const STATE_RE = /^[\w-]{16,64}$/;
+const pendingName = (state: string) => `${PENDING_COOKIE}_${state}`;
+
+function pendingCookie(state: string, value: string, secure: boolean, maxAge = PENDING_SECONDS): string {
+  return `${pendingName(state)}=${value}; Path=/auth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 
-function readPending(c: Context): Pending | null {
-  const raw = parseCookies(c.req.header('cookie'))[PENDING_COOKIE];
+function readPending(c: Context, state: string | undefined): Pending | null {
+  if (!state || !STATE_RE.test(state)) return null;
+  const raw = parseCookies(c.req.header('cookie'))[pendingName(state)];
   if (!raw) return null;
   try {
     const p = JSON.parse(Buffer.from(raw, 'base64url').toString());
@@ -141,20 +147,27 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
       state: pending.s, nonce: pending.n, code_challenge: b64url(createHash('sha256').update(pending.v).digest()), code_challenge_method: 'S256',
       ...(cfg.idpHint ? { kc_idp_hint: cfg.idpHint } : {}),
     }).toString();
-    c.header('Set-Cookie', pendingCookie(b64url(Buffer.from(JSON.stringify(pending))), deps.isHttps(c)));
+    c.header('Set-Cookie', pendingCookie(pending.s, b64url(Buffer.from(JSON.stringify(pending))), deps.isHttps(c)));
     c.header('Cache-Control', 'no-store');
     return c.redirect(url.toString(), 302);
+  });
+
+  // Not signed in and no valid link: send people to the NaruWorks home (it has the Litpage link), never to a Keycloak page.
+  app.get('/auth/home', (c) => {
+    c.header('Cache-Control', 'no-store');
+    return c.redirect(process.env.NC_HOME_URL?.trim() || '/auth/login', 302);
   });
 
   app.get('/auth/callback', async (c) => {
     const cfg = oidcConfig();
     if (!cfg) return c.text('Sign-in is not configured.', 503);
     const secure = deps.isHttps(c);
-    const pending = readPending(c);
-    c.header('Set-Cookie', pendingCookie('', secure, 0)); // a login attempt is single use
+    const state = c.req.query('state');
+    const pending = readPending(c, state);
+    if (state && STATE_RE.test(state)) c.header('Set-Cookie', pendingCookie(state, '', secure, 0)); // a login attempt is single use
     c.header('Cache-Control', 'no-store');
     if (!hit(`oidc-callback:ip:${deps.clientIp(c)}`, 60, 3600_000)) return c.text('Too many sign-in attempts. Try again later.', 429);
-    if (!pending || c.req.query('state') !== pending.s) return c.text('The sign-in session expired. Please try again.', 400);
+    if (!pending || state !== pending.s) return c.text('The sign-in session expired. Please try again.', 400);
     const code = c.req.query('code');
     if (c.req.query('error') || !code) return c.text('Sign-in was cancelled or failed.', 400);
     try {

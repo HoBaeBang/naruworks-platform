@@ -79,6 +79,20 @@ describe('GET /auth/login', () => {
     expect(res.status).not.toBe(400);
   });
 
+  it('never lets a browser keep more than 3 login attempt cookies', async () => {
+    const jar = new Map<string, string>();
+    for (let i = 0; i < 8; i++) {
+      const res = await app.request('/auth/login', { headers: { cookie: [...jar].map(([k, v]) => `${k}=${v}`).join('; ') } });
+      for (const sc of res.headers.getSetCookie()) {
+        const [pair, ...attrs] = sc.split('; ');
+        const [k, v] = [pair.slice(0, pair.indexOf('=')), pair.slice(pair.indexOf('=') + 1)];
+        if (attrs.includes('Max-Age=0')) jar.delete(k); else jar.set(k, v);
+      }
+      await new Promise((r) => setTimeout(r, 2)); // distinct timestamps: the newest attempts survive
+    }
+    expect(jar.size).toBe(3);
+  });
+
   it('sends visitors without a session to the NaruWorks home when it is configured', async () => {
     process.env.NC_HOME_URL = 'https://app.naru.test/';
     try {

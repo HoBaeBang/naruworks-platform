@@ -72,7 +72,9 @@ export function safeNext(next: string | undefined): string {
   }
 }
 
-interface Pending { s: string; n: string; v: string; x: string }
+interface Pending { s: string; n: string; v: string; x: string; t?: number }
+/** login attempts a browser may keep open at once; older cookies are expired when a new attempt starts (bounds Cookie header size) */
+const MAX_PENDING = 3;
 
 // one cookie per login attempt (named by its `state`): two overlapping attempts, e.g. a double redirect or a second tab,
 // must not overwrite each other, or the returning attempt fails with "session expired"
@@ -89,7 +91,7 @@ function readPending(c: Context, state: string | undefined): Pending | null {
   if (!raw) return null;
   try {
     const p = JSON.parse(Buffer.from(raw, 'base64url').toString());
-    return typeof p?.s === 'string' && typeof p?.n === 'string' && typeof p?.v === 'string' ? { s: p.s, n: p.n, v: p.v, x: safeNext(p.x) } : null;
+    return typeof p?.s === 'string' && typeof p?.n === 'string' && typeof p?.v === 'string' ? { s: p.s, n: p.n, v: p.v, x: safeNext(p.x), t: Number(p.t) || 0 } : null;
   } catch {
     return null;
   }
@@ -140,14 +142,19 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
   app.get('/auth/login', (c) => {
     const cfg = oidcConfig();
     if (!cfg) return c.text('Sign-in is not configured.', 503);
-    const pending: Pending = { s: b64url(randomBytes(24)), n: b64url(randomBytes(24)), v: b64url(randomBytes(48)), x: safeNext(c.req.query('next')) };
+    if (!hit(`oidc-login:ip:${deps.clientIp(c)}`, 60, 600_000)) return c.text('Too many sign-in attempts. Try again later.', 429);
+    const pending: Pending = { s: b64url(randomBytes(24)), n: b64url(randomBytes(24)), v: b64url(randomBytes(48)), x: safeNext(c.req.query('next')), t: Date.now() };
+    // expire every attempt cookie beyond the newest MAX_PENDING - 1 (plus malformed ones), so repeated /auth/login cannot grow the Cookie header
+    const old = Object.keys(parseCookies(c.req.header('cookie'))).filter((k) => k.startsWith(`${PENDING_COOKIE}_`)).map((k) => k.slice(PENDING_COOKIE.length + 1))
+      .map((state) => ({ state, t: readPending(c, state)?.t ?? -1 })).sort((a, b) => b.t - a.t);
+    for (const { state } of old.slice(MAX_PENDING - 1)) c.header('Set-Cookie', pendingCookie(state, '', deps.isHttps(c), 0), { append: true });
     const url = new URL(`${cfg.issuer}/protocol/openid-connect/auth`);
     url.search = new URLSearchParams({
       response_type: 'code', client_id: cfg.clientId, redirect_uri: `${cfg.publicUrl}/auth/callback`, scope: 'openid email profile',
       state: pending.s, nonce: pending.n, code_challenge: b64url(createHash('sha256').update(pending.v).digest()), code_challenge_method: 'S256',
       ...(cfg.idpHint ? { kc_idp_hint: cfg.idpHint } : {}),
     }).toString();
-    c.header('Set-Cookie', pendingCookie(pending.s, b64url(Buffer.from(JSON.stringify(pending))), deps.isHttps(c)));
+    c.header('Set-Cookie', pendingCookie(pending.s, b64url(Buffer.from(JSON.stringify(pending))), deps.isHttps(c)), { append: true });
     c.header('Cache-Control', 'no-store');
     return c.redirect(url.toString(), 302);
   });

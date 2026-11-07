@@ -1,0 +1,25 @@
+/* NaruWorks bar: fixed-height strip above the Litpage app; #lit-app becomes a column so the app fills the rest. */
+#lit-app { display: flex; flex-direction: column; }
+.naru-main { flex: 1 1 0; min-height: 0; position: relative; }
+.naru-main > * { height: 100%; }
+
+.naru-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--lp-text-primary);
+  background: var(--lp-bg-primary);
+  border-bottom: 1px solid var(--lp-border, rgba(127, 127, 127, 0.25));
+}
+.naru-bar a { text-decoration: none; }
+.naru-bar a:hover { text-decoration: underline; }
+.naru-bar-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.naru-bar-nav { display: flex; align-items: center; gap: 14px; margin-right: auto; opacity: 0.75; }
+.naru-bar-current { font-weight: 700; opacity: 1; }
+.naru-bar-user { display: flex; align-items: center; gap: 12px; opacity: 0.8; }
+.naru-bar-user span { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) { .naru-bar-nav { display: none; } .naru-bar-user { margin-left: auto; } }

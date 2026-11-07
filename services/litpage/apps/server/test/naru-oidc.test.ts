@@ -93,6 +93,19 @@ describe('GET /auth/login', () => {
     expect(jar.size).toBe(3);
   });
 
+  it('/auth/nav answers 401 without a session and name, email and home with one', async () => {
+    expect((await app.request('/auth/nav')).status).toBe(401);
+    process.env.NC_HOME_URL = 'https://app.naru.test/';
+    try {
+      const { session } = await signIn({ sub: 'sub-nav', email: 'nav@naru.test', name: 'Nav' });
+      const res = await app.request('/auth/nav', { headers: { cookie: session!.split(';')[0] } });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ home: 'https://app.naru.test/', name: 'Nav', email: 'nav@naru.test' });
+    } finally {
+      delete process.env.NC_HOME_URL;
+    }
+  });
+
   it('sends visitors without a session to the NaruWorks home when it is configured', async () => {
     process.env.NC_HOME_URL = 'https://app.naru.test/';
     try {

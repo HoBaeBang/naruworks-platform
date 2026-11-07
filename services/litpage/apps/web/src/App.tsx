@@ -8,6 +8,7 @@ import { ToastLayer } from './components/Modal.tsx';
 import { LoginPage } from './features/auth/LoginPage.tsx';
 import { OnboardingPage } from './features/auth/OnboardingPage.tsx';
 import { Workspace } from './features/shell/Workspace.tsx';
+import { NaruBar } from './features/shell/NaruBar.tsx';
 import { PublicPage } from './features/page/PublicPage.tsx';
 import { PublicFormPage } from './features/database/views/form/PublicFormPage.tsx';
 import { SiteRoot } from './features/settings/SiteRoot.tsx';
@@ -83,9 +84,12 @@ export function App() {
   else if (status === 'onboarding') body = <OnboardingPage />;
   else body = <Workspace />;
 
+  // NaruWorks bar only for signed-in app screens, not shared pages/forms/sites
+  const showBar = (status === 'ready' || status === 'onboarding') && !ANONYMOUS_ROUTES.has(route.name);
   return (
     <>
-      {body}
+      {showBar && <NaruBar />}
+      <div className="naru-main">{body}</div>
       <OverlayRoot />
       <TooltipLayer />
       <ToastLayer />

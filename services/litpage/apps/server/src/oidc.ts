@@ -7,7 +7,7 @@ import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } 
 import { newId } from '@nc/shared/ids.ts';
 import type { UserRecord } from '@nc/shared/records.ts';
 import { auditAccount } from './audit.ts';
-import { clearSessionCookie, createSession, destroySession, parseCookies, sessionCookie } from './auth.ts';
+import { clearSessionCookie, createSession, destroySession, parseCookies, sessionCookie, userForToken } from './auth.ts';
 import { db, findUserIdByEmail, getRecord, putRecord } from './db.ts';
 import { hit } from './ratelimit.ts';
 import { createUser, createWorkspace } from './seed.ts';
@@ -163,6 +163,15 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
   app.get('/auth/home', (c) => {
     c.header('Cache-Control', 'no-store');
     return c.redirect(process.env.NC_HOME_URL?.trim() || '/auth/login', 302);
+  });
+
+  // Data for the NaruWorks bar at the top of the app: who is signed in and where the NaruWorks home is.
+  app.get('/auth/nav', (c) => {
+    c.header('Cache-Control', 'no-store');
+    const userId = userForToken(parseCookies(c.req.header('cookie')).lit_session);
+    const user = userId ? getRecord<UserRecord>('lit_user', userId) : null;
+    if (!user) return c.json({ error: 'unauthorized' }, 401);
+    return c.json({ home: process.env.NC_HOME_URL?.trim() || null, name: user.name, email: user.email });
   });
 
   app.get('/auth/callback', async (c) => {

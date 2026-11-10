@@ -153,20 +153,10 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
       response_type: 'code', client_id: cfg.clientId, redirect_uri: `${cfg.publicUrl}/auth/callback`, scope: 'openid email profile',
       state: pending.s, nonce: pending.n, code_challenge: b64url(createHash('sha256').update(pending.v).digest()), code_challenge_method: 'S256',
       ...(cfg.idpHint ? { kc_idp_hint: cfg.idpHint } : {}),
-      ...(c.req.query('silent') === '1' ? { prompt: 'none' } : {}),
     }).toString();
     c.header('Set-Cookie', pendingCookie(pending.s, b64url(Buffer.from(JSON.stringify(pending))), deps.isHttps(c)), { append: true });
     c.header('Cache-Control', 'no-store');
     return c.redirect(url.toString(), 302);
-  });
-
-  // Not signed in and no valid link: send people to the NaruWorks home (it has the Litpage link), never to a Keycloak page.
-  // A member who is signed in to NaruWorks (Keycloak SSO) but has no Litpage session yet goes straight in: ask Keycloak silently
-  // (prompt=none). Without a Keycloak session the callback sends them to the NaruWorks home instead.
-  app.get('/auth/home', (c) => {
-    c.header('Cache-Control', 'no-store');
-    const next = encodeURIComponent(safeNext(c.req.query('next')));
-    return c.redirect(process.env.NC_HOME_URL?.trim() ? `/auth/login?silent=1&next=${next}` : `/auth/login?next=${next}`, 302);
   });
 
   // Data for the NaruWorks bar at the top of the app: who is signed in and where the NaruWorks home is.
@@ -189,10 +179,6 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
     if (!hit(`oidc-callback:ip:${deps.clientIp(c)}`, 60, 3600_000)) return c.text('Too many sign-in attempts. Try again later.', 429);
     if (!pending || state !== pending.s) return c.text('The sign-in session expired. Please try again.', 400);
     const code = c.req.query('code');
-    // answer to the silent check (prompt=none): no Keycloak session, so the visitor goes to the NaruWorks home (never loops: a normal login never answers this)
-    if (['login_required', 'interaction_required', 'consent_required', 'account_selection_required'].includes(c.req.query('error') ?? '')) {
-      return c.redirect(process.env.NC_HOME_URL?.trim() || '/auth/login', 302);
-    }
     if (c.req.query('error') || !code) return c.text('Sign-in was cancelled or failed.', 400);
     try {
       const res = await fetch(`${cfg.internalBase}/protocol/openid-connect/token`, {

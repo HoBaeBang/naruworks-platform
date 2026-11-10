@@ -106,27 +106,9 @@ describe('GET /auth/login', () => {
     }
   });
 
-  it('without a session: asks Keycloak silently first, and only then sends the visitor to the NaruWorks home', async () => {
-    process.env.NC_HOME_URL = 'https://app.naru.test/';
-    try {
-      const res = await app.request('/auth/home?next=%2Fp%2Fabc');
-      expect(res.headers.get('location')).toBe('/auth/login?silent=1&next=%2Fp%2Fabc');
-      const login = await app.request('/auth/login?silent=1&next=%2F');
-      expect(new URL(login.headers.get('location')!).searchParams.get('prompt')).toBe('none');
-      expect(new URL((await app.request('/auth/login')).headers.get('location')!).searchParams.has('prompt')).toBe(false);
-      // Keycloak has no session for this browser: back to the NaruWorks home, no session created
-      const cookie = login.headers.getSetCookie()[0].split(';')[0];
-      const state = new URL(login.headers.get('location')!).searchParams.get('state');
-      const before = sessionCount();
-      const cb = await app.request(`/auth/callback?state=${state}&error=login_required`, { headers: { cookie } });
-      expect(cb.status).toBe(302);
-      expect(cb.headers.get('location')).toBe('https://app.naru.test/');
-      expect(sessionCount()).toBe(before);
-    } finally {
-      delete process.env.NC_HOME_URL;
-    }
-    // no home configured: a normal (not silent) login
-    expect((await app.request('/auth/home')).headers.get('location')).toBe('/auth/login?next=%2F');
+  it('never asks Keycloak for a silent-only login: a member whose Keycloak session ended must still be able to sign in', async () => {
+    const res = await app.request('/auth/login?silent=1&next=%2F');
+    expect(new URL(res.headers.get('location')!).searchParams.has('prompt')).toBe(false);
   });
 
   it('keeps only same-site return paths', () => {

@@ -34,9 +34,9 @@
 .lit-dark-theme .naru-mark-light { display: none; }
 .lit-dark-theme .naru-mark-dark { display: block; }
 
-.naru-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 12px; border-left: 1px solid var(--n-border); font-size: 14px; font-weight: 700; color: var(--n-muted); }
-.naru-bar-nav { display: flex; align-items: center; gap: 16px; color: var(--n-muted); }
+.naru-bar-nav { display: flex; align-items: center; gap: 16px; min-width: 0; padding-left: 12px; border-left: 1px solid var(--n-border); font-size: 14px; color: var(--n-muted); white-space: nowrap; }
 .naru-bar-nav a:hover { color: var(--n-fg); }
+.naru-bar-nav .naru-bar-current { font-weight: 700; color: var(--n-primary-strong); }
 
 .naru-bar-member { position: relative; }
 .naru-bar-member-btn {
@@ -63,4 +63,4 @@
 .lit-dark-theme .naru-bar-menu .naru-bar-logout { color: #fca5a5; }
 .naru-bar-menu .naru-bar-logout:hover { background: rgba(239, 68, 68, 0.1); }
 
-@media (max-width: 640px) { .naru-bar-inner { padding: 0 16px; } .naru-bar-nav, .naru-bar-label { display: none; } }
+@media (max-width: 640px) { .naru-bar-inner { padding: 0 12px; } .naru-bar-brand span:not(.naru-mark) { display: none; } .naru-bar-nav { gap: 12px; } .naru-bar-member-name { display: none; } }

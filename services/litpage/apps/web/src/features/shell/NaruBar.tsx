@@ -58,12 +58,12 @@ export function NaruBar() {
             <Mark />
             NaruWorks
           </a>
-          <span className="naru-bar-label">Naru 문서</span>
+          <nav className="naru-bar-nav" aria-label="NaruWorks 서비스">
+            {home && <a href={join(home, '/calendar')}>Naru 캘린더</a>}
+            <a href="/" className="naru-bar-current" aria-current="page">Litpage</a>
+          </nav>
         </div>
         <div className="naru-bar-right">
-          <nav className="naru-bar-nav" aria-label="NaruWorks 서비스">
-            {home && <a href={join(home, '/calendar')}>캘린더</a>}
-          </nav>
           {nav && (
             <div ref={menu} className="naru-bar-member">
               <button type="button" className="naru-bar-member-btn" aria-haspopup="menu" aria-expanded={open} aria-label="회원 메뉴" onClick={() => setOpen((o) => !o)}>

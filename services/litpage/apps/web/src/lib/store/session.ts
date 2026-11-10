@@ -6,11 +6,12 @@ import { records } from './records.ts';
 import { connectRealtime, disconnectRealtime } from './sync.ts';
 
 interface SessionState {
-  status: 'loading' | 'anonymous' | 'ready' | 'onboarding';
+  /** 'error': the account data could not be loaded (server restarting, network). Not the same as signed out: never redirect. */
+  status: 'loading' | 'anonymous' | 'ready' | 'onboarding' | 'error';
   userId: string | null;
   spaceId: string | null;
   demoMode: DemoMode;
-  load: () => Promise<void>;
+  load: (attempt?: number) => Promise<void>;
   setSpace: (spaceId: string) => void;
   logout: () => Promise<void>;
 }
@@ -31,7 +32,8 @@ export const useSession = create<SessionState>((set, get) => ({
   userId: null,
   spaceId: null,
   demoMode: { enabled: false },
-  async load() {
+  async load(attempt = 0) {
+    if (attempt === 0) set({ status: 'loading' });
     try {
       const res = await api('loadAccountData');
       records.mergeRecordMap(res.recordMap);
@@ -56,8 +58,14 @@ export const useSession = create<SessionState>((set, get) => ({
     } catch (e: any) {
       if (e?.status === 401) set({ status: 'anonymous', userId: null, spaceId: null, demoMode: e?.data?.demoMode ?? { enabled: false } });
       else {
+        // anything but a 401 (restarting server, dropped connection, a bug here) must not look like "signed out",
+        // or a signed-in member is sent to the NaruWorks home: retry a few times, then offer a manual retry
         console.error(e);
-        set({ status: 'anonymous' });
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, 500 * 2 ** attempt));
+          return get().load(attempt + 1);
+        }
+        set({ status: 'error' });
       }
     }
   },

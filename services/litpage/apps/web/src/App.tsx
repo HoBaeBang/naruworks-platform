@@ -80,6 +80,14 @@ export function App() {
   else if (route.name === 'site') body = <SiteRoot domain={route.domain} />;
   else if (status === 'loading') body = <div className="nc-boot" />;
   else if (status === 'anonymous') body = <div className="nc-boot" />;
+  else if (status === 'error') {
+    body = (
+      <div className="nc-boot" style={{ display: 'grid', placeContent: 'center', gap: 12, textAlign: 'center' }}>
+        <p>Litpage 서버에 연결하지 못했습니다. 로그인 상태는 그대로입니다.</p>
+        <button type="button" style={{ justifySelf: 'center', padding: '6px 16px', borderRadius: 8, border: '1px solid currentColor', background: 'transparent', color: 'inherit', cursor: 'pointer' }} onClick={() => void useSession.getState().load()}>다시 시도</button>
+      </div>
+    );
+  }
   else if (route.name === 'teamInvite' && (status === 'ready' || status === 'onboarding')) body = <TeamInvitePage code={route.code} />;
   else if (status === 'onboarding') body = <OnboardingPage />;
   else body = <Workspace />;

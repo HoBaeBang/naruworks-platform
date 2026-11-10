@@ -1,0 +1,71 @@
+/* No-access screen (fullPageError) and the read-only permission banner — tokens only (dark mode follows). */
+.nc-noaccess {
+  margin: 16vh auto 0; max-width: 440px; padding: 0 24px 48px; display: flex; flex-direction: column; align-items: center; text-align: center;
+  color: var(--lp-text-primary);
+}
+.nc-noaccess-art {
+  width: 64px; height: 64px; border-radius: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+  background: var(--lp-bg-secondary); color: var(--lp-icon-secondary); box-shadow: inset 0 0 0 1px var(--lp-border-secondary);
+}
+.nc-noaccess-title { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.2px; }
+.nc-noaccess-title b { font-weight: 700; }
+.nc-noaccess-message { font-size: 14px; line-height: 20px; color: var(--lp-text-secondary); margin-bottom: 20px; }
+.nc-noaccess-note { width: 100%; height: auto; padding: 6px 10px; margin-bottom: 12px; }
+.nc-noaccess-note textarea {
+  width: 100%; border: none; outline: none; resize: none; background: transparent; color: inherit; font: inherit; font-size: 14px; line-height: 20px;
+}
+.nc-noaccess-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; max-width: 280px; }
+.nc-noaccess-actions .nc-btn { height: 36px; font-size: 14px; justify-content: center; }
+.nc-noaccess-footer {
+  margin-top: 40px; font-size: 12px; line-height: 16px; color: var(--lp-text-tertiary); display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center;
+}
+.nc-noaccess-footer .link { cursor: pointer; text-decoration: underline; text-decoration-color: var(--lp-border-strong-transparent, var(--lp-border-strong)); }
+.nc-noaccess-footer .link:hover { color: var(--lp-text-secondary); }
+
+/* "You can only view this page · Request edit access" (permissionsLevelBanner) */
+.nc-permission-banner {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 6px 12px; flex-shrink: 0;
+  background: var(--lp-bg-secondary); color: var(--lp-text-secondary); font-size: 14px; line-height: 20px; box-shadow: inset 0 -1px 0 var(--lp-border-secondary);
+}
+.nc-permission-banner .msg { font-weight: 500; }
+.nc-permission-banner-btn {
+  user-select: none; cursor: pointer; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 6px; white-space: nowrap;
+  font-size: 14px; font-weight: 500; color: var(--lp-text-primary); box-shadow: inset 0 0 0 1px var(--lp-border-primary); background: var(--lp-bg-primary);
+  transition: background 20ms ease-in;
+}
+.nc-permission-banner-btn:hover { background: var(--lp-bg-tertiary, var(--lp-bg-interactive-transparent)); }
+.nc-permission-banner-btn.disabled { cursor: default; opacity: 0.6; }
+
+/* teamspace "Request access to {team}" dialog */
+.nc-team-request { width: 420px; padding: 20px 24px 18px; display: flex; flex-direction: column; gap: 12px; }
+.nc-team-request-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.nc-team-request-caption { font-size: 13px; line-height: 18px; color: var(--lp-text-secondary); }
+.nc-team-request .nc-input { height: auto; padding: 6px 10px; }
+.nc-team-request textarea { width: 100%; border: none; outline: none; resize: none; background: transparent; color: inherit; font: inherit; font-size: 14px; line-height: 20px; }
+.nc-team-request-footer { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Share menu additions (shareAccess.tsx): group rows / suggestions, unlinked-page banner */
+.nc-share-group-avatar {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; margin-inline-end: 10px; border-radius: 8px;
+  background: var(--lp-bg-secondary); color: var(--lp-text-secondary); box-shadow: inset 0 0 0 1px var(--lp-border-secondary); font-size: 14px; font-weight: 500; user-select: none;
+}
+.nc-share-group-suggestions .nc-share-group-avatar { border-radius: 6px; font-size: 12px; }
+.nc-share-group-tag { flex-shrink: 0; font-size: 11px; line-height: 16px; padding: 0 5px; border-radius: 4px; background: var(--lp-bg-secondary); color: var(--lp-text-secondary); }
+.nc-share-unlinked .nc-share-banner { align-items: flex-start; gap: 8px; height: auto; padding-block: 8px; }
+.nc-share-unlinked .nc-share-banner .text { white-space: normal; font-weight: 400; font-size: 13px; line-height: 18px; }
+.nc-share-unlinked-relink {
+  flex-shrink: 0; cursor: pointer; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--lp-blue-text-primary); border-radius: 4px; padding: 0 4px;
+}
+.nc-share-unlinked-relink:hover { background: var(--lp-blue-bg-secondary-transparent, rgba(129, 140, 248, 0.1)); }
+
+
+.nc-team-invite-page { position: fixed; inset: 0; overflow: auto; background: var(--lp-bg-primary); color: var(--lp-text-primary); }
+.nc-team-invite-icon {
+  width: 64px; height: 64px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+  background: var(--lp-bg-secondary); box-shadow: inset 0 0 0 1px var(--lp-border-secondary); font-size: 32px; overflow: hidden;
+}
+.nc-team-invite-letter { font-size: 28px; font-weight: 600; color: var(--lp-text-secondary); }
+.nc-team-invite-img { width: 100%; height: 100%; object-fit: cover; }
+.nc-team-invite-private { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 12px; color: var(--lp-text-tertiary); }
+.nc-guest-banner .msg { font-weight: 400; }
+.nc-membership-request .nc-team-request-title { font-size: 16px; }

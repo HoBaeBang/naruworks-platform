@@ -1,0 +1,46 @@
+/* Calendar view — */
+.nc-cal { width: 100%; position: relative; user-select: none; }
+.nc-cal-header { display: flex; align-items: center; height: 42px; margin-bottom: 2px; gap: 2px; }
+.nc-cal-title { font-weight: 600; margin: 0 8px; line-height: 1; font-size: 14px; white-space: nowrap; }
+.nc-cal-manage { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; margin: 2px 8px 0 0; border-radius: 6px; border: 1px solid var(--lp-border-primary-transparent); font-size: 14px; color: var(--lp-text-primary); cursor: pointer; white-space: nowrap; }
+.nc-cal-manage:hover, .nc-cal-nav:hover, .nc-cal-today:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-cal-nav { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
+.nc-cal-today { height: 24px; padding: 0 6px; display: flex; align-items: center; border-radius: 6px; font-size: 14px; cursor: pointer; }
+.nc-cal-days { display: flex; box-shadow: 0 1px 0 var(--lp-border-primary); }
+.nc-cal-days > div { flex: 1 1 0; text-align: center; font-size: 12px; color: var(--lp-text-tertiary); height: 24px; line-height: 24px; }
+.nc-cal-grid { box-shadow: calc(var(--lp-direction, 1) * -1px) 0 0 var(--lp-border-primary); margin-top: 1px; overflow: hidden; }
+.nc-cal-week { position: relative; display: flex; }
+.nc-cal-day { position: relative; flex: 1 0 0; border-inline-end: 1px solid var(--lp-border-primary); border-bottom: 1px solid var(--lp-border-primary); cursor: default; }
+.nc-cal-day.weekend { background: var(--lp-bg-secondary); }
+.nc-cal-num { position: absolute; font-size: 14px; top: 4px; height: 24px; line-height: 24px; inset-inline-end: 10px; text-align: end; transition: color 100ms ease-out; color: var(--lp-text-primary); }
+.nc-cal-num.outside { color: var(--lp-text-tertiary); }
+.nc-cal-num.today { color: var(--lp-calendar-today-text); inset-inline-end: 4px; width: 24px; border-radius: 100%; text-align: center; background: var(--lp-red-bg-accent); }
+.nc-cal-add { position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 4px; display: none; align-items: center; justify-content: center; color: var(--lp-icon-secondary); cursor: pointer; background: var(--lp-bg-elevated); box-shadow: var(--lp-shadow-outset-small); z-index: 2; }
+.nc-cal-day:hover .nc-cal-add { display: flex; }
+.nc-cal-add:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-cal-more { position: absolute; left: 8px; font-size: 12px; color: var(--lp-text-secondary); cursor: pointer; padding: 2px 4px; border-radius: 4px; z-index: 3; }
+.nc-cal-more:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-cal-items { position: absolute; inset: 0; pointer-events: none; }
+.nc-cal-item { position: absolute; padding: 3px 6px; height: 34px; box-sizing: border-box; pointer-events: auto; }
+/* items are.lit-selectable too: keep them absolutely placed whatever the editor stylesheet's load order */
+.nc-cal-items > .nc-cal-item { position: absolute; max-width: none; }
+.nc-cal-item.dragging { opacity: 0.85; z-index: 5; }
+.nc-cal-card { background: var(--lp-calendar-item-background); border-radius: 6px; box-shadow: var(--lp-shadow-outset-small); display: flex; position: relative; padding: 2px 0; height: 100%; align-items: flex-start; flex-direction: column; cursor: pointer; box-sizing: border-box; overflow: hidden; }
+.nc-cal-card:hover { background: rgb(from var(--lp-calendar-item-background) r g b); box-shadow: var(--lp-shadow-outset-small), 0 0 0 1px var(--lp-border-primary-transparent); }
+.nc-cal-card-title { padding-inline: 6px; overflow: hidden; width: 100%; height: 24px; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; line-height: 24px; box-sizing: border-box; }
+.nc-cal-card-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-cal-time { color: var(--lp-text-secondary); float: inline-end; font-size: 10px; margin-inline-start: 4px; height: 14px; padding-top: 0; font-weight: 400; line-height: 24px; }
+.nc-cal-card-props { padding-inline: 6px; overflow: hidden; width: 100%; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.nc-cal-handle { position: absolute; top: 0; height: 100%; width: 12px; cursor: col-resize; }
+.nc-cal-handle.left { inset-inline-start: -4px; }
+.nc-cal-handle.right { inset-inline-end: -4px; }
+.nc-cal-nodate { padding: 48px 16px; text-align: center; color: var(--lp-text-secondary); font-size: 14px; border-top: 1px solid var(--lp-border-primary); }
+.nc-cal-nodate-title { font-weight: 600; color: var(--lp-text-primary); margin-bottom: 4px; }
+.nc-cal-link { color: var(--lp-text-primary); border-bottom: 1px solid var(--lp-border-primary-transparent); cursor: pointer; }
+.nc-cal-card-title.wrap { height: auto; max-height: 44px; white-space: normal; line-height: 20px; padding-top: 2px; }
+.nc-cal-card-title.wrap .nc-cal-card-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.nc-cal-sentinel { height: 1px; }
+/* sub-items card property */
+.nc-cal-card-subitems { display: inline-flex; align-items: center; gap: 4px; height: 18px; margin: 1px 0 0 6px; padding: 0 4px; border-radius: 4px; font-size: 12px; color: var(--lp-text-secondary); cursor: pointer; width: fit-content; }
+.nc-cal-card-subitems:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-cal-card-subitems .lit-icon { color: var(--lp-icon-secondary); }

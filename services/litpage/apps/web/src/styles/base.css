@@ -1,0 +1,118 @@
+/* Base styles: fonts, layout metrics and element defaults (colors come from tokens.css). */
+@import './tokens.css';
+
+:root {
+  --font-default: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-serif: "Iowan Old Style", "Charter", Georgia, "Noto Serif KR", "Nanum Myeongjo", serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-code: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sidebar-width: 270px;
+  --topbar-height: 44px;
+  --page-width: 720px;
+  --page-padding: 96px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-default);
+  -webkit-font-smoothing: auto;
+  color: var(--lp-text-primary);
+  background: var(--lp-bg-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#lit-app { height: 100%; }
+
+button { font: inherit; color: inherit; }
+input, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+
+::selection { background: rgba(129, 140, 248, 0.28); }
+
+::placeholder { color: color-mix(in srgb, currentColor 37.5%, transparent); }
+
+
+.lit-scroller { overflow: auto; }
+* { scrollbar-color: rgb(211, 209, 203) rgba(0, 0, 0, 0); }
+
+body.nc-scroll-locked .nc-page-scroller { scrollbar-color: transparent transparent; }
+
+[contenteditable] { outline: none; }
+[contenteditable]:empty::before, [data-empty="true"]::before {
+  content: attr(placeholder);
+  color: var(--lp-text-tertiary);
+  pointer-events: none;
+  -webkit-text-fill-color: var(--lp-text-tertiary);
+}
+
+.lit-focusable:focus-visible { box-shadow: var(--lp-focus-shadow); outline: none; }
+
+.nc-hidden { display: none !important; }
+.nc-noselect { user-select: none; -webkit-user-select: none; }
+.nc-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+
+.nc-btn {
+  user-select: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 500;
+  line-height: 1.2;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 0 8px;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--lp-text-primary);
+  transition: background 0.1s ease-in-out;
+  flex-shrink: 0;
+}
+.nc-btn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-btn:active { background: rgb(from var(--lp-bg-interactive-transparent) r g b / calc(alpha * 2)); }
+.nc-btn.icon-only { width: 28px; padding: 0; }
+.nc-btn.secondary { color: var(--lp-text-secondary); }
+.nc-btn.primary { background: var(--lp-blue-bg-accent, #818cf8); color: #fff; }
+.nc-btn.primary:hover { background: var(--lp-blue-bg-accent-secondary, #a5b4fc); }
+.nc-btn.outline { box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent); }
+.nc-btn.danger { color: var(--lp-red-text-primary, #c4554d); }
+.nc-btn[disabled] { opacity: 0.4; pointer-events: none; }
+
+.nc-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 28px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--lp-bg-secondary-transparent);
+  box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent);
+  font-size: 14px;
+  line-height: 20px;
+}
+.nc-input:focus-within { box-shadow: var(--lp-input-focus-ring); }
+.nc-input input, .nc-input textarea { border: none; background: none; outline: none; width: 100%; padding: 0; font-size: inherit; line-height: inherit; }
+.nc-input input::placeholder { color: var(--lp-text-tertiary); }
+
+kbd.nc-kbd {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--lp-text-tertiary);
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+
+@keyframes nc-spin { to { transform: rotate(360deg); } }
+@keyframes nc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nc-pop-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }

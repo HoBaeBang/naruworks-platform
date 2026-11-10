@@ -1,0 +1,26 @@
+/* Template banner: full width, background --lp-yellow-bg-secondary, padding 8px 12px, min-height 44, centered text 14/20 500 in --lp-yellow-text-secondary, database link with a 20px icon and an underlined name, help button, "Duplicate every" button (1px --lp-yellow-border-strong-transparent, background --lp-yellow-bg-secondary-transparent). */
+.nc-tpl-banner { display: flex; align-items: center; justify-content: center; gap: 24px; position: relative; width: 100%; min-height: 44px; padding: 8px 12px; background-color: var(--lp-yellow-bg-secondary, #fcd34d); color: var(--lp-yellow-text-secondary, #956400); flex-wrap: wrap; border-radius: 0; margin: 0 0 8px; font-size: 14px; line-height: 20px; font-weight: 500; box-sizing: border-box; }
+.nc-tpl-banner-text { display: flex; align-items: center; min-width: 0; white-space: nowrap; flex-wrap: wrap; justify-content: center; }
+.nc-tpl-banner-db { display: inline-flex; align-items: center; margin-inline: 8px; min-width: 0; color: inherit; text-decoration: none; border-radius: 4px; cursor: pointer; }
+.nc-tpl-banner-db:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-tpl-banner-db > span { margin-inline-start: 4px; max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background-image: linear-gradient(to right, var(--lp-border-primary-transparent) 0%, var(--lp-border-primary-transparent) 100%); background-repeat: repeat-x; background-position: 0 100%; background-size: 100% 1px; }
+.nc-tpl-banner-help { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: inherit; }
+.nc-tpl-banner-help:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-tpl-repeat { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--lp-yellow-border-strong-transparent, rgba(251, 191, 36, 0.35)); background-color: var(--lp-yellow-bg-secondary-transparent, rgba(252, 211, 77, 0.6)); color: var(--lp-yellow-text-secondary, #956400); font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.nc-tpl-repeat:hover { filter: brightness(0.97); }
+.nc-tpl-default .nc-confirm-buttons { flex-direction: column; }
+.nc-empty-row-templates { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+.nc-empty-row-template-item { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px; margin-inline-start: -6px; border-radius: 6px; color: var(--lp-text-tertiary); cursor: pointer; font-size: 16px; width: fit-content; }
+.nc-empty-row-template-item:hover { background: var(--lp-bg-interactive-transparent); color: var(--lp-text-secondary); }
+.nc-empty-row-template-item .lit-icon, .nc-empty-row-template-item .nc-page-icon { opacity: .7; }
+/* template variables (Person who duplicated page / Date when duplicated): blue translucent chip */
+.nc-tplvar-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 4px; background: var(--lp-blue-bg-secondary, rgba(129, 140, 248, 0.1)); color: var(--lp-blue-text-accent, #818cf8); font-size: 14px; line-height: 20px; white-space: nowrap; max-width: 100%; }
+.nc-tplvar-chip > span { overflow: hidden; text-overflow: ellipsis; }
+.nc-tplvar-options { padding: 6px 4px 4px; border-bottom: 1px solid var(--lp-border-secondary); }
+.nc-tplvar-option { display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 0 8px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--lp-text-primary); }
+.nc-tplvar-option:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-tplvar-option .grow { flex: 1; }
+.nc-tplvar-option .hint { font-size: 12px; color: var(--lp-text-tertiary); }
+.nc-tplvar-option .lit-icon { color: var(--lp-icon-secondary); }
+.nc-tplvar-hint { color: var(--lp-text-tertiary); font-size: 12px; }
+.nc-filter-option-badge { margin-inline-start: 6px; font-size: 11px; color: var(--lp-text-tertiary); }

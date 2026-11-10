@@ -1,0 +1,18 @@
+.nc-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  background: var(--lp-bg-accent, #818cf8);
+  color: var(--lp-text-inverse-primary, #d4d4d8);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 220px;
+  text-align: start; 
+  
+  box-shadow: rgba(0, 0, 0, 0.08) 0 4px 12px -2px, inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: nc-fade-in 100ms ease;
+}
+.nc-tooltip-sub { color: var(--lp-text-inverse-secondary, #d4d4d8); font-weight: 400; }

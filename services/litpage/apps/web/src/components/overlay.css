@@ -1,0 +1,31 @@
+.lit-overlay-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 999;
+}
+.nc-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: transparent;
+}
+.nc-overlay-backdrop.dim {
+  background: var(--lp-overlay-smoke, rgba(0, 0, 0, 0.6));
+  animation: nc-fade-in 120ms ease;
+}
+.nc-overlay { animation: nc-pop-in 120ms ease; transform-origin: top left; }
+
+
+.nc-popover {
+  border-radius: 10px;
+  position: relative;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  background: var(--lp-popover-background);
+  box-shadow: var(--lp-shadow-outset-large);
+  display: flex;
+  flex-direction: column;
+  color: var(--lp-text-primary);
+}

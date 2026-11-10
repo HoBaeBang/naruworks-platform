@@ -1,0 +1,47 @@
+/* Find in page bar: absolute in the frame, top 0 + translateY(60px), inset-inline-end 16px, width 280px, radius 12px, shadow and outline ring, z 1000. */
+.nc-find-bar {
+  position: absolute; top: 0; inset-inline-end: 16px; z-index: 1000; width: 280px;
+  transform: translateY(60px); background-color: var(--lp-bg-elevated); border-radius: 12px;
+  box-shadow: var(--lp-shadow-outset-large); outline: 3px solid var(--lp-blue-border-secondary-transparent);
+  color: var(--lp-text-primary); font-size: 16px; line-height: 24px;
+  animation: nc-find-in 150ms ease;
+}
+@keyframes nc-find-in { from { opacity: 0; } to { opacity: 1; } }
+.nc-find-row { display: flex; align-items: center; padding-inline: 10px; gap: 10px; }
+.nc-find-input { display: flex; align-items: center; flex-grow: 1; min-width: 0; }
+.nc-find-input input {
+  width: 100%; min-width: 0; border: none; outline: none; background: transparent; color: var(--lp-text-primary);
+  font-size: 14px; line-height: 21px; padding: 10px 0; font-family: inherit;
+}
+.nc-find-replace-body .nc-find-input input { padding: 0; }
+.nc-find-count { font-size: 0.8rem; line-height: 19.2px; color: var(--lp-text-tertiary); user-select: none; cursor: default; white-space: nowrap; }
+.nc-find-count-inner { display: flex; align-items: center; gap: 4px; }
+.nc-find-buttons { display: flex; align-items: center; gap: 2px; }
+.nc-find-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 3px; border-radius: 6px;
+  color: var(--lp-icon-secondary); cursor: pointer; flex-shrink: 0; user-select: none; transition: background 20ms ease-in;
+}
+.nc-find-btn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-find-btn.pressed { background: var(--lp-blue-bg-secondary-transparent); color: var(--lp-blue-icon-accent); }
+.nc-find-btn.disabled { opacity: 0.4; cursor: default; }
+.nc-find-btn.disabled:hover { background: transparent; }
+.nc-find-replace { overflow-y: hidden; height: auto; }
+.nc-find-divider { height: 1px; background-color: var(--lp-bg-tertiary-transparent); }
+.nc-find-replace-body { display: flex; padding: 10px; flex-direction: column; align-items: flex-end; gap: 3px; }
+.nc-find-replace-body .nc-find-input { width: 100%; }
+.nc-find-replace-body .nc-find-input input { line-height: 21px; height: 21px; }
+.nc-find-replace-actions { display: flex; gap: 4px; }
+.nc-find-text-btn, .nc-find-primary-btn {
+  display: flex; align-items: center; font-size: 13px; line-height: 15.6px; border-radius: 8px; padding: 7px 8px; cursor: pointer; user-select: none;
+  white-space: nowrap; transition: background 20ms ease-in;
+}
+.nc-find-text-btn { color: var(--lp-text-secondary); font-weight: 400; }
+.nc-find-text-btn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-find-primary-btn { color: var(--lp-blue-text-inverse-primary); fill: var(--lp-blue-text-inverse-primary); background: var(--lp-blue-bg-accent); font-weight: 500; }
+.nc-find-primary-btn:hover { background: hsl(from var(--lp-blue-bg-accent) h s calc(l - 5) / alpha); }
+.nc-find-primary-btn .inner { display: flex; align-items: center; gap: 4px; }
+.nc-find-text-btn.disabled, .nc-find-primary-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+/* match highlights (CSS Custom Highlight API): other matches.4, current.9 with black text */
+::highlight(nc-find) { background-color: rgba(120, 53, 15, 0.4); }
+::highlight(nc-find-current) { background-color: rgba(120, 53, 15, 0.9); color: rgb(0, 0, 0); }

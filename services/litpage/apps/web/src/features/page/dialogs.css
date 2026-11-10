@@ -1,0 +1,74 @@
+/* Shared pieces for page-level dialogs (confirm, export, publish settings, customize page). */
+.nc-confirm {
+  background: var(--lp-popover-background);
+  border-radius: 12px;
+  box-shadow: var(--lp-shadow-outset-screen);
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+.nc-confirm-message { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--lp-text-primary); white-space: pre-wrap; }
+.nc-confirm-description { font-size: 12px; line-height: 16px; color: var(--lp-text-secondary); margin-top: 2px; }
+.nc-confirm-buttons { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 16px; }
+
+/* dialog buttons: 32px, radius 6, 14px/500 */
+.nc-dialog-btn {
+  user-select: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap; font-weight: 500; line-height: 1.2; height: 32px; padding: 0 12px; border-radius: 6px; font-size: 14px;
+  border: none; background: transparent; color: var(--lp-text-primary); transition: background 0.1s ease-in-out;
+}
+.nc-dialog-btn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-dialog-btn:disabled { opacity: 0.4; pointer-events: none; }
+.nc-dialog-btn.primary { background: var(--lp-blue-bg-accent); color: var(--lp-blue-text-inverse-primary); }
+.nc-dialog-btn.primary:hover { background: hsl(from var(--lp-blue-bg-accent) h s calc(l - 5) / alpha); }
+.nc-dialog-btn.danger { background: var(--lp-red-bg-accent); color: #fff; }
+.nc-dialog-btn.danger:hover { background: hsl(from var(--lp-red-bg-accent) h s calc(l - 5) / alpha); }
+.nc-dialog-btn.outline { box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent); }
+.nc-dialog-btn.outline-danger { box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent); color: var(--lp-red-text-primary); }
+.nc-dialog-btn.small { height: 28px; padding: 0 8px; }
+.nc-dialog-btn.blue-outline { color: var(--lp-blue-text-secondary); box-shadow: inset 0 0 0 1px var(--lp-blue-border-strong-transparent); }
+
+/* toggle switch: 26×14 track + 2px padding (content-box), 14px knob, off --lp-switch-track-inactive-bg */
+.nc-toggle { box-sizing: content-box; width: 26px; height: 14px; padding: 2px; border-radius: 44px; background: var(--lp-switch-track-inactive-bg); position: relative; flex-shrink: 0; transition: background 200ms, box-shadow 200ms; cursor: pointer; display: inline-flex; }
+.nc-toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 44px; background: #fff; top: 2px; left: 2px; transition: transform 200ms ease-out; }
+.nc-toggle.on { background: var(--lp-blue-bg-accent); }
+.nc-toggle.on::after { transform: translateX(12px); }
+.nc-toggle.disabled { opacity: 0.4; pointer-events: none; }
+.nc-toggle-wrap { position: relative; display: inline-flex; flex-shrink: 0; border-radius: 44px; }
+.nc-toggle-wrap.disabled { opacity: 0.4; }
+.nc-toggle-wrap.disabled .nc-toggle-input { pointer-events: none; }
+.nc-toggle-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.nc-toggle-wrap:has(.nc-toggle-input:focus-visible) { box-shadow: var(--lp-input-focus-ring, 0 0 0 2px rgba(129, 140, 248, 0.5)); }
+
+/* settings rows: label left, control right (export dialog, publish settings, customize page) */
+.nc-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; font-size: 14px; color: var(--lp-text-primary); }
+.nc-setting-row .label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.nc-setting-row .label .sub { font-size: 12px; color: var(--lp-text-secondary); }
+.nc-select-btn {
+  display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px 0 8px; border-radius: 6px; cursor: pointer;
+  color: var(--lp-text-secondary); font-size: 14px; user-select: none; white-space: nowrap;
+}
+.nc-select-btn:hover { background: var(--lp-bg-interactive-transparent); }
+
+/* export dialog: 320 wide, padding 24, r12, --lp-shadow-outset-screen */
+.nc-export-dialog { background: var(--lp-popover-background); border-radius: 12px; box-shadow: var(--lp-shadow-outset-screen); width: 320px; padding: 24px; font-size: 14px; display: flex; flex-direction: column; }
+.nc-export-dialog .rows { display: flex; flex-direction: column; }
+.nc-export-dialog .nc-setting-row { min-height: 0; height: 32px; }
+.nc-export-dialog .nc-export-row.select { height: auto; }
+.nc-export-dialog .nc-setting-row .label { color: var(--lp-text-tertiary); }
+/* select trigger: 28px, padding 0 8, gap 6, 14px primary text, narrow chevron, pulled 6px into the padding */
+.nc-export-dialog .nc-select-btn { height: 28px; padding: 0 8px; gap: 6px; margin-inline-end: -6px; color: var(--lp-text-primary); }
+.nc-export-dialog .footer { display: flex; align-items: center; margin-top: 16px; }
+.nc-export-btn {
+  user-select: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1.2;
+  height: 28px; padding: 0 8px; border: none; border-radius: 6px; background: transparent; font-family: inherit; font-size: 14px; transition: background 0.1s ease-in-out;
+}
+.nc-export-btn.cancel { margin-inline: auto 8px; font-weight: 400; color: var(--lp-gray-text-accent); }
+.nc-export-btn.cancel:hover { background: var(--lp-gray-bg-interactive-transparent, var(--lp-bg-interactive-transparent)); }
+.nc-export-btn.primary { font-weight: 500; color: var(--lp-blue-text-inverse-primary); background: var(--lp-blue-bg-accent); }
+.nc-export-btn.primary:hover { background: hsl(from var(--lp-blue-bg-accent) h s calc(l - 5) / alpha); }
+.nc-export-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.nc-export-dialog .progress { padding: 8px 0 0; font-size: 12px; color: var(--lp-text-secondary); }

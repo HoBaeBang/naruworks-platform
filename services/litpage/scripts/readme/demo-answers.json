@@ -1,0 +1,8 @@
+{
+  "chat": {
+    "Which roadmap items need attention this quarter?": "Two items on **Roadmap** need attention this quarter:\n\n1. **Offline sync** (Platform, In progress) is due in about six weeks. It is the only item already in progress, so protect its scope.\n2. **Referral program** (Growth, Planning) has a target date but is still in planning. Agree on the scope this week to keep it on track.\n\n**Widgets** (Mobile) is planned for Q1 and has no date yet, so it can wait. **Dark mode** has already shipped."
+  },
+  "titles": {
+    "Which roadmap items need attention this quarter?": "Roadmap items to watch"
+  }
+}

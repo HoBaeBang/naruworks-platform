@@ -1,0 +1,84 @@
+/* Settings › Preferences › Appearance › High contrast.
+   The root carries [data-contrast="high"]: selected tabs get a 1px --lp-border-primary outline, focus rings are 2px,
+   glyphs are outlined. The token overrides below make secondary/tertiary text and icons darker
+   (light) / lighter (dark) to ≥ 4.5:1 on the page background, borders and translucent dividers ~2.5× stronger,
+   hover fills more visible. Independent of the theme (light/dark), saved per account, applied on this device. */
+
+html[data-contrast="high"],
+html[data-contrast="high"].lit-light-theme {
+  --lp-text-primary: #191918;
+  --lp-text-secondary: #55534f;
+  --lp-text-tertiary: #6b6964;
+  --lp-text-disabled: #818cf8;
+  --lp-text-accent: #3f3f46;
+  --lp-icon-primary: #222221;
+  --lp-icon-secondary: #55534f;
+  --lp-icon-tertiary: #6b6964;
+  --lp-icon-disabled: #a1a1aa;
+  --lp-icon-accent: #55534f;
+  --lp-border-primary: #b4b1ab;
+  --lp-border-secondary: #cfccc6;
+  --lp-border-strong: #818cf8;
+  --lp-border-accent: #6b6964;
+  --lp-border-primary-transparent: rgba(0, 0, 0, 0.3);
+  --lp-border-secondary-transparent: rgba(69, 26, 3, 0.2);
+  --lp-border-strong-transparent: rgba(0, 0, 0, 0.45);
+  --lp-bg-interactive-transparent: rgba(67, 20, 7, 0.09);
+  --lp-bg-tertiary-transparent: rgba(69, 26, 3, 0.12);
+  --lp-button-hover-background-transparent: rgba(63, 63, 70, 0.1);
+  --lp-button-neutral-hover-bg: rgba(63, 63, 70, 0.22);
+  --lp-blue-text-accent: #1a6cbf;
+  --lp-blue-icon-accent: #1a6cbf;
+}
+
+html[data-contrast="high"].lit-dark-theme {
+  --lp-text-primary: #ffffff;
+  --lp-text-secondary: #d0cdc7;
+  --lp-text-tertiary: #b3afa9;
+  --lp-text-disabled: #818cf8;
+  --lp-text-accent: #fafafa;
+  --lp-icon-primary: #ffffff;
+  --lp-icon-secondary: #d0cdc7;
+  --lp-icon-tertiary: #b3afa9;
+  --lp-icon-disabled: #a1a1aa;
+  --lp-icon-accent: #fafafa;
+  --lp-border-primary: #6f6d68;
+  --lp-border-secondary: #58564f;
+  --lp-border-strong: #818cf8;
+  --lp-border-accent: #b3afa9;
+  --lp-border-primary-transparent: rgba(255, 255, 255, 0.3);
+  --lp-border-secondary-transparent: rgba(255, 255, 255, 0.2);
+  --lp-border-strong-transparent: rgba(255, 255, 255, 0.42);
+  --lp-bg-interactive-transparent: rgba(255, 255, 255, 0.1);
+  --lp-bg-tertiary-transparent: rgba(255, 255, 255, 0.14);
+  --lp-button-hover-background-transparent: rgba(255, 255, 255, 0.1);
+  --lp-button-neutral-hover-bg: rgba(255, 255, 255, 0.2);
+  --lp-blue-text-accent: #6ab0f3;
+  --lp-blue-icon-accent: #6ab0f3;
+}
+
+/* high-contrast rules: selected tabs are outlined, focus rings are thicker */
+html[data-contrast="high"] [role="tab"][aria-selected="true"]:not(:focus-visible),
+html[data-contrast="high"] .nc-set-tab.selected:not(:focus-visible),
+html[data-contrast="high"] .nc-set-pill.selected:not(:focus-visible) {
+  outline: 1px solid var(--lp-border-primary);
+  outline-offset: -1px;
+}
+html[data-contrast="high"] [role="tab"]:focus-visible,
+html[data-contrast="high"] [role="button"]:focus-visible,
+html[data-contrast="high"] button:focus-visible,
+html[data-contrast="high"] input:focus-visible {
+  outline: 2px solid var(--lp-border-strong);
+  outline-offset: 1px;
+}
+/* menus, popovers and dialogs get a visible edge instead of relying on soft shadows */
+html[data-contrast="high"] .nc-overlay,
+html[data-contrast="high"] .nc-set-subdialog,
+html[data-contrast="high"] .lit-dialog {
+  outline: 1px solid var(--lp-border-strong);
+}
+/* placeholders and disabled controls stay readable */
+html[data-contrast="high"] ::placeholder {
+  color: var(--lp-text-tertiary);
+  opacity: 1;
+}

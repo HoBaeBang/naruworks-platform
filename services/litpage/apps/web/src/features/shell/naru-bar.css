@@ -1,0 +1,66 @@
+/* NaruWorks header: same tokens, sizes and shapes as the NaruWorks site header. #lit-app becomes a column so the app fills the rest.
+   Naru uses [data-theme]; Litpage keeps its own theme class on <html>, so the bar follows that. */
+#lit-app { display: flex; flex-direction: column; }
+.naru-main { flex: 1 1 0; min-height: 0; position: relative; }
+.naru-main > * { height: 100%; }
+
+.naru-bar {
+  --n-bg: #eef5f0; --n-fg: #10221b; --n-primary: #168e5e; --n-primary-strong: #086641; --n-primary-soft: #d4f1e3;
+  --n-surface: rgba(251, 255, 252, 0.9); --n-border: rgba(16, 34, 27, 0.24); --n-muted: rgba(16, 34, 27, 0.74);
+  flex: none;
+  position: relative;
+  z-index: 40;
+  border-bottom: 1px solid var(--n-border);
+  background: color-mix(in srgb, var(--n-bg) 88%, transparent);
+  color: var(--n-fg);
+  backdrop-filter: blur(24px);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
+}
+.lit-dark-theme .naru-bar {
+  --n-bg: #101816; --n-fg: #eff8f2; --n-primary: #57df9a; --n-primary-strong: #a8f5df; --n-primary-soft: rgba(109, 238, 194, 0.15);
+  --n-surface: rgba(255, 255, 255, 0.056); --n-border: rgba(239, 248, 242, 0.1); --n-muted: rgba(239, 248, 242, 0.68);
+}
+.naru-bar a { color: inherit; text-decoration: none; }
+
+.naru-bar-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 56px; padding: 0 24px; }
+.naru-bar-left, .naru-bar-right { display: flex; align-items: center; min-width: 0; }
+.naru-bar-left { gap: 12px; }
+.naru-bar-right { gap: 16px; font-size: 14px; }
+
+.naru-bar-brand { display: flex; flex: none; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; line-height: 1; }
+.naru-mark { display: inline-grid; flex: none; width: 32px; height: 32px; overflow: hidden; border-radius: 8px; }
+.naru-mark svg { grid-area: 1 / 1; width: 100%; height: 100%; }
+.naru-mark-dark { display: none; }
+.lit-dark-theme .naru-mark-light { display: none; }
+.lit-dark-theme .naru-mark-dark { display: block; }
+
+.naru-bar-nav { display: flex; align-items: center; gap: 16px; min-width: 0; padding-left: 12px; border-left: 1px solid var(--n-border); font-size: 14px; color: var(--n-muted); white-space: nowrap; }
+.naru-bar-nav a:hover { color: var(--n-fg); }
+.naru-bar-nav .naru-bar-current { font-weight: 700; color: var(--n-primary-strong); }
+
+.naru-bar-member { position: relative; }
+.naru-bar-member-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; cursor: pointer;
+  border: 1px solid var(--n-border); border-radius: 8px; background: var(--n-surface); color: var(--n-fg);
+  font: inherit; font-size: 14px; font-weight: 700; transition: border-color 0.15s, color 0.15s;
+}
+.naru-bar-member-btn:hover { border-color: var(--n-primary); color: var(--n-primary-strong); }
+.naru-bar-avatar { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--n-primary-soft); color: var(--n-primary-strong); font-size: 12px; font-weight: 900; }
+.naru-bar-member-name { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.naru-bar-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 288px; padding: 12px;
+  border: 1px solid var(--n-border); border-radius: 8px; background: var(--n-bg); box-shadow: 0 20px 48px rgba(10, 35, 25, 0.18);
+}
+.naru-bar-menu-head { padding: 0 4px 12px; border-bottom: 1px solid var(--n-border); }
+.naru-bar-menu-head p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.naru-bar-menu-head p:first-child { font-size: 14px; font-weight: 700; }
+.naru-bar-menu-head p:last-child { margin-top: 4px; font-size: 12px; color: var(--n-muted); }
+.naru-bar-menu a { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+.naru-bar-menu-head + a { margin-top: 8px; }
+.naru-bar-menu a:hover { background: var(--n-primary-soft); }
+.naru-bar-menu .naru-bar-logout { margin-top: 4px; color: #dc2626; }
+.lit-dark-theme .naru-bar-menu .naru-bar-logout { color: #fca5a5; }
+.naru-bar-menu .naru-bar-logout:hover { background: rgba(239, 68, 68, 0.1); }
+
+@media (max-width: 640px) { .naru-bar-inner { padding: 0 12px; } .naru-bar-brand span:not(.naru-mark) { display: none; } .naru-bar-nav { gap: 12px; } .naru-bar-member-name { display: none; } }

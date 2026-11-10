@@ -1,0 +1,43 @@
+/* Dashboard view — rows of widget cards (each a regular view of the same data source) */
+.nc-dash { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; padding-bottom: 16px; }
+.nc-dash-row { position: relative; display: flex; gap: 16px; min-height: 160px; }
+.nc-dash-widget { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; border-radius: 12px; background: var(--lp-bg-primary); box-shadow: 0 0 0 1px var(--lp-border-primary); overflow: hidden; }
+.nc-dash-widget-head { display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 8px 0 14px; flex-shrink: 0; font-size: 14px; font-weight: 500; color: var(--lp-text-primary); }
+.nc-dash-widget-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-dash-widget-more { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: var(--lp-icon-secondary); cursor: pointer; opacity: 0; transition: opacity 120ms; }
+.nc-dash-widget:hover .nc-dash-widget-more { opacity: 1; }
+.nc-dash-widget-more:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-dash-widget-body { flex: 1; min-height: 0; overflow: auto; padding: 0 12px 12px; }
+.nc-dash-widget-body .nc-cal-header { height: 36px; }
+.nc-dash-row-add { position: absolute; right: -32px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--lp-icon-tertiary); cursor: pointer; opacity: 0; transition: opacity 120ms; }
+.nc-dash-row:hover .nc-dash-row-add { opacity: 1; }
+.nc-dash-row-add:hover { background: var(--lp-bg-interactive-transparent); color: var(--lp-icon-secondary); }
+.nc-dash-row-resize { position: absolute; left: 0; right: 0; bottom: -10px; height: 8px; cursor: row-resize; border-radius: 4px; }
+.nc-dash-row-resize:hover { background: var(--lp-blue-border-strong, rgba(129, 140, 248, 0.25)); }
+.nc-dash-newrow { display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-radius: 8px; color: var(--lp-text-tertiary); font-size: 14px; cursor: pointer; box-shadow: inset 0 0 0 1px var(--lp-border-secondary); }
+.nc-dash-newrow:hover { background: var(--lp-button-hover-background-transparent, rgba(63, 63, 70, 0.04)); color: var(--lp-text-secondary); }
+.nc-dash-menu-head { padding: 8px 12px 2px; font-size: 12px; font-weight: 500; color: var(--lp-text-secondary); }
+.nc-dash-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 48px 16px 40px; }
+.nc-dash-empty-title { font-size: 18px; font-weight: 600; color: var(--lp-text-primary); margin-bottom: 10px; }
+.nc-dash-empty-sub { font-size: 14px; color: var(--lp-text-secondary); margin-bottom: 24px; max-width: 420px; line-height: 1.5; }
+.nc-dash-cards { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.nc-dash-card { width: 200px; height: 172px; border-radius: 12px; background: var(--lp-bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 22px 12px 26px; box-sizing: border-box; font-size: 13px; line-height: 1.45; color: var(--lp-text-secondary); cursor: pointer; }
+.nc-dash-card:hover { box-shadow: inset 0 0 0 1px var(--lp-border-primary); }
+.nc-dash-card.disabled { cursor: default; opacity: 0.75; }
+.nc-dash-card.disabled:hover { box-shadow: none; }
+.nc-dash-card-art { display: flex; gap: 6px; }
+.nc-dash-card-art span { width: 34px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: var(--lp-bg-primary); box-shadow: 0 0 0 1px var(--lp-border-primary); color: var(--lp-icon-secondary); }
+.nc-dash-add-btn, .nc-dash-tb-add { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; background: var(--lp-bg-primary); box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent), var(--lp-shadow-outset-small); font-size: 14px; font-weight: 500; color: var(--lp-text-primary); cursor: pointer; }
+.nc-dash-tb-add { height: 28px; padding: 0 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--lp-border-primary-transparent); margin-inline-start: 6px; }
+.nc-dash-add-btn:hover, .nc-dash-tb-add:hover { background: var(--lp-bg-interactive-transparent); }
+/*: View / Edit mode, drag & drop, widget widths */
+.nc-dash-widget-head.draggable { cursor: grab; }
+.nc-dash-widget.dragging { opacity: 0.4; }
+.nc-dash-widget.drop-before { box-shadow: 0 0 0 1px var(--lp-border-primary), -3px 0 0 0 var(--lp-blue-border-accent); }
+.nc-dash-widget.drop-after { box-shadow: 0 0 0 1px var(--lp-border-primary), 3px 0 0 0 var(--lp-blue-border-accent); }
+.nc-dash-gap { height: 12px; margin: -14px 0; border-radius: 4px; position: relative; z-index: 3; }
+.nc-dash-gap.over { background: var(--lp-blue-border-accent); opacity: 0.6; }
+.nc-dash-col-resize { flex: none; width: 8px; margin: 0 -12px; z-index: 2; cursor: col-resize; border-radius: 4px; align-self: stretch; }
+.nc-dash-col-resize:hover { background: var(--lp-blue-border-strong, rgba(129, 140, 248, 0.25)); }
+.nc-dash-tb-done { display: inline-flex; align-items: center; height: 28px; padding: 0 10px; margin-inline-start: 6px; border-radius: 6px; background: var(--lp-blue-bg-accent, #818cf8); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
+.nc-dash-tb-done:hover { background: var(--lp-blue-bg-accent-secondary, #a5b4fc); }

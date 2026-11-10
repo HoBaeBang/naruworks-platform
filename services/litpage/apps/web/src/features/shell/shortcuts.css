@@ -1,0 +1,55 @@
+
+.nc-kbd-layer { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; }
+.nc-kbd-underlay { position: absolute; inset: 0; background: var(--lp-modal-underlay-background); animation: nc-fade-in 150ms ease; }
+.nc-kbd-dialog {
+  position: relative; z-index: 1; width: calc(100vw - 100px); height: calc(100vh - 100px); max-width: 960px; max-height: 700px;
+  border-radius: 12px; overflow: hidden; background: var(--lp-bg-elevated); box-shadow: var(--lp-shadow-outset-screen); animation: nc-pop-in 160ms ease;
+  color: var(--lp-text-primary);
+}
+.nc-kbd-inner { display: flex; flex-direction: column; height: 100%; width: 100%; }
+.nc-kbd-title { font-weight: 700; font-size: 20px; line-height: 1.5; color: var(--lp-text-primary); padding: 24px 0 0 32px; margin: 0; }
+.nc-kbd-toolbar { display: flex; align-items: center; padding: 0 32px; min-height: 64px; position: relative; gap: 8px; }
+.nc-kbd-tabs { display: flex; flex: 1 1 0%; gap: 6px; padding: 8px 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.nc-kbd-tabs::-webkit-scrollbar { display: none; }
+.nc-kbd-tab {
+  user-select: none; cursor: pointer; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1.2; height: 32px;
+  padding: 0 12px; border-radius: 16px; font-size: 14px; font-weight: 500; gap: 6px; color: var(--lp-text-secondary); flex-shrink: 0;
+  transition: background 0.1s ease-in-out;
+}
+.nc-kbd-tab:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-kbd-tab.selected { background: var(--lp-bg-interactive-transparent); color: var(--lp-text-primary); }
+.nc-kbd-tab:focus-visible { outline: none; box-shadow: var(--lp-button-focus-ring); }
+.nc-kbd-tab-icon { display: flex; align-items: center; justify-content: center; height: 20px; flex-shrink: 0; overflow: visible; }
+.nc-kbd-slash { width: 20px; text-align: center; color: var(--lp-icon-secondary); font-size: 16px; }
+.nc-kbd-iconbtn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+.nc-kbd-iconbtn.round { width: 32px; height: 32px; border-radius: 16px; }
+.nc-kbd-iconbtn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-kbd-search {
+  display: flex; align-items: center; gap: 8px; flex: 1; height: 36px; padding: 0 6px 0 10px; border-radius: 8px;
+  background: var(--lp-bg-secondary-transparent); box-shadow: var(--lp-input-focus-ring);
+}
+.nc-kbd-search input { flex: 1; border: none; outline: none; background: none; font-size: 14px; color: var(--lp-text-primary); }
+.nc-kbd-search input::placeholder { color: var(--lp-text-tertiary); }
+.nc-kbd-list { flex: 1 1 0%; padding: 0 32px 24px; overflow: auto; position: relative; }
+.nc-kbd-fade { height: 16px; background: linear-gradient(to bottom, var(--lp-bg-primary), transparent); position: sticky; top: 0; z-index: 1; pointer-events: none; }
+.nc-kbd-section { margin-bottom: 48px; }
+.nc-kbd-section h2 { font-weight: 600; font-size: 24px; line-height: 1.5; color: var(--lp-text-primary); margin: 0 0 8px; }
+.nc-kbd-section h3 { font-weight: 600; font-size: 16px; line-height: 1.4; color: var(--lp-text-primary); margin: 20px 0 8px; }
+.nc-kbd-row { display: flex; justify-content: space-between; align-items: center; height: 44px; border-bottom: 1px solid var(--lp-border-secondary); }
+.nc-kbd-action { flex: 1 1 0%; font-size: 14px; color: var(--lp-text-primary); margin-inline-end: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-kbd-keys { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.nc-kbd-key {
+  
+  display: flex; gap: 4px; align-items: center; font-family: Menlo, ui-monospace, monospace; font-size: 13px; height: 20px; padding: 4px 8px;
+  color: var(--lp-text-secondary); cursor: default; background-color: var(--lp-button-hover-background-transparent); border-radius: 6px;
+}
+.nc-kbd-key code { font-family: inherit; }
+.nc-kbd-empty { padding: 48px 0; text-align: center; }
+.nc-kbd-empty .title { font-size: 16px; font-weight: 600; color: var(--lp-text-primary); margin-bottom: 4px; }
+.nc-kbd-empty .desc { font-size: 14px; color: var(--lp-text-secondary); }
+@media (max-width: 600px) {
+  .nc-kbd-dialog { width: 100vw; height: 100vh; max-height: none; border-radius: 0; }
+  .nc-kbd-title { padding: 20px 0 0 20px; }
+  .nc-kbd-toolbar { padding: 0 20px; }
+  .nc-kbd-list { padding: 0 20px 20px; }
+}

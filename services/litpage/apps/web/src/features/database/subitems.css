@@ -1,0 +1,33 @@
+/* Sub-items (nested rows, count indicator, "New sub-item", card property). Indent 24px per level; the toggle is a
+   20px button like a toggle block's triangle; rows without sub-items reveal it on hover. */
+.nc-subitem-indent { display: inline-block; flex: none; height: 1px; }
+.nc-subitem-toggle {
+  width: 20px; height: 20px; margin: 1px 2px 0 -4px; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  border-radius: 4px; color: var(--lp-icon-secondary); cursor: pointer; opacity: 0; transition: opacity 100ms ease, background 20ms ease-in;
+}
+.nc-subitem-toggle .lit-icon { transition: transform 120ms ease; }
+.nc-subitem-toggle.open .lit-icon { transform: rotate(90deg); }
+.nc-subitem-toggle.has-children, .nc-subitem-toggle.open,
+.nc-table-row-outer:hover .nc-subitem-toggle, .nc-list-item:hover .nc-subitem-toggle { opacity: 1; }
+.nc-subitem-toggle:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-subitem-count { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: 6px; padding: 0 4px; height: 18px; border-radius: 4px; font-size: 12px; font-weight: 400; color: var(--lp-text-secondary); background: var(--lp-bg-interactive-transparent); vertical-align: 1px; }
+.nc-subitem-count .lit-icon { color: var(--lp-icon-secondary); }
+.nc-subitem-context .nc-title-cell-text, .nc-subitem-context .nc-list-title { color: var(--lp-text-secondary); }
+
+/* "New sub-item" row (table: same pitch as a row; list: 30px) */
+.nc-subitem-new { display: flex; align-items: center; min-height: 33px; }
+.nc-table-subitem-new { margin-inline-start: 8px; padding-inline-start: 8px; border-bottom: 1px solid var(--lp-border-secondary-transparent); }
+.nc-subitem-new-btn { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 14px; color: var(--lp-text-tertiary); cursor: pointer; user-select: none; }
+.nc-subitem-new-btn .lit-icon { color: var(--lp-icon-tertiary); }
+.nc-subitem-new-btn:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-list-subitem-new { min-height: 30px; }
+
+/* card property */
+.nc-card-subitems { margin: 2px 0 0; font-size: 12px; }
+.nc-card-subitems-toggle { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 4px; margin-inline-start: -4px; border-radius: 4px; color: var(--lp-text-secondary); cursor: pointer; }
+.nc-card-subitems-toggle:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-card-subitems-toggle .lit-icon { transition: transform 120ms ease; color: var(--lp-icon-secondary); }
+.nc-card-subitems-toggle.open .lit-icon { transform: rotate(90deg); }
+.nc-card-subitem { display: flex; align-items: center; gap: 4px; height: 22px; padding-inline-start: 14px; border-radius: 4px; color: var(--lp-text-primary); cursor: pointer; font-size: 12px; }
+.nc-card-subitem:hover { background: var(--lp-bg-interactive-transparent); }
+.nc-card-subitem-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -68,7 +68,7 @@ export function App() {
     }
     if (status === 'anonymous' && !ANONYMOUS_ROUTES.has(route.name)) {
       // NaruWorks: there is no login page; the server sends the browser to the NaruWorks home (which links to /auth/login)
-      location.replace('/auth/home');
+      location.replace(`/auth/home?next=${encodeURIComponent(location.pathname + location.search)}`);
     }
     if (status === 'onboarding' && route.name !== 'onboarding') navigate('/onboarding', { replace: true });
     if (status === 'ready' && (route.name === 'login' || route.name === 'signup' || route.name === 'onboarding')) navigate(takeAfterLogin() ?? '/', { replace: true });

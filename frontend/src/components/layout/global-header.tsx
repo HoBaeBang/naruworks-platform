@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { MemberMenu } from "@/components/auth/member-menu";
 import { NaruWorksMark } from "@/components/brand/naruworks-mark";
 
+// Litpage (docs service). Unset = not deployed yet: no link. Its /auth/login signs members in with their NaruWorks account.
+const litpageUrl = process.env.NEXT_PUBLIC_LITPAGE_URL?.replace(/\/+$/, "");
+
 const pageLabelByPath: Record<string, string> = {
   "/calendar": "Naru Calendar",
   "/admin/members": "회원 관리",
@@ -43,10 +46,12 @@ export function GlobalHeader() {
               <a href="#services">서비스</a>
               <a href="#calendar">캘린더</a>
               <a href="#about">소개</a>
+              {litpageUrl && <a href={`${litpageUrl}/auth/login`}>Litpage</a>}
             </nav>
           ) : (
             <nav className="hidden items-center gap-4 text-[var(--muted)] sm:flex">
               <Link href="/calendar">캘린더</Link>
+              {litpageUrl && <a href={`${litpageUrl}/auth/login`}>Litpage</a>}
             </nav>
           )}
           <MemberMenu />

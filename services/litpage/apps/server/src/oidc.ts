@@ -72,6 +72,10 @@ export function safeNext(next: string | undefined): string {
   }
 }
 
+const ID_COOKIE = 'lit_idt';
+const idTokenCookie = (value: string, secure: boolean, maxAge = 7 * 86400) =>
+  `${ID_COOKIE}=${value}; Path=/auth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
+
 interface Pending { s: string; n: string; v: string; x: string; t?: number }
 /** login attempts a browser may keep open at once; older cookies are expired when a new attempt starts (bounds Cookie header size) */
 const MAX_PENDING = 3;
@@ -204,6 +208,8 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
       const userId = resolveUser(id.sub, email, name);
       if (!userId) return c.text('이 계정은 다른 로그인 정보와 이미 연결되어 있습니다.', 403);
       c.header('Set-Cookie', sessionCookie(createSession(userId), secure), { append: true });
+      // kept only for logout: Keycloak shows a "Do you want to log out?" page unless the request carries the ID token (id_token_hint)
+      if (tokens.id_token.length < 3500) c.header('Set-Cookie', idTokenCookie(tokens.id_token, secure), { append: true });
       auditAccount('login', userId, { ip: deps.clientIp(c), data: { authType: 'oidc' } });
       return c.redirect(pending.x, 302);
     } catch (e) {
@@ -219,8 +225,15 @@ export function registerOidcRoutes(app: Hono, deps: { isHttps: (c: Context) => b
     c.header('Cache-Control', 'no-store');
     const cfg = oidcConfig();
     if (!cfg) return c.redirect('/', 302);
+    const idToken = parseCookies(c.req.header('cookie'))[ID_COOKIE];
+    c.header('Set-Cookie', idTokenCookie('', deps.isHttps(c), 0), { append: true });
     const url = new URL(`${cfg.issuer}/protocol/openid-connect/logout`);
-    url.search = new URLSearchParams({ client_id: cfg.clientId, post_logout_redirect_uri: `${cfg.publicUrl}/` }).toString();
+    // back to the NaruWorks home when it is known (it must be a valid post-logout redirect URI of the Keycloak client)
+    url.search = new URLSearchParams({
+      client_id: cfg.clientId,
+      post_logout_redirect_uri: process.env.NC_HOME_URL?.trim() || `${cfg.publicUrl}/`,
+      ...(idToken && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(idToken) ? { id_token_hint: idToken } : {}),
+    }).toString();
     return c.redirect(url.toString(), 302);
   });
 }

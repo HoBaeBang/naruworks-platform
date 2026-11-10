@@ -208,6 +208,23 @@ describe('/auth/logout', () => {
     expect(res.headers.get('location')).toContain(`${ISS}/protocol/openid-connect/logout`);
     expect(dbm.db.prepare('SELECT 1 FROM sessions WHERE token = ?').get(cookie.slice('lit_session='.length))).toBeUndefined();
   });
+
+  it('sends the ID token as id_token_hint (so Keycloak skips its confirmation page) and returns to the NaruWorks home', async () => {
+    process.env.NC_HOME_URL = 'https://app.naru.test/';
+    try {
+      const { res: loginRes } = await signIn({ sub: 'sub-hint', email: 'hint@naru.test' });
+      const jar = loginRes.headers.getSetCookie().map((c) => c.split(';')[0]).filter((c) => !c.endsWith('=')).join('; ');
+      const idt = /lit_idt=([^;]+)/.exec(jar)?.[1];
+      expect(idt).toBeTruthy();
+      const res = await app.request('/auth/logout', { headers: { cookie: jar } });
+      const u = new URL(res.headers.get('location')!);
+      expect(u.searchParams.get('id_token_hint')).toBe(idt);
+      expect(u.searchParams.get('post_logout_redirect_uri')).toBe('https://app.naru.test/');
+      expect(res.headers.getSetCookie().some((c) => c.startsWith('lit_idt=;') && c.includes('Max-Age=0'))).toBe(true);
+    } finally {
+      delete process.env.NC_HOME_URL;
+    }
+  });
 });
 
 describe('removed sign-in paths', () => {

@@ -1,6 +1,6 @@
 # 중앙 인증(IdP) 설계: Keycloak + OIDC
 
-> 상태 (2026-10-28): Keycloak으로 교체하는 작업이 이슈 #58에서 진행 중이다. 처음에는 Authentik을 도입했으나 요건 R1을 충족하지 못해 폐기했다(13장).
+> 상태 (2026-11-12): Keycloak이 운영 중이다(2026-10-29 반영). 처음 도입한 Authentik은 요건 R1을 충족하지 못해 폐기했다(13장). 서비스가 늘어날 때의 세션·로그아웃 정리는 [오픈소스 서비스 연동 기준](open-source-integration.md) 5장과 이슈 #80에서 다룬다.
 
 ## 1. 목적과 결정
 
@@ -235,6 +235,8 @@ cd frontend && NEXT_PUBLIC_API_BASE_URL=http://localhost:8081 npm run dev
 - 다른 소셜 로그인을 추가할 때 같은 사람을 하나의 사용자로 묶는 정책이 필요하다.
 - Keycloak 사용자 삭제와 DB 재생성 시 `sub`가 바뀌는 문제(8장).
 - 캘린더: 만료된 학교 계정 연동(로컬 2번)의 정리, 만료 시 재연결을 안내하는 화면, 스케줄러가 30분마다 같은 스택트레이스를 남기는 문제.
+- Litpage용 `litpage` 클라이언트는 로컬 Keycloak에 수동으로 만들었고 realm JSON에는 아직 없다. 운영 반영 전에 realm JSON과 운영 콘솔 설정이 필요하다.
+- 서비스(Naru 백엔드, Litpage)의 세션 수명과 Keycloak SSO 수명이 달라 로그인 상태가 어긋난다. 로그아웃 전체 통일, SSO 7일, 회원 정지 시 세션 종료는 #80에서 정리한다.
 
 ## 13. Authentik 폐기 기록
 

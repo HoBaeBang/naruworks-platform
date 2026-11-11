@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 540" width="1280" height="540" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#168e5e"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="540" rx="20" fill="#eef5f0"/>
+  <text x="40" y="56" font-size="26" font-weight="700" fill="#10221b">NaruWorks 서비스 제공 흐름</text>
+  <text x="40" y="86" font-size="15" fill="#46594f">한 번 로그인하고, 필요한 오픈소스를 골라 쓰고, 결과물은 나루 드라이브에 쌓는다</text>
+
+  <!-- row 1 -->
+  <g stroke="#b8d8c6" stroke-width="1.5">
+    <rect x="40" y="130" width="200" height="140" rx="14" fill="#fafffb"/>
+    <rect x="285" y="130" width="200" height="140" rx="14" fill="#fafffb"/>
+    <rect x="530" y="130" width="200" height="140" rx="14" fill="#fafffb"/>
+    <rect x="775" y="130" width="200" height="140" rx="14" fill="#d4f1e3" stroke="#168e5e"/>
+    <rect x="1020" y="130" width="200" height="140" rx="14" fill="#168e5e" stroke="#168e5e"/>
+  </g>
+  <g font-size="14" fill="#168e5e" font-weight="700">
+    <text x="58" y="160">1</text><text x="303" y="160">2</text><text x="548" y="160">3</text><text x="793" y="160">4</text>
+  </g>
+  <text x="1038" y="160" font-size="14" font-weight="700" fill="#d4f1e3">5</text>
+  <g font-size="21" font-weight="700" fill="#10221b">
+    <text x="58" y="195">사용자</text>
+    <text x="303" y="195">NaruWorks 계정</text>
+    <text x="548" y="195">오픈소스 카탈로그</text>
+    <text x="793" y="195">오픈소스 서비스</text>
+  </g>
+  <text x="1038" y="195" font-size="21" font-weight="700" fill="#ffffff">나루 드라이브</text>
+  <g font-size="14" fill="#46594f">
+    <text x="58" y="224">Git, Docker를 몰라도</text><text x="58" y="246">골라서 바로 사용</text>
+    <text x="303" y="224">소셜 로그인 한 번으로</text><text x="303" y="246">회원 정보는 한 곳에서 관리</text>
+    <text x="548" y="224">목록에서 골라 사용하고</text><text x="548" y="246">없으면 사용 신청</text>
+    <text x="793" y="224">문서 · 노트 · 시트 …</text><text x="793" y="246">NaruWorks 로그인으로 연결</text>
+  </g>
+  <g font-size="14" fill="#ffffff">
+    <text x="1038" y="224">결과물을 저장</text><text x="1038" y="246">기본 5GB 무료 · 이후 요금제</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2.5" fill="none" marker-end="url(#arrow)">
+    <path d="M244 200H281"/><path d="M489 200H526"/><path d="M734 200H771"/><path d="M979 200H1016"/>
+  </g>
+
+  <!-- row 2 -->
+  <rect x="40" y="340" width="445" height="130" rx="14" fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5"/>
+  <text x="60" y="372" font-size="17" font-weight="700" fill="#10221b">사용자가 하는 일</text>
+  <g font-size="14" fill="#46594f">
+    <text x="60" y="400">· 필요한 오픈소스를 목록에서 골라 사용한다</text>
+    <text x="60" y="424">· 없는 오픈소스는 사용을 신청한다</text>
+    <text x="60" y="448">· 더 좋은 서비스가 나오면 바꿔서 쓴다</text>
+  </g>
+
+  <rect x="530" y="340" width="445" height="130" rx="14" fill="#ffffff" stroke="#168e5e" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="550" y="372" font-size="17" font-weight="700" fill="#086641">오픈소스가 되려면 (연동 조건)</text>
+  <g font-size="14" fill="#46594f">
+    <text x="550" y="400">· 라이선스 문제가 없는 오픈소스</text>
+    <text x="550" y="424">· NaruWorks 로그인과 인증을 맞춤</text>
+    <text x="550" y="448">· 상단 NaruWorks 로고, 하단 서비스 가이드라인 적용</text>
+  </g>
+  <path d="M875 274V336" stroke="#168e5e" stroke-width="2" stroke-dasharray="5 4" fill="none"/>
+
+  <rect x="1020" y="340" width="200" height="130" rx="14" fill="#fafffb" stroke="#168e5e" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="1038" y="380" font-size="17" font-weight="700" fill="#10221b">다른 서비스</text>
+  <g font-size="14" fill="#46594f">
+    <text x="1038" y="406">더 좋은 오픈소스가 나와도</text><text x="1038" y="428">같은 파일로 이어서 작업</text>
+  </g>
+  <path d="M1120 274V336" stroke="#168e5e" stroke-width="2.5" fill="none" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+  <text x="40" y="508" font-size="14" fill="#46594f">NaruWorks는 회원 · 인증 · 드라이브를 제공하고, 오픈소스는 그 위에서 골라 쓰는 서비스가 된다</text>
+</svg>

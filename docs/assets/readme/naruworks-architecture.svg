@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 650" width="1280" height="650" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#168e5e"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="650" rx="20" fill="#eef5f0"/>
+  <text x="40" y="56" font-size="26" font-weight="700" fill="#10221b">NaruWorks 연동 구조</text>
+  <text x="40" y="86" font-size="15" fill="#46594f">회원·인증·드라이브는 NaruWorks가 맡고, 오픈소스 서비스는 그 위에 연결된다</text>
+
+  <rect x="520" y="110" width="240" height="52" rx="12" fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5"/>
+  <text x="640" y="142" font-size="18" font-weight="700" fill="#10221b" text-anchor="middle">사용자 (브라우저)</text>
+  <path d="M640 166V196" stroke="#168e5e" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="200" width="1200" height="200" rx="18" fill="#d4f1e3" stroke="#168e5e" stroke-width="1.5"/>
+  <text x="62" y="232" font-size="19" font-weight="700" fill="#086641">NaruWorks 플랫폼</text>
+  <g stroke="#168e5e" stroke-width="1.5" fill="#fafffb">
+    <rect x="60" y="256" width="268" height="124" rx="12"/>
+    <rect x="356" y="256" width="268" height="124" rx="12"/>
+    <rect x="652" y="256" width="268" height="124" rx="12" fill="#168e5e"/>
+    <rect x="948" y="256" width="268" height="124" rx="12"/>
+  </g>
+  <g font-size="19" font-weight="700" fill="#10221b">
+    <text x="78" y="292">회원 · 인증</text>
+    <text x="374" y="292">오픈소스 카탈로그</text>
+    <text x="966" y="292">직접 서비스</text>
+  </g>
+  <text x="670" y="292" font-size="19" font-weight="700" fill="#ffffff">나루 드라이브</text>
+  <g font-size="14" fill="#46594f">
+    <text x="78" y="320">소셜 로그인 · 회원 정보</text><text x="78" y="342">권한과 상태(Keycloak)</text>
+    <text x="374" y="320">목록 제공 · 사용 신청</text><text x="374" y="342">연동 조건 확인</text>
+    <text x="966" y="320">Naru Calendar</text><text x="966" y="342">문서관리 (Naru Docs)</text>
+  </g>
+  <g font-size="14" fill="#ffffff">
+    <text x="670" y="320">모든 서비스의 결과물 저장</text><text x="670" y="342">기본 5GB 무료 · 이후 요금제</text>
+  </g>
+
+  <g stroke="#b8d8c6" stroke-width="1.5">
+    <rect x="60" y="460" width="268" height="100" rx="12" fill="#fafffb"/>
+    <rect x="356" y="460" width="268" height="100" rx="12" fill="#fafffb"/>
+    <rect x="652" y="460" width="268" height="100" rx="12" fill="#fafffb"/>
+    <rect x="948" y="460" width="268" height="100" rx="12" fill="#eef5f0" stroke="#168e5e" stroke-dasharray="7 5"/>
+  </g>
+  <g font-size="18" font-weight="700" fill="#10221b">
+    <text x="78" y="496">오픈소스 A</text><text x="374" y="496">오픈소스 B</text><text x="670" y="496">오픈소스 C</text><text x="966" y="496">+ 신청해서 추가</text>
+  </g>
+  <g font-size="14" fill="#46594f">
+    <text x="78" y="522">예: 문서 · 노트</text><text x="374" y="522">예: 시트 · 프로젝트</text><text x="670" y="522">예: 이미지 · 한글 편집</text><text x="966" y="522">사용자가 필요한 소프트웨어</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2.2" fill="none" marker-end="url(#arrow)">
+    <path d="M110 404V456"/><path d="M406 404V456"/><path d="M702 404V456"/><path d="M998 404V456"/>
+    <path d="M280 456V404"/><path d="M576 456V404"/><path d="M872 456V404"/><path d="M1168 456V404"/>
+  </g>
+
+  <g font-size="14" fill="#10221b">
+    <text x="40" y="598"><tspan font-weight="700" fill="#168e5e">↓</tspan> NaruWorks 로그인과 회원 정보로 연결    <tspan font-weight="700" fill="#168e5e" dx="24">↑</tspan> 오픈소스의 결과물을 나루 드라이브에 저장</text>
+  </g>
+  <text x="40" y="626" font-size="14" fill="#46594f">연동 조건: 라이선스 문제 없음 · 상단 NaruWorks 로고와 하단 가이드라인 · 로그인 연동</text>
+</svg>

@@ -78,6 +78,7 @@ NaruWorks가 회원 정보, 인증, 드라이브, 카탈로그를 맡고, 오픈
 
 ## 개발 문서
 
+- 방향과 결정: [`ADR 0002`](docs/decisions/0002-open-source-service-platform.md), [오픈소스 서비스 연동 기준](docs/architecture/open-source-integration.md), [로드맵](docs/roadmap/open-source-platform-roadmap.md)
 - 서비스별 문서: [`docs/services/naru-calendar`](docs/services/naru-calendar/README.md), [`docs/services/naru-drive`](docs/services/naru-drive/README.md)
 - Litpage 수정 내역: [`services/litpage/NARU.md`](services/litpage/NARU.md)
 - 협업과 PR 규칙: [`docs/development/git-github-session-runbook.md`](docs/development/git-github-session-runbook.md)

@@ -1,6 +1,6 @@
 # NaruWorks 사용자 흐름 (UF)
 
-상태: v0.7 초안
+상태: v0.7 초안 (FRD·BR v1.2 반영, 승인④ 완료)
 
 ## 1. 문서 정보·개정 이력
 
@@ -8,9 +8,9 @@
 |---|---|
 | 문서명 | NaruWorks 사용자 흐름 |
 | 버전 | v0.7 초안 |
-| 상태 | 초안 (라운드 13·14·DEC-062~077 반영. FRD·BR·NFR v1.1·PRD v1.0 본문은 수정하지 않음) |
+| 상태 | 초안 (FRD·BR v1.2 반영, 승인④ 완료. 라운드 13·14·DEC-062~077 반영. NFR v1.1·PRD v1.0 본문은 수정하지 않음) |
 | 작성일 | 2026-11-18 17:44 KST (Asia/Seoul) |
-| 개정일 | 2026-11-18 22:39 KST (Asia/Seoul) |
+| 개정일 | 2026-11-18 23:02 KST (Asia/Seoul) |
 | 작성 | 기획 봇 |
 | 관련 문서 | `docs/01-planning/frd/FRD.md`, `docs/01-planning/business-rules/BR.md`, `docs/01-planning/acceptance-criteria/AC.md`, `docs/01-planning/prd/PRD.md` (v1.0) |
 
@@ -27,6 +27,7 @@
 | v0.5 초안 | 2026-11-18 22:05 KST | 라운드 14·DEC-069~074 반영. 푸터 구성(약관·개인정보 새 창, 문의 이메일만, 라이선스 고지, Dev. Aslan0), 로그인 전 화면 푸터, 링크 보기 화면 헤더·로그인 버튼, 재가입 복구 안내를 홈 위 대화상자로 이동, 관리 URL은 안내 없이 홈으로 보냄. |
 | v0.6 초안 | 2026-11-18 22:34 KST | DEC-076 반영. 링크 보기 화면 비회원 헤더의 로고·카테고리·서비스 전환도 로그인 화면으로 이동. |
 | v0.7 초안 | 2026-11-18 22:39 KST | DEC-077 반영. 푸터 문의 이메일은 aslanhobae@gmail.com, 오픈소스 라이선스 고지는 같은 창 팝업. |
+| v0.7 초안 | 2026-11-18 23:02 KST | 머리말만 갱신. FRD·BR v1.2 반영, 승인④ 완료. UF 본문 단계는 변경하지 않음. UF-01 흐름도만 복구 안내 순서를 맞춤(M-06). |
 
 ### 화면 역할 이름
 
@@ -74,8 +75,8 @@ flowchart TD
   account -->|"정지 계정"| blocked["로그인 차단 안내"]
   signup --> home
   blocked -->|"안내에서 나감"| startNode
-  account -->|"30일 안 재가입 복구"| restoreNotice["홈 위 복구 안내 대화상자"]
-  restoreNotice --> home
+  account -->|"30일 안 재가입 복구"| home
+  home -->|"데이터가 복구된 로그인"| restoreNotice["홈 위 복구 안내 대화상자"]
   home --> headerCat["공통 헤더 카테고리"]
   headerCat -->|"해당 카테고리 위치로 이동"| home
   home --> logout{"회원 메뉴에서 로그아웃"}

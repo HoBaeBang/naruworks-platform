@@ -33,3 +33,6 @@ target/
 # Docker / local runtime
 *.pid
 tmp/
+
+# Claude/OMC local state
+.omc/

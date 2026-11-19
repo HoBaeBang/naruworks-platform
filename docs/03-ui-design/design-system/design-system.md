@@ -1,6 +1,6 @@
 # NaruWorks 디자인 시스템
 
-기획 v1.0 · DES-002 브랜드 A ‘Deep Ink (먹빛 나루)’ 채택 · NARU-93 승인② 초안
+기획 v1.0 · DES-002 브랜드 A ‘Deep Ink (먹빛 나루)’ 채택 · DES-004 커스텀 아이콘 · NARU-93 디자인 시스템 v0.3
 
 신뢰 · 차분 · 정돈을 기준으로 삼는다. NFR v1.1에 따라 PC·모바일 반응형 웹과 한국어·영어를 지원한다. 라이트·다크와 WCAG AA 대비는 승인②의 디자인 전제다. [디자인 결정 기록](../design-decisions.md) · [브랜드 A](../brand/brand-concepts.md) · [NFR](../../01-planning/nfr/NFR.md) · [와이어프레임](../../01-planning/wireframe/WF.figcraft)
 
@@ -103,49 +103,53 @@ FigCraft의 `Deep Ink` 컬렉션은 라이트와 다크에 같은 색 토큰 31�
 - [라이트 로고](assets/logo-light.svg) · [다크 로고](assets/logo-dark.svg) · [기본 심볼](assets/symbol.svg)
 - [라이트 크기 검사](exports/brand-assets-light.png) · [다크 크기 검사](exports/brand-assets-dark.png)
 
-## 아이콘 제안
+## 아이콘
 
-**승인 필요.** Lucide(ISC) 37개를 검토 대상으로 배치했다. 기본 24px 그리드와 2px 선을 사용한다. 단독 아이콘 버튼에는 접근 가능한 이름을 제공하고, 같은 정보를 전달하는 보조 아이콘은 스크린리더에서 숨긴다. PDF는 `file-type`과 ‘PDF’ 레이블을 함께 쓴다. [Lucide 원본](https://github.com/lucide-icons/lucide) · [라이선스](https://github.com/lucide-icons/lucide/blob/0.468.0/LICENSE)
+DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나루) 스타일로 새로 그린 **커스텀 아이콘 세트 37개**를 쓴다. 라이선스는 프로젝트 소유(project-owned)이다.
 
-| 용도 | Lucide 이름 |
+마스터는 24×24 그리드, 라이브 에어리어 패딩 2px, 스트로크 1.75px, 라운드 캡·조인, 단색 `currentColor`다. 코너 곡선은 로고 아치와 같은 부드러운 언어를 따른다. 같은 마스터를 16·20·24px로 광학 검사했다. SVG는 [icons/](icons/)에 두고, FigCraft 컴포넌트 이름은 `icon/<name>`이다.
+
+단독 아이콘 버튼에는 접근 가능한 이름을 제공하고, 같은 정보를 전달하는 보조 아이콘은 스크린리더에서 숨긴다. PDF는 `file-pdf`와 ‘PDF’ 레이블을 함께 쓴다.
+
+| 용도 | 이름 |
 | --- | --- |
-| 홈 | `house` |
-| 드라이브 | `hard-drive` |
+| 홈 | `home` |
+| 드라이브 | `drive` |
 | 폴더 | `folder` |
 | 문서 | `file-text` |
 | 이미지 | `file-image` |
-| PDF | `file-type` |
+| PDF | `file-pdf` |
 | 동영상 | `file-video` |
 | 오디오 | `file-audio` |
 | 압축 | `file-archive` |
 | 기타 파일 | `file` |
 | 올리기 | `upload` |
 | 내려받기 | `download` |
-| 공유 | `share-2` |
+| 공유 | `share` |
 | 링크 | `link` |
-| 휴지통 | `trash-2` |
-| 복원 | `archive-restore` |
-| 더 보기 | `ellipsis` |
+| 휴지통 | `trash` |
+| 복원 | `restore` |
+| 더 보기 | `more` |
 | 검색 | `search` |
-| 정렬 | `arrow-down-up` |
-| 그리드 보기 | `layout-grid` |
-| 목록 보기 | `list` |
+| 정렬 | `sort` |
+| 그리드 보기 | `view-grid` |
+| 목록 보기 | `view-list` |
 | 회원 | `user` |
 | 설정 | `settings` |
-| 로그아웃 | `log-out` |
-| 관리 | `shield` |
-| 언어 | `globe` |
-| 밝게 | `sun` |
-| 어둡게 | `moon` |
-| 시스템 | `monitor` |
-| 닫기 | `x` |
+| 로그아웃 | `logout` |
+| 관리 | `admin` |
+| 언어 | `language` |
+| 밝게 | `theme-light` |
+| 어둡게 | `theme-dark` |
+| 시스템 | `theme-system` |
+| 닫기 | `close` |
 | 확인 | `check` |
-| 주의 | `triangle-alert` |
+| 주의 | `warning` |
 | 정보 | `info` |
 | 펼치기 | `chevron-down` |
 | 다음 | `chevron-right` |
 | 메뉴 | `menu` |
-| 진행 중 | `loader-circle` |
+| 진행 중 | `loader` |
 
 ## 컴포넌트 인벤토리
 
@@ -357,6 +361,7 @@ on-tooltip  #FFFFFF / #0B1220
 
 - foundations · [Light](exports/foundations-light.png) / [Dark](exports/foundations-dark.png)
 - brand-assets · [Light](exports/brand-assets-light.png) / [Dark](exports/brand-assets-dark.png)
+- 아이콘 SVG 37개 · [icons/](icons/)
 - icons · [Light](exports/icons-light.png) / [Dark](exports/icons-dark.png)
 - components-buttons · [Light](exports/components-buttons-light.png) / [Dark](exports/components-buttons-dark.png)
 - components-inputs · [Light](exports/components-inputs-light.png) / [Dark](exports/components-inputs-dark.png)
@@ -367,25 +372,9 @@ on-tooltip  #FFFFFF / #0B1220
 - components-shell · [Light](exports/components-shell-light.png) / [Dark](exports/components-shell-dark.png)
 - contrast · [Light](exports/contrast-light.png) / [Dark](exports/contrast-dark.png)
 
-### Lucide 출처 고지
+## v0.3 커스텀 아이콘
 
-```text
-ISC License
-
-Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-```
+NARU-93 · DES-004. 외부 아이콘 라이브러리 제안(Lucide/ISC)을 철회하고, Deep Ink 스타일의 원본 커스텀 아이콘 37개로 교체했다. FigCraft Icons 페이지와 `icon/<name>` 컴포넌트, `icons/<name>.svg`, `exports/icons-light.png`·`icons-dark.png`를 갱신했다. 구 제안명은 쓰지 않는다.
 
 ## v0.2 검수 반영
 

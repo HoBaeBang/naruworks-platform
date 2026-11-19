@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#168e5e"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#c0392b"/></marker>
+  </defs>
+  <rect width="1280" height="800" rx="20" fill="#eef5f0"/>
+  <text x="40" y="52" font-size="26" font-weight="700" fill="#10221b">현재 인증·인가 구조</text>
+  <text x="40" y="82" font-size="15" fill="#46594f">코드와 설정에서 확인한 사실만 그렸다. 빨간 번호는 문서 4장의 어긋나는 지점이다.</text>
+
+  <!-- browser -->
+  <rect x="40" y="300" width="150" height="130" rx="14" fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5"/>
+  <text x="115" y="350" font-size="19" font-weight="700" fill="#10221b" text-anchor="middle">브라우저</text>
+  <text x="115" y="376" font-size="13" fill="#46594f" text-anchor="middle">쿠키 2개</text>
+  <text x="115" y="396" font-size="13" fill="#46594f" text-anchor="middle">JSESSIONID</text>
+  <text x="115" y="414" font-size="13" fill="#46594f" text-anchor="middle">lit_session</text>
+
+  <!-- next -->
+  <rect x="250" y="120" width="300" height="80" rx="12" fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5"/>
+  <text x="268" y="150" font-size="16" font-weight="700" fill="#10221b">Next.js · app.naruworks.com</text>
+  <text x="268" y="176" font-size="13" fill="#46594f">api.naruworks.com을 직접 호출 (쿠키 포함)</text>
+
+  <!-- spring -->
+  <rect x="250" y="240" width="300" height="250" rx="14" fill="#d4f1e3" stroke="#168e5e" stroke-width="1.5"/>
+  <text x="268" y="270" font-size="17" font-weight="700" fill="#086641">Naru 백엔드 (Spring)</text>
+  <text x="268" y="284" font-size="12" fill="#46594f">api.naruworks.com</text>
+  <g font-size="13" fill="#10221b">
+    <text x="268" y="314">OIDC 로그인 클라이언트 naru-api</text>
+    <text x="268" y="338">인메모리 HttpSession · JSESSIONID 7일</text>
+    <text x="268" y="362">요청마다 DB로 승인 회원을 확인</text>
+    <text x="268" y="386">가입·초대·승인·관리자(ADMIN)를 직접 처리</text>
+    <text x="268" y="410">CSRF 비활성 · CORS credentials 허용</text>
+    <text x="268" y="434">Calendar, Drive 등 직접 서비스와 같은 배포 단위</text>
+    <text x="268" y="458" fill="#c0392b">재시작하면 세션이 사라진다(인메모리)</text>
+  </g>
+
+  <!-- member db -->
+  <rect x="600" y="120" width="200" height="104" rx="12" fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5"/>
+  <text x="616" y="148" font-size="16" font-weight="700" fill="#10221b">회원 DB</text>
+  <g font-size="13" fill="#46594f">
+    <text x="616" y="172">PENDING · APPROVED</text><text x="616" y="192">REJECTED · SUSPENDED</text><text x="616" y="212">역할 ADMIN</text>
+  </g>
+  <path d="M400 204V236" stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M550 262H700V228" stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="708" y="246" font-size="12" fill="#46594f">요청마다 조회</text>
+
+  <!-- litpage -->
+  <rect x="250" y="540" width="300" height="200" rx="14" fill="#fafffb" stroke="#168e5e" stroke-width="1.5"/>
+  <text x="268" y="570" font-size="17" font-weight="700" fill="#086641">Litpage (Node)</text>
+  <text x="268" y="584" font-size="12" fill="#46594f">litpage.naruworks.com · 운영 전</text>
+  <g font-size="13" fill="#10221b">
+    <text x="268" y="614">OIDC를 직접 구현 · 클라이언트 litpage</text>
+    <text x="268" y="638">lit_session 쿠키 7일 (SQLite 세션)</text>
+    <text x="268" y="662">자체 사용자 DB (Keycloak sub로 연결)</text>
+    <text x="268" y="686" fill="#c0392b">member 역할은 로그인 때 한 번만 확인</text>
+    <text x="268" y="710">회원 정지는 다음 로그인 때 반영</text>
+  </g>
+
+  <!-- keycloak -->
+  <rect x="850" y="240" width="390" height="250" rx="14" fill="#fafffb" stroke="#168e5e" stroke-width="1.5"/>
+  <text x="868" y="270" font-size="17" font-weight="700" fill="#086641">Keycloak · idp.naruworks.com</text>
+  <g font-size="13" fill="#10221b">
+    <text x="868" y="302">Google 소셜 로그인만 사용</text>
+    <text x="868" y="326" fill="#c0392b">realm 역할은 member 하나</text>
+    <text x="868" y="350">클라이언트: naru-api, naru-api-admin</text>
+    <text x="868" y="374">litpage는 realm 파일에 아직 없음(로컬에서 수동 생성)</text>
+    <text x="868" y="398">SSO·토큰 수명은 realm 파일에 값이 없다</text>
+    <text x="868" y="418" fill="#46594f">→ 기본값(Idle 30분, Max 10시간, Access 5분)으로 추정</text>
+    <text x="868" y="442" fill="#46594f">운영 콘솔에서 바꿨는지는 확인하지 못했다</text>
+    <text x="868" y="466" fill="#46594f">Back-channel logout 설정 없음</text>
+  </g>
+
+  <!-- drive -->
+  <rect x="850" y="560" width="390" height="130" rx="14" fill="#eef5f0" stroke="#168e5e" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="868" y="592" font-size="17" font-weight="700" fill="#086641">나루 드라이브 (개발 중)</text>
+  <g font-size="13" fill="#10221b">
+    <text x="868" y="620">폴더 조회·생성, 이름 변경, 이동까지 구현</text>
+    <text x="868" y="644" fill="#c0392b">서비스 → 드라이브 인증·인가 설계가 없다</text>
+    <text x="868" y="668" fill="#46594f">5GB 한도·요금제도 아직 없다</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#168e5e" stroke-width="2.2" fill="none" marker-end="url(#a)">
+    <path d="M190 340L250 175"/>
+    <path d="M190 365H250"/>
+    <path d="M190 410L250 620"/>
+    <path d="M550 290H850"/>
+    <path d="M550 600H760V470H850"/>
+  </g>
+  <text x="560" y="282" font-size="12" fill="#46594f">OIDC 로그인 (naru-api)</text>
+  <text x="598" y="592" font-size="12" fill="#46594f">OIDC 로그인 (litpage)</text>
+
+  <path d="M550 430H850" stroke="#168e5e" stroke-width="2.2" fill="none" marker-end="url(#a)" stroke-dasharray="2 0"/>
+  <text x="560" y="422" font-size="12" fill="#46594f">회원 상태 → member 역할 (Admin API, 한 방향)</text>
+
+  <path d="M850 360H550" stroke="#c0392b" stroke-width="2.2" stroke-dasharray="7 5" fill="none" marker-end="url(#r)"/>
+  <text x="590" y="346" font-size="12" fill="#c0392b">로그아웃·정지를 서비스에 알리는 통로 없음</text>
+  <g stroke="#c0392b" stroke-width="3"><path d="M745 350L765 370"/><path d="M765 350L745 370"/></g>
+
+  <path d="M550 700H700V640H850" stroke="#168e5e" stroke-width="2" stroke-dasharray="7 5" fill="none" marker-end="url(#a)"/>
+  <text x="705" y="716" font-size="12" fill="#46594f">저장 방식 미정</text>
+
+  <!-- badges -->
+  <g font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <circle cx="536" cy="258" r="12" fill="#c0392b"/><text x="536" y="263">1</text>
+    <circle cx="536" cy="558" r="12" fill="#c0392b"/><text x="536" y="563">1</text>
+    <circle cx="1224" cy="258" r="12" fill="#c0392b"/><text x="1224" y="263">1</text>
+    <circle cx="786" cy="140" r="12" fill="#c0392b"/><text x="786" y="145">2</text>
+    <circle cx="572" cy="342" r="11" fill="#c0392b"/><text x="572" y="347">3</text>
+    <circle cx="1224" cy="318" r="12" fill="#c0392b"/><text x="1224" y="323">4</text>
+    <circle cx="1224" cy="578" r="12" fill="#c0392b"/><text x="1224" y="583">5</text>
+    <circle cx="536" cy="470" r="12" fill="#c0392b"/><text x="536" y="475">6</text>
+    <circle cx="536" cy="722" r="12" fill="#c0392b"/><text x="536" y="727">6</text>
+    <circle cx="1224" cy="372" r="12" fill="#c0392b"/><text x="1224" y="377">7</text>
+  </g>
+
+  <text x="40" y="778" font-size="13" fill="#46594f">실선 = 확인한 연결 · 점선 = 없거나 미정인 것 · 1 세션 3군데 · 2 회원 상태 이중 · 3 알림 통로 없음 · 4 권한이 member 하나 · 5 드라이브 인가 없음 · 6 서비스마다 구현 · 7 설정 관리</text>
+</svg>

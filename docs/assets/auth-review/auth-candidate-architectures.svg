@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 860" width="1280" height="860" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#168e5e"/></marker>
+  </defs>
+  <rect width="1280" height="860" rx="20" fill="#eef5f0"/>
+  <text x="40" y="52" font-size="26" font-weight="700" fill="#10221b">고려할 인증 아키텍처 후보 4가지</text>
+  <text x="40" y="82" font-size="15" fill="#46594f">모두 Keycloak을 로그인의 기준으로 두고, 세션을 어디에 두는지가 다르다</text>
+
+  <!-- panel frames -->
+  <g fill="#fafffb" stroke="#b8d8c6" stroke-width="1.5">
+    <rect x="40" y="110" width="600" height="340" rx="16"/><rect x="660" y="110" width="580" height="340" rx="16"/>
+    <rect x="40" y="470" width="600" height="340" rx="16"/><rect x="660" y="470" width="580" height="340" rx="16"/>
+  </g>
+
+  <!-- A -->
+  <text x="60" y="142" font-size="18" font-weight="700" fill="#086641">A. 서비스별 OIDC 유지 + 보강</text>
+  <g stroke="#b8d8c6" stroke-width="1.5" fill="#ffffff">
+    <rect x="60" y="165" width="90" height="46" rx="10"/>
+    <rect x="200" y="165" width="130" height="46" rx="10"/><rect x="350" y="165" width="130" height="46" rx="10"/><rect x="500" y="165" width="120" height="46" rx="10"/>
+    <rect x="200" y="330" width="420" height="46" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+  </g>
+  <g font-size="13" fill="#10221b" text-anchor="middle">
+    <text x="105" y="193">브라우저</text><text x="265" y="184">Naru</text><text x="265" y="202" font-size="11" fill="#46594f">자체 세션</text>
+    <text x="415" y="184">Litpage</text><text x="415" y="202" font-size="11" fill="#46594f">자체 세션</text><text x="560" y="184">서비스 N</text><text x="560" y="202" font-size="11" fill="#46594f">자체 세션</text>
+    <text x="410" y="358">Keycloak (SSO) + Back-channel logout</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M150 188H196"/><path d="M265 211V326"/><path d="M415 211V326"/><path d="M560 211V326"/>
+  </g>
+  <g font-size="12" fill="#46594f">
+    <text x="60" y="410">세션: 서비스마다</text><text x="60" y="430">오픈소스 수정: 서비스마다 OIDC·로그아웃 구현</text>
+    <text x="60" y="296" fill="#168e5e">서비스가 늘면 같은 구현이 늘어난다</text>
+  </g>
+
+  <!-- B -->
+  <text x="680" y="142" font-size="18" font-weight="700" fill="#086641">B. 공통 게이트 + 토큰 전달</text>
+  <g stroke="#b8d8c6" stroke-width="1.5" fill="#ffffff">
+    <rect x="680" y="165" width="90" height="46" rx="10"/>
+    <rect x="800" y="165" width="150" height="46" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+    <rect x="1000" y="165" width="100" height="40" rx="10"/><rect x="1000" y="215" width="100" height="40" rx="10"/><rect x="1000" y="265" width="100" height="40" rx="10"/>
+    <rect x="800" y="330" width="150" height="46" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+  </g>
+  <g font-size="13" fill="#10221b" text-anchor="middle">
+    <text x="725" y="193">브라우저</text><text x="875" y="184">게이트</text><text x="875" y="202" font-size="11" fill="#46594f">쿠키 하나 · 세션</text>
+    <text x="1050" y="190">Naru</text><text x="1050" y="240">Litpage</text><text x="1050" y="290">서비스 N</text><text x="875" y="358">Keycloak</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M770 188H796"/><path d="M950 185H996"/><path d="M950 190L996 235"/><path d="M950 195L996 285"/><path d="M875 211V326"/>
+  </g>
+  <text x="962" y="168" font-size="11" fill="#46594f">Bearer 토큰</text>
+  <g font-size="12" fill="#46594f">
+    <text x="680" y="410">세션: 게이트 한 곳 · 서비스는 토큰 서명만 검증</text><text x="680" y="430">오픈소스 수정: 없거나 적음(헤더·토큰 신뢰)</text>
+    <text x="680" y="296" fill="#168e5e">서비스가 늘어도 인증 구현은 그대로</text>
+  </g>
+
+  <!-- C -->
+  <text x="60" y="502" font-size="18" font-weight="700" fill="#086641">C. 플랫폼 BFF 게이트웨이 (Spring)</text>
+  <g stroke="#b8d8c6" stroke-width="1.5" fill="#ffffff">
+    <rect x="60" y="525" width="90" height="46" rx="10"/>
+    <rect x="190" y="525" width="190" height="64" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+    <rect x="440" y="520" width="110" height="40" rx="10"/><rect x="440" y="570" width="110" height="40" rx="10"/><rect x="440" y="620" width="110" height="40" rx="10"/>
+    <rect x="190" y="690" width="190" height="46" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+  </g>
+  <g font-size="13" fill="#10221b" text-anchor="middle">
+    <text x="105" y="553">브라우저</text><text x="285" y="548">Naru 백엔드</text><text x="285" y="568" font-size="11" fill="#46594f">게이트웨이 + 회원 + 세션</text>
+    <text x="495" y="545">Calendar</text><text x="495" y="595">Litpage</text><text x="495" y="645">서비스 N</text><text x="285" y="718">Keycloak</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M150 548H186"/><path d="M380 545L436 540"/><path d="M380 555L436 590"/><path d="M380 565L436 640"/><path d="M285 589V686"/>
+  </g>
+  <g font-size="12" fill="#46594f">
+    <text x="60" y="770">세션: Naru 백엔드 한 곳 · 회원 상태를 바로 확인</text><text x="60" y="790">오픈소스 수정: 없거나 적음 / 서비스가 Naru 백엔드에 의존</text>
+  </g>
+
+  <!-- D -->
+  <text x="680" y="502" font-size="18" font-weight="700" fill="#086641">D. 토큰 전용 (세션 없음)</text>
+  <g stroke="#b8d8c6" stroke-width="1.5" fill="#ffffff">
+    <rect x="680" y="525" width="110" height="64" rx="10"/>
+    <rect x="900" y="520" width="130" height="40" rx="10"/><rect x="900" y="570" width="130" height="40" rx="10"/><rect x="900" y="620" width="130" height="40" rx="10"/>
+    <rect x="680" y="690" width="230" height="46" rx="10" stroke="#168e5e" fill="#d4f1e3"/>
+  </g>
+  <g font-size="13" fill="#10221b" text-anchor="middle">
+    <text x="735" y="553">브라우저</text><text x="735" y="573" font-size="11" fill="#46594f">토큰 보관</text>
+    <text x="965" y="545">Naru</text><text x="965" y="595">Litpage</text><text x="965" y="645">서비스 N</text><text x="795" y="718">Keycloak</text>
+  </g>
+  <g stroke="#168e5e" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M790 548L896 540"/><path d="M790 556L896 590"/><path d="M790 564L896 640"/><path d="M735 589V686"/>
+  </g>
+  <text x="810" y="520" font-size="11" fill="#46594f">Bearer 토큰</text>
+  <g font-size="12" fill="#46594f">
+    <text x="680" y="770">세션: 없음 · 브라우저가 토큰을 들고 있다(탈취 위험)</text><text x="680" y="790">오픈소스 수정: 크다(화면 코드가 토큰을 붙여야 함, 파일·웹소켓 한계)</text>
+  </g>
+</svg>

@@ -105,7 +105,7 @@ FigCraft의 `Deep Ink` 컬렉션은 라이트와 다크에 같은 색 토큰 31�
 
 ## 아이콘
 
-DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나루) 스타일로 새로 그린 **커스텀 아이콘 세트 37개**를 쓴다. 라이선스는 프로젝트 소유(project-owned)이다.
+DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나루) 스타일로 새로 그린 **커스텀 아이콘 세트 39개**를 쓴다. 라이선스는 프로젝트 소유(project-owned)이다.
 
 마스터는 24×24 그리드, 라이브 에어리어 패딩 2px, 스트로크 1.75px, 라운드 캡·조인, 단색 `currentColor`다. 코너 곡선은 로고 아치와 같은 부드러운 언어를 따른다. 같은 마스터를 16·20·24px로 광학 검사했다. SVG는 [icons/](icons/)에 두고, FigCraft 컴포넌트 이름은 `icon/<name>`이다.
 
@@ -150,6 +150,8 @@ DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나�
 | 다음 | `chevron-right` |
 | 메뉴 | `menu` |
 | 진행 중 | `loader` |
+| 추가 | `plus` |
+| 오류 | `error` |
 
 ## 컴포넌트 인벤토리
 
@@ -361,7 +363,7 @@ on-tooltip  #FFFFFF / #0B1220
 
 - foundations · [Light](exports/foundations-light.png) / [Dark](exports/foundations-dark.png)
 - brand-assets · [Light](exports/brand-assets-light.png) / [Dark](exports/brand-assets-dark.png)
-- 아이콘 SVG 37개 · [icons/](icons/)
+- 아이콘 SVG 39개 · [icons/](icons/)
 - icons · [Light](exports/icons-light.png) / [Dark](exports/icons-dark.png)
 - components-buttons · [Light](exports/components-buttons-light.png) / [Dark](exports/components-buttons-dark.png)
 - components-inputs · [Light](exports/components-inputs-light.png) / [Dark](exports/components-inputs-dark.png)
@@ -375,6 +377,8 @@ on-tooltip  #FFFFFF / #0B1220
 ## v0.3 커스텀 아이콘
 
 NARU-93 · DES-004. 외부 아이콘 라이브러리 제안(Lucide/ISC)을 철회하고, Deep Ink 스타일의 원본 커스텀 아이콘 37개로 교체했다. FigCraft Icons 페이지와 `icon/<name>` 컴포넌트, `icons/<name>.svg`, `exports/icons-light.png`·`icons-dark.png`를 갱신했다. 구 제안명은 쓰지 않는다.
+
+WF-13~16 시안 확정 후 `plus`(추가)와 `error`(오류)를 세트에 더해 39개가 되었다. 두 SVG는 같은 마스터 규격(24×24, 스트로크 1.75px, 라운드, `currentColor`)이며, FigCraft `icon/plus`·`icon/error` 컴포넌트와 Icons 시트(`exports/icons-light.png`·`icons-dark.png`)를 갱신했다.
 
 ## v0.2 검수 반영
 
@@ -434,3 +438,5 @@ WF-03에서 저장 폴더를 변경하면 이후 결과물에만 새 폴더를 �
 - Secondary 버튼 및 Icon button의 눌림 경계는 `border-strong` / `surface-pressed` 조합을 사용한다. 그래픽 `secondary`는 텍스트에 사용하지 않는다.
 - WF-08은 Common header guest, WF-05·06은 Drive navigation, WF-03·05는 Dialog / Folder workflows와 File list row, WF-07은 Member sharing page를 참조한다.
 - FigCraft의 Foundations, Contrast, Buttons, Inputs, Feedback, Navigation, Overlays, Data, Shell 예시를 각 모드의 구현 검토에 사용한다.
+
+- **v0.3 검수(review-03)** — 16px에서 `file-pdf`의 PDF 표식을 선명하게 하고 `file-archive`의 지퍼 눈금과 당김 손잡이 사이를 넓혔다. 라이트·다크 컴포넌트 PNG를 모두 다시 내보냈다.

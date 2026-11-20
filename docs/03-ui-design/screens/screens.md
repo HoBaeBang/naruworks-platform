@@ -591,3 +591,134 @@ v1·v2 절·파일·PNG는 비교용으로 그대로 둔다. v3는 v2 파일을 
 - 선택 동작 띠와 모바일 하단 시트는 디자인 제안이다. 화면당 한 화면이 기획 와이어프레임과 달라진 부분은 위 표와 제안에 적었다.
 - 다크 프레임의 그림자는 DS 그림자 색을 라이트와 같은 값으로 고정했다(변수에 묶지 않음).
 - 프레임 각각을 모두 육안으로 확인하지는 못했다. WF-05 기본·상태 A·B·D(데스크톱)과 모바일 기본·D·드로어, WF-06 기본·B(모바일), WF-07 A·B·모바일 기본, WF-08 기본·A·B(데스크톱)는 스크린샷으로 확인했다. 나머지 다크·모바일 상태 프레임은 같은 구조의 복제본이라 개별 확인을 하지 않았다 [미확인].
+
+---
+
+## WF-09~12 (P3-4 · 세 번째 묶음) · v4·WF-05~08 시각 언어
+
+호배님이 2026-11-20 08:59 KST에 WF-05~08을 확정·커밋하고 WF-09~16을 같은 방식으로 진행하라고 했다. 이 절은 **WF-09~12만** 다룬다(WF-13 이후는 그리지 않고 WF-11 메뉴에 목적지만 표시). 기준은 develop `4b66d1d`의 기획 v1.0(DEC-081), 기능 범위는 `screen-data-actions.md`의 WF-09~12와 공통 헤더·푸터다. 새 빈 파일 [screens-wf09-12.figcraft](screens-wf09-12.figcraft)에서 시작했고 `Deep Ink` 변수 컬렉션(Light/Dark, 22개)만 새로 만들었다. 라이트/다크는 디자이너용 시안이며 테마 선택기(Q-090, DEC-101)는 어느 프레임에도 두지 않았다. 터치 기기는 마우스 올림 썸네일을 생략한다(DEC-084, 이 묶음에는 썸네일 화면 없음). 텍스트 4.5:1, UI·포커스·필수 경계 3:1을 목표로 DS 토큰 쌍만 골랐다(DEC-102, 화면별 실측은 [미확인]).
+
+**열람 기록(정직성).** 이 파일 `screens.md`를 처음 열 때 앞부분의 v1~v3 절 텍스트(1~250행)가 함께 화면에 나왔다. 지시된 금지 대상은 v1~v3의 FigCraft 파일과 PNG이며 그것들은 열지 않았다. 다만 v1~v3 절 문장은 읽었고, 레이아웃 근거로 쓰지 않았다. WF-05~08 PNG는 헤더·드로어·푸터·메달리온·알림 일관성 확인용으로 4장(WF-05 기본 라이트, WF-05 모바일 라이트 드로어, WF-08 B 라이트, v4 WF-01 S 라이트)만 봤고 파일을 복사·복제하지 않았다.
+
+### v4·WF-05~08에서 이어받은 것
+
+일반 회원 헤더(72px)·푸터(60px, 이용약관·개인정보처리방침·오픈소스 라이선스 고지·문의 `aslanhobae@gmail.com`·`Dev. Aslan0`), 본문 폭 1120 가운데, 모바일 360(좌우 16, 44px 터치), 표면 `bg` → `surface` → `surface-raised`, 카드 그림자 1단계, 모바일 헤더 드로어(닫기, 서비스 전환, 카테고리, 프로필, 로그아웃, 테마 선택기 없음), 아치 메달리온은 서비스·상태 표지에만(폼·목록·알림 안 금지), 금색 `accent`는 수면선과 메달리온 점 같은 장식만, 오류 아이콘은 `error`.
+**관리자 헤더 변형(이번에 처음):** 헤더 구성은 일반 회원과 같고 **회원 메뉴 항목만** 프로필·**관리**·로그아웃이다. 헤더 본체에 관리 바로가기를 따로 더하지 않았다(FRD 헤더 정의). 데스크톱은 WF-11에 회원 메뉴를 연 프레임을 추가해 항목 차이를 보이고, 모바일 드로어는 프로필·관리·로그아웃을 둔다. 일반 회원 화면(WF-09)에는 관리가 없다.
+
+### 구성 근거 (그리기 전에 작성)
+
+#### WF-09 탈퇴 확인
+
+- **주요 목표:** 무엇을 잃고 무엇이 남는지 알고 나서 탈퇴하거나, 부담 없이 취소해 프로필(WF-16)로 돌아간다. 실수로 실행하지 않는다.
+- **정보 위계:** (1) 「탈퇴 확인」 제목 (2) 탈퇴하면 일어나는 일(탈퇴 상태, 공유·링크는 보관 기간 유지) (3) 30일 보관 후 삭제·30일 안 재가입 시 복구의 시간 흐름 (4) 취소·탈퇴 확인 (5) 표시 이름 예약 안내 자리(기획 [미확인]).
+- **구성:** **두 카드 + 시간선.** 폭 1120을 664 / 424로 나눈다. 왼쪽 카드는 읽을 내용과 두 동작(취소 secondary, 탈퇴 확인 위험 버튼)이고, 오른쪽 카드는 30일을 한눈에 보이는 세로 시간선(탈퇴 확인 → 보관 30일 → 데이터 삭제, 보관 구간에 「다시 가입하면 복구」)이다. 시간 순서가 실제로 있는 내용이라 시간선만 번호 없이 선과 점으로 그린다. 한 사실은 한 곳에만 둔다(왼쪽: 상태·공유 유지, 오른쪽: 30일·복구). 되돌리기 어려운 동작이라 위험 버튼은 `error` 채움 하나만 쓰고, 안전한 취소를 왼쪽에 둔다. 표시 이름 예약 안내는 점선 라벨 자리에 `[미확인]`으로 남긴다. 상태 A는 같은 화면을 `scrim`으로 덮고 대화상자 안에 완료 표지(아치 메달리온, 완료 상태 표지)와 문구 `[문구 미확정]`, 「확인」(→ WF-01)을 둔다. 모바일은 한 열: 제목 → 안내 카드 → 시간선 카드 → 버튼 두 개(전폭 44px 이상, 취소가 위). 드로어는 일반 회원(프로필·로그아웃, 관리 없음).
+- **이끈 스킬 규칙:** ui-ux-pro-max(`confirmation-dialogs`·destructive는 시각적으로 분리, `primary-action` 하나, `error-recovery`로 취소 경로, `empty-nav-state`), hallmark(카드 안 카드 금지, 라벨은 본문체·소문자 격, 상태점·가운뎃점 금지, 한 화면 약 80단어), web-design-guidelines(파괴적 동작은 확인, 구체적 버튼 라벨, `aria-live` 완료 안내, 한국어 문구 우선), frontend-design(대담함은 한 곳: 시간선, 장식 라벨 금지), design-taste-frontend(양쪽 가장자리 정렬, 빈 화면 금지).
+
+#### WF-10 로그인 차단 안내
+
+- **주요 목표:** 왜 로그인할 수 없는지 알고(정지, 해제되면 다시 가능), 로그인 화면으로 돌아간다. 정지 사유·기간은 기획에 없어 보여 주지 않는다.
+- **정보 위계:** (1) 「로그인할 수 없습니다」 (2) 정지되어 차단됐고 해제 후 다시 로그인할 수 있다는 한 줄 (3) 「로그인 화면으로」 (4) 푸터. **헤더 없음.**
+- **구성:** **차단 입구.** 캔버스 전체가 `surface`이고 가운데에 수면선(전폭 `border` 한 줄, 금색은 짧은 구간 하나)이 가로지른다. 그 위에 상태 표지로 **차단 아치 메달리온**(`warning`, `error` 색)이 서고 아래로 제목, 본문, primary 버튼이 한 열로 이어진다. 헤더가 없으므로 작은 가로형 로고를 본문 위에 두어 어느 서비스인지 알린다. v4의 무헤더 차단·상태 표지(메달리온 + 수면선)와 같은 언어다. 열린 세션 유지·정지 사유·기간은 그리지 않는다. 추가 상태 프레임 없음. 모바일은 같은 구성을 한 열로 쌓고 버튼은 전폭이다.
+- **이끈 스킬 규칙:** frontend-design(오류는 사과 없이 원인과 다음 행동), ui-ux-pro-max(`error-clarity`, `primary-action`, `color-not-decorative-only`), hallmark(한 화면 한 동작, 장식 라벨 금지, 아치 메달리온은 상태 표지로만), web-design-guidelines(링크가 아니라 화면 이동 버튼, 구체적 라벨), design-taste-frontend(균형, 가운데 축 한 열).
+
+#### WF-11 관리
+
+- **주요 목표:** 관리자가 세 관리 기능(회원 목록, 오픈소스 관리, 카테고리 관리) 중 하나로 한 번에 들어간다.
+- **정보 위계:** (1) 「관리 화면」 제목 (2) 메뉴 3개(회원 목록 → WF-12, 오픈소스 관리 → WF-13, 카테고리 관리 → WF-14) (3) 관리자 헤더의 회원 메뉴(프로필·관리·로그아웃).
+- **구성:** **제목 열 + 메뉴 목록.** 같은 아이콘 타일 3개를 가로로 나열하는 흔한 카드 줄을 피했다(hallmark 게이트 3). 왼쪽 4열은 제목과 금색 수면선만, 오른쪽 8열(728)은 한 장의 목록 카드이고 행 3개가 전폭 링크다. 행마다 아이콘, 이름, 짧은 설명, 오른쪽 끝의 이동 표시(chevron)와 목적지 라벨(WF-12/13/14, 시안용 주석)이 있다. WF-13·14 화면은 그리지 않는다. **상태 A는 별도 UI가 없다**(일반 회원은 안내 없이 WF-02로 이동, AC-FR-ADM-001-02·03): 프레임을 만들지 않고 문서에만 적는다. 비로그인 직접 접근은 [미확인]. 관리자 헤더 차이를 보이기 위해 회원 메뉴가 열린 프레임을 데스크톱 라이트·다크에 추가한다. 모바일 드로어는 프로필·관리·로그아웃.
+- **이끈 스킬 규칙:** design-taste-frontend(3열 아이콘 카드 반복 금지, 비대칭 4/8 구성, 양쪽 가장자리), hallmark(게이트 3 카드 징후, 장식 숫자·라벨 금지, 표면 사다리), ui-ux-pro-max(`nav-hierarchy`, `touch-target-size`, 관리자 메뉴는 현재 위치 표시), web-design-guidelines(링크는 `<a>`, 메뉴 항목은 키보드 이동), frontend-design(대담함은 한 곳: 비대칭 제목 열의 수면선).
+
+#### WF-12 관리자 회원 목록
+
+- **주요 목표:** 회원을 확인하고, 필요하면 정지하거나 해제한다. 정지는 확인을 거친다.
+- **정보 위계:** (1) 「회원 목록」 제목과 경로(관리 > 회원 목록) (2) 표(표시 이름, 이메일, 정지 여부 이용 중/정지, 동작) (3) 행 동작(정지 / 해제) (4) 정지 확인 대화상자.
+- **구성:** **관리 표.** 1120 전폭 한 장의 표 카드, 헤더 행과 행 구분선은 장식 `border`. 정지 여부는 색만이 아니라 글자(이용 중 / 정지)와 아이콘 없는 배지로 구분한다(`success`/`error` 계열 배지, 본문은 `text`). 동작 열의 「정지」는 secondary(글자 `error` 아님, 경계 `border-strong`), 「해제」는 secondary다. 확인 대화상자는 대상 회원 이름·이메일을 보여 주고 취소·정지 확인(위험 버튼)을 두며, 확인하면 다음 로그인부터 차단되고 열린 세션은 로그아웃까지 유지된다는 안내만 문장으로 둔다(세션 UI 없음). 해제에는 대화상자가 없다. 행 선택 UI·검색·정렬·페이지 나눔은 [미확인]이라 그리지 않는다. 상태 A는 표 머리를 두고 본문을 메달리온 빈 상태로 바꾼다. 모바일은 표가 아니라 행 카드 목록(이름·이메일·배지 + 44px 동작 버튼)으로 접는다(DS는 표 안 가로 스크롤이지만 좁은 폭에서 읽기 쉬운 쪽을 택한 제안). 드로어는 관리자(프로필·관리·로그아웃).
+- **이끈 스킬 규칙:** ui-ux-pro-max(`confirmation-dialogs`, `destructive-emphasis`, `empty-states`, `color-not-decorative-only`, `touch-target-size`), web-design-guidelines(파괴적 동작은 확인 모달, 숫자·이메일 `tabular-nums`·`translate="no"`, 긴 값은 말줄임·`min-w-0`, 아이콘 버튼 접근 이름), hallmark(표 머리는 본문체 소문자 격, 카드 안 카드 금지, 상태점 금지), design-taste-frontend(표가 열을 채움, 가장자리 정렬), frontend-design(오류·빈 상태는 원인과 행동).
+
+### 스킬 적용 기록
+
+| 스킬 | 로드 방법 | 읽은 파일 | 가져온 규칙·권고 | 반영한 화면·상태 |
+| --- | --- | --- | --- | --- |
+| frontend-design | Skill 도구 | 플러그인 `SKILL.md`(Skill 호출 결과) | 주제(나루·건너는 곳)에서 모티프, 한 곳에만 대담함, 장식 라벨·한 단어 강조 금지, 오류·빈 상태는 원인과 행동 | WF-09 시간선, WF-10 차단 메달리온·수면선, WF-11 비대칭 제목 열, 전 화면 문구 |
+| design-taste-frontend | Skill 도구 + Read | `SKILL.md`, `references/layout-v4.md`(제품 앱이라 마케팅·셰이더·사진 규칙과 `gate.mjs`는 제외) | 양쪽 가장자리, 상단 정렬, 빈 화면 금지, 3열 아이콘 카드 지양 | WF-09 664/424, WF-11 4/8, WF-12 전폭 표 |
+| ui-ux-pro-max | Skill 도구 + Read | `SKILL.md`, `references/pro-rules.md`(`search.py` 미실행, 팔레트 hex 미사용) | 터치 44, 파괴적 동작 확인, 오류는 원인+다음 행동, 빈 상태 행동, 색만으로 전달 금지, 다크는 독립 점검 | 전 화면 버튼·배지, WF-09 A, WF-12 B |
+| hallmark | Skill 도구 + Read | `SKILL.md`, `references/gates.md`(lint 미실행) | 라벨 본문체·소문자 격, 가운뎃점·상태점·이모지 금지, 카드 안 카드 금지, 게이트 3(아이콘 카드 줄), 한 화면 약 80단어 | WF-11 목록 행, 푸터, 전 화면 카드 |
+| web-design-guidelines | Skill 도구 + 프롬프트 인라인 규칙 | `SKILL.md`(네트워크 미사용) | 파괴적 동작 확인, 구체적 라벨, `…`, 포커스 가시성은 구현 단계, 고유 문자열 `translate="no"` | WF-09 A·WF-12 B 대화상자, 이메일 셀 |
+
+구성 근거에 적은 `kebab-case` 규칙 이름(`confirmation-dialogs`, `primary-action`, `destructive-emphasis`, `empty-states` 등) 일부는 이전 절의 표기를 따른 것이다. ui-ux-pro-max의 `references/quick-reference.md`는 이번에 열지 않아 원문 대조는 [미확인]이다. 실제로 읽어 근거로 삼은 것은 `SKILL.md`의 우선순위 표와 `pro-rules.md`의 점검표다. design-taste-frontend·frontend-design·web-design-guidelines의 나머지 참조 파일, hallmark의 `craft.md` 등은 이번에 열지 않았다. `gate.mjs`·`search.py`·`sloplint.mjs`·네트워크는 쓰지 않았다.
+
+### WF-09~12 프레임과 상태 (WF · FR/AC · 상태)
+
+**프레임 합계 36개** = 데스크톱 16(기본·상태·메뉴 열림 8 × 라이트·다크) + 모바일 14(기본·상태 7 × 라이트·다크) + 모바일 헤더 드로어 6(WF-09·11·12 × 라이트·다크). 데스크톱 1440×900, 모바일 폭 360(높이는 내용에 맞춤, 상태 A·B 모바일과 드로어는 360×800~812 뷰포트). 라이트·다크는 같은 구조에 변수 컬렉션 `Deep Ink`의 Light/Dark 모드만 바꿨다. 파일 안 `TEMPLATE-*` 프레임과 로고 원본은 복제용 작업 부품이며 내보내지 않았다.
+
+| WF | 상태 | 관련 FR / AC | 화면 내용 |
+| --- | --- | --- | --- |
+| WF-09 탈퇴 확인 | 기본 | FR-AUTH-003 · AC-FR-AUTH-003-01·02 | 일반 회원 헤더·푸터, 「탈퇴 확인」, 탈퇴 상태·공유·링크 유지 안내 카드, 30일 보관 시간선(탈퇴 확인 → 보관 기간 → 데이터 삭제, 재가입 복구), 취소(→ WF-16, secondary)·탈퇴 확인(위험 버튼), 표시 이름 예약 안내 자리 `[미확인]` |
+| WF-09 | A 탈퇴 완료 안내 | AC-FR-AUTH-003-03 | `scrim` 위 대화상자: 완료 표지(아치 메달리온), 문구 `[문구 미확정]`, 「확인」(→ WF-01) |
+| WF-09 | 모바일 드로어 | FR-SHELL-001 | 일반 회원: 닫기, 서비스 전환, 카테고리, 프로필, 로그아웃. 관리·테마 선택기 없음 |
+| WF-10 로그인 차단 안내 | 기본 | FR-AUTH-005 · AC-FR-AUTH-005-01·03 | **헤더 없음**·푸터. 작은 로고, 차단 아치 메달리온(수면선 위에 선 형태), 「로그인할 수 없습니다」, 정지로 차단·해제 후 다시 로그인 가능, 「로그인 화면으로」(→ WF-01, 문구 `[문구 미확정]`). 정지 사유·기간·열린 세션 표시 없음. 추가 상태·드로어 없음 |
+| WF-11 관리 | 기본 | FR-ADM-001~004 · AC-FR-ADM-001-01, AC-FR-SHELL-001-04 | 관리자 헤더, 「관리 화면」, 메뉴 3행(회원 목록 → WF-12, 오픈소스 관리 → WF-13, 카테고리 관리 → WF-14), 목적지 주석 |
+| WF-11 | 회원 메뉴 열림(시안 추가) | AC-FR-SHELL-001-04 | 관리자 헤더의 회원 메뉴: 프로필·관리(현재 위치)·로그아웃. 관리자 변형의 항목 차이를 보이기 위한 프레임 |
+| WF-11 | 상태 A(문서에만, 프레임 없음) | AC-FR-ADM-001-02·03 | 관리자가 아닌 회원은 **안내 없이 WF-02로 이동**한다. 별도 차단 UI·화면 없음. 비로그인 직접 접근은 [미확인] |
+| WF-11 | 모바일 드로어 | FR-SHELL-001 | 관리자: 프로필·**관리**·로그아웃 |
+| WF-12 회원 목록 | 기본 | FR-ADM-001·002 · AC-FR-ADM-001-01·04, AC-FR-ADM-002-01·02 | 관리자 헤더, 경로(관리 > 회원 목록), 표(표시 이름·이메일·정지 여부 이용 중/정지·동작 정지/해제). 이름은 예시이며 미설정 시 Google 계정 이름 행 포함(`Hana Park`). 해제는 대화상자 없음. 모바일은 행 카드 목록 |
+| WF-12 | A 회원 없음 | AC-FR-ADM-001-01 | 표 머리 유지, 본문 메달리온 빈 상태, 문구 `[문구 미확정]` |
+| WF-12 | B 정지 확인 대화상자 | AC-FR-ADM-002-03 · AC-FR-AUTH-005-02 | 대상 회원 이름·이메일, 다음 로그인부터 차단·열린 세션은 로그아웃까지 유지(안내 문장만), 취소·정지 확인(위험 버튼), 문구 `[문구 미확정]` |
+| WF-12 | 모바일 드로어 | FR-SHELL-001 | 관리자 항목 포함 |
+
+공통 푸터(이용약관, 개인정보처리방침, 오픈소스 라이선스 고지, 문의 `aslanhobae@gmail.com`, `Dev. Aslan0`, 회사 정보 없음)는 모든 프레임에 있다(WF-10 포함, 헤더만 없다). 테마 선택기(Q-090)는 어디에도 없다. 로딩 화면은 기획에 없어 만들지 않았다. 표의 이름·이메일은 예시(`example.com`)다.
+
+### PNG 파일 링크 표 (`exports/wf09-12/`)
+
+| 화면·상태 | 데스크톱 라이트 | 데스크톱 다크 | 모바일 라이트 | 모바일 다크 |
+| --- | --- | --- | --- | --- |
+| WF-09 기본 | [png](exports/wf09-12/WF-09-withdraw-desktop-light.png) | [png](exports/wf09-12/WF-09-withdraw-desktop-dark.png) | [png](exports/wf09-12/WF-09-withdraw-mobile-light.png) | [png](exports/wf09-12/WF-09-withdraw-mobile-dark.png) |
+| WF-09 A | [png](exports/wf09-12/WF-09-withdraw-desktop-light-state-A.png) | [png](exports/wf09-12/WF-09-withdraw-desktop-dark-state-A.png) | [png](exports/wf09-12/WF-09-withdraw-mobile-light-state-A.png) | [png](exports/wf09-12/WF-09-withdraw-mobile-dark-state-A.png) |
+| WF-10 기본 | [png](exports/wf09-12/WF-10-login-blocked-desktop-light.png) | [png](exports/wf09-12/WF-10-login-blocked-desktop-dark.png) | [png](exports/wf09-12/WF-10-login-blocked-mobile-light.png) | [png](exports/wf09-12/WF-10-login-blocked-mobile-dark.png) |
+| WF-11 기본 | [png](exports/wf09-12/WF-11-admin-desktop-light.png) | [png](exports/wf09-12/WF-11-admin-desktop-dark.png) | [png](exports/wf09-12/WF-11-admin-mobile-light.png) | [png](exports/wf09-12/WF-11-admin-mobile-dark.png) |
+| WF-11 회원 메뉴 열림 | [png](exports/wf09-12/WF-11-admin-desktop-light-menu-open.png) | [png](exports/wf09-12/WF-11-admin-desktop-dark-menu-open.png) | (모바일은 드로어) | (모바일은 드로어) |
+| WF-12 기본 | [png](exports/wf09-12/WF-12-members-desktop-light.png) | [png](exports/wf09-12/WF-12-members-desktop-dark.png) | [png](exports/wf09-12/WF-12-members-mobile-light.png) | [png](exports/wf09-12/WF-12-members-mobile-dark.png) |
+| WF-12 A | [png](exports/wf09-12/WF-12-members-desktop-light-state-A.png) | [png](exports/wf09-12/WF-12-members-desktop-dark-state-A.png) | [png](exports/wf09-12/WF-12-members-mobile-light-state-A.png) | [png](exports/wf09-12/WF-12-members-mobile-dark-state-A.png) |
+| WF-12 B | [png](exports/wf09-12/WF-12-members-desktop-light-state-B.png) | [png](exports/wf09-12/WF-12-members-desktop-dark-state-B.png) | [png](exports/wf09-12/WF-12-members-mobile-light-state-B.png) | [png](exports/wf09-12/WF-12-members-mobile-dark-state-B.png) |
+
+모바일 드로어(360×800)
+
+| 화면 | 라이트 | 다크 |
+| --- | --- | --- |
+| WF-09 드로어(일반 회원) | [png](exports/wf09-12/WF-09-withdraw-mobile-light-drawer.png) | [png](exports/wf09-12/WF-09-withdraw-mobile-dark-drawer.png) |
+| WF-11 드로어(관리자) | [png](exports/wf09-12/WF-11-admin-mobile-light-drawer.png) | [png](exports/wf09-12/WF-11-admin-mobile-dark-drawer.png) |
+| WF-12 드로어(관리자) | [png](exports/wf09-12/WF-12-members-mobile-light-drawer.png) | [png](exports/wf09-12/WF-12-members-mobile-dark-drawer.png) |
+
+`exports/wf09-12/.keep`은 export 폴더 생성을 위한 플레이스홀더다.
+
+### 새 토큰·컴포넌트 제안
+
+새 DS 색 토큰은 없다. 쓴 변수는 `bg`, `surface`, `surface-raised`, `surface-hover`, `text`, `text-muted`, `border`, `border-strong`, `primary`, `on-primary`, `accent`, `error`, `error-subtle`, `success`, `success-subtle`, `on-danger`, `overlay`, `scrim`(DS 값 그대로)이다. 파일 안에 **`wordmark` 보조 변수** 하나를 더 만들었다(라이트 `#1E3A5F`, 다크 `#E8EDF5`): DS 로고 SVG의 워드마크 색이 라이트는 `primary`, 다크는 `text` 계열이라 한 변수로 모드 전환하려고 둔 파일 내부 값이며 DS 토큰 제안은 아니다(로고 자산 다크 변형을 컴포넌트화하면 필요 없음). 아래는 DS에 반영하지 않은 제안이다.
+
+- **Danger 버튼(확인 대화상자용)**: DS에 `error`/`on-danger`/`danger-hover`/`danger-pressed`가 있으나 이 파일은 hover·pressed를 그리지 않았다. WF-09·WF-12 대화상자의 「탈퇴 확인」·「정지 확인」에 DS의 Danger 버튼을 연결해야 한다.
+- **보관 시간선(Retention timeline)**: WF-09 전용 세로 시간선(점 2개 + 보관 구간 막대). 재사용 계획이 있으면 컴포넌트화 검토.
+- **관리 메뉴 행(Admin menu row)**: WF-11의 아이콘·제목·설명·이동 표시 행. DS의 Service card·Menu와 조정 필요.
+- **회원 메뉴 관리자 변형의 「현재 위치」 표시**: 시안은 `surface-hover` 바탕 + 굵은 글자로 표시. DS Menu의 `회원 관리자` 변형과 맞춰야 한다.
+- **Arch medallion**(v4·WF-05~08 제안의 연장): 80×96, 빈 상태·차단·완료 표지에 같은 규격으로 썼다. WF-10 차단 표지는 수면선(`border-strong` 전폭 선) 위에 서도록 배치했다.
+- **Admin table 모바일 변형**: DS는 표 안 가로 스크롤인데 이 파일은 행 카드 목록으로 접었다(제안).
+- **Badge 이용 중/정지**: `success-subtle`+`success`, `error-subtle`+`error` 글자 배지(상태점 없음). DS Badge와 일치하는지 확인 필요.
+- **목적지 주석(점선 칩, WF-12/13/14)**: 시안용 주석이며 실제 UI가 아니다. 구현 시 제거.
+
+### 열린 기획 질문 (모두 기획 확인 필요)
+
+- **WF-09**: 탈퇴 후 표시 이름 예약(30일) 안내를 화면에 둘지(BR-026, 시안은 점선 라벨 자리), 처리 실패·재탈퇴 시 화면 표현, 완료 안내 문구와 「확인」 버튼 문구, 완료 안내 뒤 WF-01로 가는 방식(자동/버튼), 시간선 문구(「오늘」「30일이 지나면 삭제됩니다」)의 확정 여부.
+- **WF-10**: 버튼 문구와 안내 문구 확정, 정지 사유·기간은 표시하지 않는 것으로 두었다(기획에 없음), 직접 접근·로딩·오류 표현. 「토큰 갱신 시에도 차단」(pending planning)의 UI 표현은 그리지 않았다.
+- **WF-11**: 비로그인 직접 접근의 이동 위치, 메뉴 설명 문구(시안은 FR 이름에서 옮긴 초안), 로딩·오류, 관리 화면 안에서 WF-13·14로의 이동 표현.
+- **WF-12**: 정지 확인 문구, 빈 목록 문구, 행 선택·검색·정렬·페이지 나눔 필요 여부(회원 수가 많을 때), 로딩·오류, 정지/해제 직후의 피드백(Toast 필요 여부, 해제는 확인 대화상자 없음), 정지된 회원의 행 표시 추가 정보(사유·시각은 기획에 없음).
+- **공통**: Q-090 테마 선택기 위치(어느 프레임에도 두지 않음), 모바일 헤더·푸터·드로어 배치의 기획 확정 여부, 관리자 헤더에 관리 바로가기를 따로 둘지(시안은 회원 메뉴 안에만).
+
+### WF-09~12 한계와 [미확인]
+
+- 글꼴: 헤드리스 FigCraft에 IBM Plex Sans KR이 없어 한글은 대체 글꼴로 렌더링될 수 있다. 파일에는 IBM Plex Sans KR / IBM Plex Sans 지정이 남아 있다.
+- 대비는 DS 대비표의 토큰 쌍만 골랐고 화면별로 다시 측정하지 않았다(DEC-102 화면 단위 충족 [미확인]). 12·13px 보조 문구는 `text-muted`로 DS 표의 4.5:1 이상 쌍이다. 키보드 포커스·읽기 순서·터치 동작은 시안으로 검증할 수 없다 [미확인]. 호버·눌림·포커스 상태는 그리지 않았다.
+- 카드·대화상자·드롭다운 그림자 색은 변수에 묶지 않은 고정 값이다(다크에서도 같은 값).
+- WF-11 「회원 메뉴 열림」 프레임에서 열린 메뉴가 첫 메뉴 행의 목적지 주석을 가린다(팝오버의 실제 동작).
+- WF-11은 본문 아래 여백이 비교적 넓다(메뉴가 3개뿐이고 기획에 없는 기능을 채우지 않는 선택).
+- 줄바꿈은 글자 수 기준으로 직접 넣은 모바일 문구가 있다(WF-09 모바일, WF-10 모바일, WF-11 모바일 설명). 실제 글꼴·폭에서는 다시 확인해야 한다 [미확인].
+- 눈으로 확인한 프레임: WF-09 데스크톱 라이트·상태 A 라이트·모바일 라이트·다크 상태 A·데스크톱 다크, WF-10 데스크톱·모바일 라이트, WF-11 데스크톱·모바일 라이트·메뉴 열림 다크·관리자 드로어 라이트/다크, WF-12 데스크톱 라이트·A·B, 모바일 라이트·A·B, 모바일 다크 B. 나머지는 같은 구조의 복제본이라 개별 확인을 하지 않았다 [미확인]. PNG 파일 자체를 다시 열어 보지는 않았다(내보내기 응답의 바이트 수만 확인).
+- 사용한 도구는 FigCraft MCP, Skill, Read, Edit, Write(`.keep`)이다. 웹·셸·REPL은 쓰지 않았다.

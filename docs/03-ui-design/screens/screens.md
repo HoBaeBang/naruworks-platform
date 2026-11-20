@@ -414,3 +414,180 @@ v1·v2 절·파일·PNG는 비교용으로 그대로 둔다. v3는 v2 파일을 
 - 카드 그림자 색은 변수에 묶지 않은 고정 값이다(다크에서도 같은 색).
 - 64장 PNG는 내보냈으나 장면별로 모두 육안 검토하지는 못했다. 기본 프레임과 대표 상태는 확인했다.
 - 가운데 정렬 구성이라 WF-02 상태 B와 WF-03은 본문 아래 여백이 비교적 넓다. 기획에 없는 기능을 채우지 않는 선택이다.
+
+---
+
+## WF-05~08 (P3-4 · 두 번째 묶음) · v4 시각 언어
+
+호배님이 2026-11-19 21:06 KST에 WF-01~04 v4를 확정하고 WF-05~16을 같은 방식으로 진행하라고 했다. 이 절은 **WF-05~08만** 다룬다. 기준은 develop `4b66d1d`의 기획 v1.0(DEC-081), 기능 범위는 `screen-data-actions.md`의 WF-05~08과 공통 헤더·푸터다. 새 빈 파일 [screens-wf05-08.figcraft](screens-wf05-08.figcraft)에서 시작했다(이전 세션의 `file.new`는 디스크에 파일이 남지 않아 이번 세션에서 새로 만들고 저장했다). v1~v3의 FigCraft·PNG·절은 열지 않았다. v4 파일·절·PNG는 읽기만 했고 복사하지 않았다(헤더·푸터·메달리온·알림은 v4의 규칙에 따라 새로 그렸다). 라이트/다크는 디자이너용 시안이며 테마 선택기(Q-090)는 어느 프레임에도 두지 않았다(DEC-101). 터치·모바일에서는 마우스 올림 썸네일을 생략했다(DEC-084). 텍스트 4.5:1, UI·포커스·필수 경계 3:1을 목표로 토큰 쌍을 골랐다(DEC-102, 화면별 실측은 [미확인]).
+
+### v4에서 이어받은 것
+
+일반 회원 헤더·푸터와 모바일 헤더 드로어(닫기, 프로필·로그아웃, 관리 없음, 테마 선택기 없음). `bg` → `surface`(캔버스) → `surface-raised`(카드) 표면 3단. 아치 메달리온은 **서비스·상태 표지**에만(WF-05 왼쪽 메뉴의 서비스 표지, 빈 폴더·빈 휴지통·차단 카드), 폼·목록·알림 안에는 쓰지 않는다. 금색 `accent`는 장식(수면선 한 줄, 메달리온 점)에만, 텍스트에는 쓰지 않는다. 오류·경고 아이콘은 `error` 토큰. 알림은 선택·목록·확인 흐름을 끊지 않는 보조 영역에 둔다. 데스크톱 1440(본문 최대 1120, 가운데), 모바일 360(좌우 16), 터치 44px. WF-08만 비회원 헤더 변형(로그인 버튼, 로고·카테고리·서비스 전환·로그인은 모두 WF-01).
+
+### 구성 근거 (그리기 전에 작성)
+
+#### WF-05 나루 드라이브
+
+- **주요 목표:** 지금 폴더에서 파일을 찾고, 올리고, 정리하고, 공유한다. 삭제해도 이 화면에 머문다.
+- **정보 위계:** (1) 현재 위치(경로)와 두 주 동작(올리기 primary, 폴더 만들기 secondary) (2) 항목 목록(이름 → 종류 → 크기 → 수정일 → 공유 여부) (3) 선택한 항목의 동작(이름 변경·이동·내려받기·회원 공유·링크 공유·삭제) (4) 왼쪽 메뉴(내 드라이브·휴지통) (5) 푸터.
+- **구성:** **서재 + 목록대.** 왼쪽 240 열은 서비스 표지(아치 메달리온 + 「나루 드라이브」)와 메뉴 두 개(내 드라이브·휴지통)를 가진 보조 패널이고, 오른쪽 848 열(1120 − 240 − 간격 32)이 작업 영역이다. 작업 영역은 위에 경로와 두 주 동작, 가운데에 한 장의 목록 카드(`surface-raised`, 열 머리와 행 구분선은 장식 `border`), 목록 바로 위에 선택 동작 띠로 이루어진다. 목록 카드가 열을 가득 채우므로 1440에서 빈 면이 없고, 항목이 늘어도 행만 늘어난다. 썸네일은 데스크톱에서만 마우스를 올린 행 옆 작은 미리보기로 보이고(한 행만), 모바일은 형식 아이콘만 쓴다. 파일 형식은 DS 아이콘(문서·이미지·PDF·압축 등)으로 구분하고 PDF는 레이블을 병기한다. 휴지통은 헤더나 도구 띠가 아니라 왼쪽 메뉴에만 둔다(AC-FR-DRV-004-04). 모바일은 왼쪽 메뉴를 목록 위 두 칸짜리 분할 탭(내 드라이브·휴지통, 44px)으로 접고, 목록은 이름·보조 한 줄(종류·크기·수정일)·공유 표지로 줄인다. 상태 A 빈 폴더는 목록 자리에 메달리온 빈 상태(만들기·올리기 안내, 총용량 초과 안내 없음), B는 올리기 알림을 제목 줄 바로 아래, 선택 동작 띠와 목록 카드 바깥의 알림 줄에 둔다(목록·선택 흐름을 끊지 않고 둘 다 그대로 보인다). C는 폴더 만들기·이름 변경·이동의 실패 안내를 같은 알림 줄에(입력 UI가 [미확인]이라 대화상자는 그리지 않았다), D는 링크 공유 설정 오버레이(스위치, 다운로드 허용), E는 Litpage 문서 열기 불가 안내.
+- **이끈 스킬 규칙:** design-taste(양쪽 가장자리 정렬, 빈 화면 금지, 목록 카드가 열을 채움), ui-ux-pro-max(화면당 primary 하나, `confirmation-dialogs`·`undo-support`는 삭제 확인이 [미확인]이라 구현하지 않고 질문으로 남김, `error-recovery`, `empty-states`, `touch-target-size`), hallmark(표면 사다리, 라벨은 본문 글꼴·소문자 격, 카드 안 카드 금지, 상태점·가운뎃점 메타 금지), web-design-guidelines(아이콘 전용 버튼 접근 이름, 오류는 인라인, `…`, 숫자는 tabular), frontend-design(대담함은 한 곳: 서비스 표지 메달리온).
+
+#### WF-06 휴지통
+
+- **주요 목표:** 삭제한 항목을 30일 안에 원래 위치로 복원한다. 남은 기간을 한눈에 안다.
+- **정보 위계:** (1) 「30일 후 자동 삭제되고 공유 링크는 차단됩니다」 안내 (2) 목록(이름·종류·크기·자동 삭제까지 남은 기간·원래 위치) (3) 복원 동작. 영구 삭제·비우기는 기획에 없어 그리지 않는다.
+- **구성:** **WF-05와 같은 서재 틀.** 왼쪽 메뉴는 그대로 두고 「휴지통」이 선택된 상태로 이어져 「왼쪽 메뉴로만 진입」이 보인다. 작업 영역 위에 안내 띠(정보, 아이콘만 `info`)가 있고, 목록은 WF-05와 같은 카드이되 열이 다르다(수정일 대신 남은 기간, 원래 위치 추가). 복원 대상 선택 방식은 [미확인]이라 WF-05와 같은 선택 동작 띠에 「원래 위치로 복원」 하나만 둔다. 남은 기간은 「23일 남음」처럼 숫자와 단위를 함께 쓰고 색으로 긴급도를 나누지 않는다(이전 초안의 「7일 이하 경고 표시」는 기획에 없는 기준이라 만들지 않았다). 상태 A 빈 휴지통은 메달리온 빈 상태, B는 30일이 지나 복원할 수 없는 항목의 오류 안내(원인 + 다음 행동).
+- **이끈 스킬 규칙:** ui-ux-pro-max(`color-not-decorative-only`, `empty-states`, `error-clarity`), hallmark(영구 삭제 같은 위험 동작을 만들지 않음, 한 화면 한 primary), design-taste(화면 틀 반복으로 위계 학습), web-design-guidelines(숫자 `tabular-nums`).
+
+#### WF-07 회원 공유
+
+- **주요 목표:** 소유자가 한 파일을 이메일로 찾은 활동 회원에게 권한(보기/편집)과 다운로드 허용을 정해 공유하고, 공유 중인 회원을 취소한다.
+- **정보 위계:** (1) 대상 파일 (2) 이메일 입력 → 찾기 → 찾은 회원 (3) 권한·다운로드 (4) 공유 (5) 공유 중인 회원 목록(공유 취소).
+- **구성:** **두 단 공유대.** 폭 1120(다른 화면과 같은 좌우 선)의 한 카드가 두 패널(왼쪽 560 / 오른쪽 나머지)로 나뉜다. 왼쪽은 「새로 공유」(파일 이름 띠, 이메일 필드 + 찾기, 찾은 회원, 권한 라디오, 다운로드 허용 체크, 공유 primary), 오른쪽은 「공유 중인 회원」 목록(표시 이름·권한·다운로드 허용·공유 취소). 입력에서 결과까지 한 방향으로 읽히고 오른쪽이 결과를 확인하는 자리다. 닫기가 WF-05로 돌아가는지는 [미확인]이어서 제목 줄 오른쪽에 「닫기」 버튼(모바일은 X 아이콘 버튼, 접근 이름 「닫기」) 하나만 두고 도착 화면은 열린 질문으로 남긴다. 모바일은 한 열로 쌓는다. 상태 A는 필드 아래 인라인 오류(활동 회원 없음: 정지·탈퇴 포함, 다음 행동 안내), B는 같은 위치의 자기 자신 안내. 빈 공유 목록 UI는 [미확인]이라 그리지 않고 열린 질문으로 남긴다(모든 프레임의 공유 중 목록은 회원 3명이 있는 예시다).
+- **이끈 스킬 규칙:** ui-ux-pro-max(`error-placement`, `input-labels`, `error-recovery`, `required-indicators`), web-design-guidelines(필드 라벨, `type="email"`·`autocomplete="off"`·`spellcheck=false`, 오류는 인라인), hallmark(라디오·체크는 라벨과 한 타깃, 한 primary), design-taste(두 패널 가장자리 정렬).
+
+#### WF-08 링크 보기
+
+- **주요 목표:** 비회원이 링크로 받은 파일을 보기만 한다. 허용되면 내려받는다. 열 수 없으면 이유를 안다.
+- **정보 위계:** (1) 파일 보기 영역 (2) 「보기 전용」 안내 (3) 다운로드(허용일 때만) (4) 비회원 헤더의 로그인.
+- **구성:** **열람대.** 비회원 헤더(로고·카테고리·서비스 전환·로그인 버튼) 아래, 폭 1120 한 장의 큰 보기 영역과 그 위 얇은 정보 띠(파일 이름·크기는 [미확인]이라 「파일 이름·크기 [미확인]」 라벨 자리, 「보기 전용」 표지, 다운로드 버튼)로 이루어진다. 편집 동작은 없다. 상태 A는 다운로드 불허로 버튼이 없는 띠, 상태 B는 보기 영역이 차단 카드(메달리온, 안내 `[문구 미확정]`, 사유별 구분 [미확인])로 바뀐다. 모바일은 띠가 위, 보기 영역이 아래 한 열이다. 비회원 헤더는 로그인 primary를 하나만 둔다.
+- **이끈 스킬 규칙:** design-taste(큰 보기 영역이 캔버스를 채움), ui-ux-pro-max(`primary-action`, 비활성 대신 버튼 자체를 숨기는 기획 반영), frontend-design(차단 메달리온은 상태 표지), web-design-guidelines(링크는 링크, 로그인은 버튼).
+
+### 스킬 적용 기록
+
+| 스킬 | 로드 방법 | 읽은 파일 | 가져온 규칙·권고 | 반영한 화면·상태 |
+| --- | --- | --- | --- | --- |
+| frontend-design | Skill 도구 | 플러그인 `SKILL.md`(Skill 호출 결과) | 제품 주제에서 모티프를 끌어온다. 한 곳에만 대담함을 쓴다. 장식 라벨·한 단어 강조 금지. 오류·빈 상태는 원인과 다음 행동. | WF-05 서비스 표지 메달리온, 빈 폴더·빈 휴지통·차단 카드, 전 화면 오류 문구 |
+| design-taste-frontend | Skill 도구, `references/layout-v4.md` Read | `SKILL.md`, `layout-v4.md` | 제품 앱이므로 마케팅 히어로·셰이더·사진 규칙은 제외. 양쪽 가장자리 정렬, 빈 화면 금지, 한 줄을 채우는 카드, 위계, 반슬롭. | 1120 가운데 정렬, 목록 카드·열람 영역이 열을 채움 |
+| ui-ux-pro-max | Skill 도구, `references/quick-reference.md` Read | `SKILL.md`, `quick-reference.md` | 생산성·SaaS: 절제된 신뢰 블루. 대비 4.5:1, 터치 44, 간격 8, 화면당 primary 하나, 오류는 필드 근처에 원인+복구, 빈 상태는 행동 제안, 색만으로 의미 전달 금지, 위험 동작 확인. 팔레트 hex는 쓰지 않고 Deep Ink 유지. | 전 화면 버튼 위계, WF-06 남은 기간 표시, WF-07 오류 |
+| hallmark | Skill 도구, `references/gates.md` Read | `SKILL.md`, `gates.md` | 라벨은 본문 글꼴 한 단계 작게·대문자 아님, 이모지·장식 상태점·가운뎃점 메타 금지, 카드 안 카드 금지, 다크는 재도출·명도 단계, 한 화면 약 80단어, 가짜 수치·가짜 사진 금지. 마케팅 히어로·lint 규칙은 이식하지 않음(lint 미실행). | 목록 카드, 푸터 링크, 다크 프레임, 화면당 문구량 |
+| web-design-guidelines | Skill 도구, 프롬프트 인라인 규칙 | `SKILL.md` + 인라인 규칙(네트워크 미사용) | 아이콘 전용 버튼 접근 이름, 폼 라벨·`type`·`autocomplete`·`spellcheck`, 오류 인라인, `…`, `tabular-nums`, 링크는 링크·버튼은 버튼, 파괴적 동작 확인(삭제 확인은 [미확인]), 한국어 문구 우선. | 행 작업 버튼, WF-07 필드, WF-06 남은 기간 숫자(「23일 남음」 단위 포함, `tnum` 기능은 FigCraft에서 적용하지 않음 [미확인]), WF-08 로그인 |
+
+이번 세션에서 스킬 다섯 개를 모두 Skill 도구로 다시 호출했고, 다음 참조를 Read로 열었다: design-taste-frontend `references/layout-v4.md`, ui-ux-pro-max `references/quick-reference.md`, hallmark `references/gates.md`·`references/craft.md`. `search.py`·`gate.mjs`·`sloplint.mjs`·네트워크는 쓰지 않았다. 스킬의 lint·게이트·마케팅 히어로 규칙은 실행하지 않았고 구성·표면·타이포·접근성 판단 기준으로만 썼다. ui-ux-pro-max의 `pro-rules.md`·CSV 데이터와 frontend-design의 다른 파일은 이번에 열지 않았다.
+
+### 이번 세션의 초안 점검
+
+- 이어 쓴 것: 화면별 주요 목표·정보 위계, 알림 위치 원칙, 스킬 적용 기록 틀. 그린 결과와 어긋난 부분만 고쳤다(위 본문의 열 폭 848, 알림 줄 위치, WF-06 「7일 이하 경고」 삭제, WF-07 카드 폭 1120과 닫기 위치, 빈 공유 목록 미작도, WF-08 파일 이름 라벨).
+- 이전 세션의 「새로 그렸다」는 문장은 디스크에 파일이 없어 사실이 아니었다. 이번 세션에서 새 빈 파일로 만들었고 v4 파일은 읽기·스크린샷만 했다(v4 헤더 구조는 읽고 새로 그렸다).
+
+### WF-05~08 프레임과 상태 (WF · FR/AC · 상태)
+
+기본 + 상태를 데스크톱·모바일 × 라이트·다크로 그렸다. 합계 **66개** = 데스크톱 30(기본·상태 15 × 라이트·다크) + 모바일 30(같은 구성) + 모바일 헤더 드로어 6(WF-05·06·07 × 라이트·다크). 데스크톱 1440×900, 모바일 폭 360(높이는 내용에 맞춤, 상태 D 모바일과 드로어는 360×800 뷰포트). 라이트·다크는 같은 구조에 변수 컬렉션 `Deep Ink`의 Light/Dark 모드만 바꿨다.
+
+| WF | 상태 | 관련 FR / AC | 화면 내용 |
+| --- | --- | --- | --- |
+| WF-05 나루 드라이브 | 기본 | FR-DRV-001~008 · AC-FR-DRV-001-03, AC-FR-DRV-004-04 | 서비스 표지(아치 메달리온)와 왼쪽 메뉴(내 드라이브·휴지통), 현재 위치(경로·폴더 이름), 폴더 만들기·올리기, 선택 동작 띠, 목록(이름·종류·크기·수정일·공유 여부). 데스크톱은 마우스 올린 행 옆(이름과 「종류」 열 사이 여백)에 작은 미리보기 썸네일 한 개, 모바일은 형식 아이콘만. 모바일은 헤더 아래에 작은 서비스 표지(소형 아치 메달리온 + 「나루 드라이브」) 한 줄이 있다 |
+| WF-05 | A 빈 폴더 | AC-FR-DRV-001-02 | 목록 자리에 메달리온 빈 상태. 만들기·올리기 안내와 파일당 1GB. 총용량 초과 안내 없음 |
+| WF-05 | B 1GB 초과·올리기 실패 | AC-FR-DRV-003-02, AC-NFR-PERF-002-01 | 알림 줄(`error` 아이콘), 목록 유지, 문구 `[문구 미확정]` |
+| WF-05 | C 폴더 변경 불가 | AC-FR-DRV-002-02 | 같은 알림 줄(빈 이름·중복·자기 자신 아래 이동), 입력 UI는 그리지 않음 [미확인] |
+| WF-05 | D 링크 공유 설정 | AC-FR-DRV-007-01·02 | 데스크톱 대화상자(`scrim`), 모바일 하단 시트(보이는 닫기 버튼). 링크 공유 켜짐, 다운로드 허용, 만료·비밀번호 없음. 링크 주소 표시·복사 UI는 점선 슬롯 [미확인] |
+| WF-05 | E Litpage 문서 열기 불가 | AC-FR-DRV-005-02 | 같은 알림 줄. 파일은 드라이브에서 그대로 볼 수 있다는 안내 `[문구 미확정]` |
+| WF-05 | 모바일 드로어 | FR-SHELL-001 | 닫기·서비스 전환·카테고리·프로필·로그아웃. 관리 항목·테마 선택기 없음 |
+| WF-06 휴지통 | 기본 | FR-DRV-004 · AC-FR-DRV-004-02·03·05 | 왼쪽 메뉴에서 「휴지통」 선택, 30일·링크 차단 안내(정보 알림), 선택 동작 띠의 「원래 위치로 복원」(primary 하나), 목록(이름·종류·크기·자동 삭제까지·원래 위치). 영구 삭제·비우기 없음 |
+| WF-06 | A 빈 휴지통 | AC-FR-DRV-004-05 | 메달리온 빈 상태 |
+| WF-06 | B 30일 경과 복원 불가 | AC-FR-DRV-004-02 | 알림 줄, 이미 자동 삭제되어 되살릴 수 없다는 안내 `[문구 미확정]`. 오류가 가리키는 파일(견적서 v1.pdf)이 선택된 행이고(남은 기간 칸 「30일 경과」), 「원래 위치로 복원」은 비활성(`surface` 바탕·`text-muted` 글자)이다 |
+| WF-06 | 모바일 드로어 | FR-SHELL-001 | WF-05와 같은 구성 |
+| WF-07 회원 공유 | 기본 | FR-DRV-006 · AC-FR-DRV-006-01·03·04 | 대상 파일, 이메일 입력·찾기, 찾은 활동 회원, 권한(보기/편집)·다운로드 허용, 공유(primary), 공유 중인 회원 목록과 공유 취소, 닫기 |
+| WF-07 | A 활동 회원 없음 | AC-FR-DRV-006-02 | 필드 아래 인라인 오류(정지·탈퇴 포함), 찾은 회원 없음, 공유 비활성 `[문구 미확정]` |
+| WF-07 | B 자기 자신에게 공유 | AC-FR-DRV-006-03 | 같은 위치의 오류, 공유 비활성 `[문구 미확정]` |
+| WF-07 | 모바일 드로어 | FR-SHELL-001 | WF-05와 같은 구성 |
+| WF-08 링크 보기 | 기본 | FR-DRV-007 · AC-FR-DRV-007-01, AC-FR-SHELL-001-05 | 비회원 헤더(로그인 버튼, 문구 `[문구 미확정]`), 파일 정보 띠(이름·크기 라벨 [미확인], 「보기 전용」 표지, 다운로드), 보기 영역 플레이스홀더. 편집 동작 없음 |
+| WF-08 | A 다운로드 불허 | AC-FR-DRV-007-01 | 다운로드 버튼 없음, 안내 `[문구 미확정]` |
+| WF-08 | B 링크를 열 수 없음 | AC-FR-DRV-007-02, AC-FR-DRV-004-03 | 파일 정보 띠 없이 차단 카드(메달리온, 사유별 구분 없음 [미확인]) `[문구 미확정]` |
+
+공통 헤더(일반 회원, WF-05~07)·비회원 헤더(WF-08)·푸터(이용약관, 개인정보처리방침, 오픈소스 라이선스 고지, 문의 `aslanhobae@gmail.com`, `Dev. Aslan0`, 회사 정보 없음)는 모든 프레임에 있다. 테마 선택기(Q-090)는 어디에도 두지 않았다. 로딩 화면은 기획에 없어 만들지 않았다.
+
+### 그린 결과의 구성 요약
+
+- **표면과 장치(v4 이어받음).** `surface` 바탕, `surface-raised` 카드, 헤더·푸터 `bg` 전폭 띠, 본문 폭 1120 가운데. 아치 메달리온은 WF-05 서비스 표지와 빈 폴더·빈 휴지통·보기 영역·차단 카드에만, 금색은 메달리온 수면선 한 줄뿐이다. 오류·경고 아이콘은 `error`, 정보 아이콘은 `info`, 알림 본문은 `text`. 목록·폼·알림 안에는 메달리온을 쓰지 않았다.
+- **WF-05·06.** 왼쪽 240 메뉴(서비스 표지 + 두 항목)와 오른쪽 작업 영역. 휴지통은 헤더가 아닌 왼쪽 메뉴로만 들어간다. 선택된 행은 `info-subtle` 바탕에 `primary` 2px 테두리로 표시해 색만으로 구분하지 않는다(행 선택 방식 자체는 [미확인]). 모바일은 헤더 아래 작은 서비스 표지(소형 아치 메달리온 + 「나루 드라이브」, 데스크톱 표지의 축소형)가 서비스를 알리고, 두 칸 분할 탭이 왼쪽 메뉴를 대신하며 행은 이름·보조 한 줄·공유 표지·더 보기(44px)로 줄였다.
+- **WF-07.** 왼쪽 「새로 공유」(입력 → 찾기 → 찾은 회원 → 권한·다운로드 → 공유)에서 오른쪽 「공유 중인 회원」으로 한 방향으로 읽힌다. 화면당 primary는 「공유」 하나. 모바일은 한 열로 쌓고 공유 중 목록을 아래에 둔다.
+- **WF-08.** 비회원 헤더의 primary는 「로그인」 하나. 보기 영역이 남는 높이를 채워 빈 화면이 생기지 않는다.
+
+### PNG 파일 링크 표 (`exports/wf05-08/`)
+
+| 화면·상태 | 데스크톱 라이트 | 데스크톱 다크 | 모바일 라이트 | 모바일 다크 |
+| --- | --- | --- | --- | --- |
+| WF-05 기본 | [png](exports/wf05-08/WF-05-drive-desktop-light.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark.png) | [png](exports/wf05-08/WF-05-drive-mobile-light.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark.png) |
+| WF-05 A | [png](exports/wf05-08/WF-05-drive-desktop-light-state-A.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark-state-A.png) | [png](exports/wf05-08/WF-05-drive-mobile-light-state-A.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-state-A.png) |
+| WF-05 B | [png](exports/wf05-08/WF-05-drive-desktop-light-state-B.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark-state-B.png) | [png](exports/wf05-08/WF-05-drive-mobile-light-state-B.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-state-B.png) |
+| WF-05 C | [png](exports/wf05-08/WF-05-drive-desktop-light-state-C.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark-state-C.png) | [png](exports/wf05-08/WF-05-drive-mobile-light-state-C.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-state-C.png) |
+| WF-05 D | [png](exports/wf05-08/WF-05-drive-desktop-light-state-D.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark-state-D.png) | [png](exports/wf05-08/WF-05-drive-mobile-light-state-D.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-state-D.png) |
+| WF-05 E | [png](exports/wf05-08/WF-05-drive-desktop-light-state-E.png) | [png](exports/wf05-08/WF-05-drive-desktop-dark-state-E.png) | [png](exports/wf05-08/WF-05-drive-mobile-light-state-E.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-state-E.png) |
+| WF-06 기본 | [png](exports/wf05-08/WF-06-trash-desktop-light.png) | [png](exports/wf05-08/WF-06-trash-desktop-dark.png) | [png](exports/wf05-08/WF-06-trash-mobile-light.png) | [png](exports/wf05-08/WF-06-trash-mobile-dark.png) |
+| WF-06 A | [png](exports/wf05-08/WF-06-trash-desktop-light-state-A.png) | [png](exports/wf05-08/WF-06-trash-desktop-dark-state-A.png) | [png](exports/wf05-08/WF-06-trash-mobile-light-state-A.png) | [png](exports/wf05-08/WF-06-trash-mobile-dark-state-A.png) |
+| WF-06 B | [png](exports/wf05-08/WF-06-trash-desktop-light-state-B.png) | [png](exports/wf05-08/WF-06-trash-desktop-dark-state-B.png) | [png](exports/wf05-08/WF-06-trash-mobile-light-state-B.png) | [png](exports/wf05-08/WF-06-trash-mobile-dark-state-B.png) |
+| WF-07 기본 | [png](exports/wf05-08/WF-07-member-share-desktop-light.png) | [png](exports/wf05-08/WF-07-member-share-desktop-dark.png) | [png](exports/wf05-08/WF-07-member-share-mobile-light.png) | [png](exports/wf05-08/WF-07-member-share-mobile-dark.png) |
+| WF-07 A | [png](exports/wf05-08/WF-07-member-share-desktop-light-state-A.png) | [png](exports/wf05-08/WF-07-member-share-desktop-dark-state-A.png) | [png](exports/wf05-08/WF-07-member-share-mobile-light-state-A.png) | [png](exports/wf05-08/WF-07-member-share-mobile-dark-state-A.png) |
+| WF-07 B | [png](exports/wf05-08/WF-07-member-share-desktop-light-state-B.png) | [png](exports/wf05-08/WF-07-member-share-desktop-dark-state-B.png) | [png](exports/wf05-08/WF-07-member-share-mobile-light-state-B.png) | [png](exports/wf05-08/WF-07-member-share-mobile-dark-state-B.png) |
+| WF-08 기본 | [png](exports/wf05-08/WF-08-link-desktop-light.png) | [png](exports/wf05-08/WF-08-link-desktop-dark.png) | [png](exports/wf05-08/WF-08-link-mobile-light.png) | [png](exports/wf05-08/WF-08-link-mobile-dark.png) |
+| WF-08 A | [png](exports/wf05-08/WF-08-link-desktop-light-state-A.png) | [png](exports/wf05-08/WF-08-link-desktop-dark-state-A.png) | [png](exports/wf05-08/WF-08-link-mobile-light-state-A.png) | [png](exports/wf05-08/WF-08-link-mobile-dark-state-A.png) |
+| WF-08 B | [png](exports/wf05-08/WF-08-link-desktop-light-state-B.png) | [png](exports/wf05-08/WF-08-link-desktop-dark-state-B.png) | [png](exports/wf05-08/WF-08-link-mobile-light-state-B.png) | [png](exports/wf05-08/WF-08-link-mobile-dark-state-B.png) |
+
+모바일 드로어(360×800, WF-08은 비회원 헤더라 없음)
+
+| 화면 | 라이트 | 다크 |
+| --- | --- | --- |
+| WF-05 드로어 | [png](exports/wf05-08/WF-05-drive-mobile-light-drawer.png) | [png](exports/wf05-08/WF-05-drive-mobile-dark-drawer.png) |
+| WF-06 드로어 | [png](exports/wf05-08/WF-06-trash-mobile-light-drawer.png) | [png](exports/wf05-08/WF-06-trash-mobile-dark-drawer.png) |
+| WF-07 드로어 | [png](exports/wf05-08/WF-07-member-share-mobile-light-drawer.png) | [png](exports/wf05-08/WF-07-member-share-mobile-dark-drawer.png) |
+
+`exports/wf05-08/.keep`은 export 폴더 생성을 위한 플레이스홀더다.
+
+### 새 토큰·컴포넌트 제안
+
+새 색 토큰은 없다. 쓴 변수는 `bg`, `surface`, `surface-raised`, `surface-hover`, `text`, `text-muted`, `border`, `border-strong`, `primary`, `on-primary`, `accent`, `error`, `error-subtle`, `info`, `info-subtle`, `overlay`, `scrim`뿐이다(DS 값 그대로, 파일에는 22개 변수만 옮겼다). 아래는 DS에 반영하지 않은 제안이다.
+
+- **File list row의 선택 표시**: 선택 행을 `info-subtle` 바탕 + `primary` 2px 테두리로 표시했다. DS의 File list row `selected`와 맞출 필요가 있다.
+- **선택 동작 띠(Selection actions bar)**: 선택된 항목의 동작(이름 변경·이동·내려받기·회원 공유·링크 공유·삭제 / 휴지통은 복원)을 목록 위 한 줄로 모았다. 선택 방식 [미확인]이므로 제안이다.
+- **Inline alert 3종 배치**: `error-subtle` 바탕에 `error` 아이콘, `info-subtle` 바탕에 `info` 아이콘, 본문은 `text`. WF-07은 필드 아래 인라인 오류(텍스트 `error`).
+- **Arch medallion**(v4 제안 승격 검토): 80×96, 빈 상태·보기 영역·차단 카드에도 같은 규격을 썼다. 서비스 표지용 56×64 소형도 썼다.
+- **Toggle·Radio·Checkbox·Avatar**: DS 인벤토리에 있는 컴포넌트를 이번 파일에는 시안용 프레임으로 다시 그렸다. 체크 표시용 `check`의 `on-primary` 변형 아이콘이 필요하다.
+- **모바일 하단 시트(링크 공유)**: 데스크톱 대화상자와 같은 내용을 아래에서 올라오는 시트로 바꿨다. DS의 Bottom sheet(파일·휴지통 복원)에는 링크 공유 변형이 없다.
+
+### 열린 기획 질문 (모두 기획 확인 필요)
+
+- **WF-05**: 삭제 확인 방식(확인 대화상자·되돌리기), 항목 선택 방식과 동작 노출 위치(데스크톱 띠·모바일 더 보기 시트), 폴더 만들기·이름 변경·이동의 입력 UI, 링크 주소 표시·복사 UI, 길게 이어진 이름 처리, 폴더 크기·날짜·시간대 표기, 공유 여부의 회원/링크 구분, 업로드 진행·로딩·썸네일 준비 중 표시, 모바일의 썸네일 대체(DEC-084 기준 생략으로 그림), 상태 B·C·E 문구.
+- **WF-06**: 복원 대상 선택 방식, 원래 폴더가 사라졌을 때의 복원 위치, 복원 실패·로딩 표현, 남은 기간 표기 단위, 상태 B 문구.
+- **WF-07**: 닫기의 도착 화면(WF-05인지), 빈 공유 목록 UI, 권한의 기본 선택(시안은 보기), 다운로드 허용의 편집 권한 시 표시, 상태 A·B 문구, 로딩·오류.
+- **WF-08**: 파일 이름·크기 표시 여부, 열 수 있는 형식의 범위, 사유별 안내 구분, 상태 A·B 문구, 로그인 버튼 문구와 로그인 후 복귀 위치.
+- **공통**: Q-090 테마 선택기 위치(어느 프레임에도 두지 않음), 모바일 헤더·푸터 배치의 기획 확정 여부.
+
+### review-09 반영 (WF-05~08 수정)
+
+호배님 지시(2026-11-19 22:58 KST)에 따라 review-09 지적 7건 중 **경미 4를 뺀 6건**만 고쳐 다시 그렸다. 부분 수정이며 나머지 레이아웃·문구·컴포넌트는 그대로다.
+
+| # | 지적 | 수정 |
+| --- | --- | --- |
+| 1 (major) | WF-05 데스크톱 호버 썸네일이 「종류」 열을 가림 | 썸네일을 184×128에서 152×104로 줄여 호버 행의 이름과 「종류」 열 사이 여백으로 옮겼다. 열 텍스트를 가리지 않는다. 모바일에는 호버 썸네일을 넣지 않았다(DEC-084) |
+| 2 (major) | WF-08 모바일 비회원 헤더의 용도 없는 햄버거 | 공통 컴포넌트 `header-guest-mobile`에서 메뉴 버튼(`ic/menu`)을 지워 6장에 반영했다. 로고와 로그인 버튼만 남았고 오른쪽 여백은 16px로 맞췄다. 회원 드로어는 만들지 않았다 |
+| 3 (minor) | keep-all과 어긋난 음절 단위 줄바꿈 | 단어(조사 포함) 중간에서 끊기던 문구에 줄바꿈을 직접 넣었다. 문구 내용은 바꾸지 않았다. 대상: WF-05 상태 A(데스크톱·모바일)·B·C·E 모바일 알림, WF-06 모바일 안내·빈 상태, WF-07 A·B 오류와 모바일 도움말, WF-08 보기 영역·B 차단 안내(데스크톱·모바일 라이트·다크 짝 포함) |
+| 4 (minor) | WF-05 상태 B·C·E에 남은 호버 배경 | 썸네일이 빠진 「현장 사진 03.jpg」 행의 `surface-hover` 바탕을 없앴다(데스크톱 B·C·E 라이트·다크 6장). 같은 잔여가 있던 상태 D의 배경 행도 함께 정리했다 |
+| 5 (minor) | WF-05·06 모바일에 서비스 맥락 약함 | 모바일 프레임 헤더 아래 첫 줄에 소형 서비스 표지(36×40 아치 메달리온 + 「나루 드라이브」 16px)를 넣었다. WF-05 14장·WF-06 8장(기본·상태·드로어). 테마 선택기·관리 메뉴·새 기능 없음 |
+| 6 (minor) | WF-06 상태 B 오류·선택 행·복원 버튼 불일치 | 오류 문구의 파일을 선택된 행과 같은 「견적서 v1.pdf」로 맞췄고, 그 행의 남은 기간을 「30일 경과」로 바꿨다. 「원래 위치로 복원」은 비활성 모양(`surface` 바탕, `border` 테두리, `text-muted` 글자)이다. 데스크톱·모바일 라이트·다크 4장 |
+
+**경미 4는 호배님 지시에 따라 손대지 않았다.** WF-08 데스크톱 비회원 헤더 로그인 버튼 옆 `[문구 미확정]`이 모바일 헤더에 없는 점, 그 생략을 문서로 해명하는 일, 데스크톱 쪽 표시를 바꾸는 일 모두 하지 않았다.
+
+**구성 근거를 화면에 맞춘 곳:** 위 프레임 표의 WF-05 기본·WF-06 B 행, 「그린 결과의 구성 요약」의 WF-05·06 문장(모바일 서비스 표지). 그 밖의 문장은 그대로다.
+
+**다시 낸 PNG(`exports/wf05-08/`, 같은 파일명, 60장):**
+
+- WF-05 데스크톱 12: `WF-05-drive-desktop-{light,dark}`, `…-state-A`, `-B`, `-C`, `-D`, `-E` 각 라이트·다크
+- WF-05 모바일 14: `WF-05-drive-mobile-{light,dark}`, `…-state-A`~`-E`, `…-{light,dark}-drawer`
+- WF-06 10: `WF-06-trash-desktop-{light,dark}-state-B`, `WF-06-trash-mobile-{light,dark}`, `…-state-A`, `-B`, `…-{light,dark}-drawer`
+- WF-07 12: `WF-07-member-share-desktop-{light,dark}-state-A`, `-B`, `WF-07-member-share-mobile-{light,dark}`, `…-state-A`, `-B`, `…-{light,dark}-drawer`
+- WF-08 12: `WF-08-link-desktop-{light,dark}`, `…-state-A`, `-B`, `WF-08-link-mobile-{light,dark}`, `…-state-A`, `-B`
+
+이번 수정에서 눈으로 다시 확인한 PNG: WF-05 데스크톱 기본(라이트), WF-05 모바일 다크 C·다크 드로어, WF-06 모바일 라이트 B, WF-07 모바일 라이트 A, WF-08 모바일 다크 A. 나머지 재출력본은 같은 구조라 개별로 보지 않았다 [미확인]. 줄바꿈은 글자 수 기준으로 넣은 고정 줄바꿈이라 실제 구현 글꼴·폭에서는 다시 확인해야 한다 [미확인].
+
+### WF-05~08 한계와 [미확인]
+
+- 글꼴: 헤드리스 FigCraft에 IBM Plex Sans KR이 없어 한글은 대체 글꼴로 렌더링된다. 파일에는 IBM Plex Sans KR / IBM Plex Sans 지정이 남아 있다.
+- 대비는 DS 대비표의 토큰 쌍을 그대로 따랐고 화면별로 다시 측정하지 않았다(DEC-102 충족 여부 화면 단위 [미확인]). 12·13px 보조 문구는 `text-muted`로 DS 표의 4.5:1을 넘는 쌍이다. 키보드 포커스·읽기 순서·터치 동작은 시안으로 검증할 수 없다 [미확인].
+- 호버·눌림·포커스 상태 프레임, 업로드 진행·로딩 표현은 그리지 않았다. 마우스 올림 썸네일은 WF-05 기본 데스크톱 한 프레임에만 슬롯으로 그렸고 실제 이미지 축소본은 쓰지 않았다(가짜 사진 금지).
+- 모바일에서 선택 항목의 동작(WF-05)은 행의 「더 보기」 버튼만 그렸고 그 메뉴·시트는 그리지 않았다 [미확인].
+- 선택 동작 띠와 모바일 하단 시트는 디자인 제안이다. 화면당 한 화면이 기획 와이어프레임과 달라진 부분은 위 표와 제안에 적었다.
+- 다크 프레임의 그림자는 DS 그림자 색을 라이트와 같은 값으로 고정했다(변수에 묶지 않음).
+- 프레임 각각을 모두 육안으로 확인하지는 못했다. WF-05 기본·상태 A·B·D(데스크톱)과 모바일 기본·D·드로어, WF-06 기본·B(모바일), WF-07 A·B·모바일 기본, WF-08 기본·A·B(데스크톱)는 스크린샷으로 확인했다. 나머지 다크·모바일 상태 프레임은 같은 구조의 복제본이라 개별 확인을 하지 않았다 [미확인].

@@ -722,3 +722,152 @@ v1·v2 절·파일·PNG는 비교용으로 그대로 둔다. v3는 v2 파일을 
 - 줄바꿈은 글자 수 기준으로 직접 넣은 모바일 문구가 있다(WF-09 모바일, WF-10 모바일, WF-11 모바일 설명). 실제 글꼴·폭에서는 다시 확인해야 한다 [미확인].
 - 눈으로 확인한 프레임: WF-09 데스크톱 라이트·상태 A 라이트·모바일 라이트·다크 상태 A·데스크톱 다크, WF-10 데스크톱·모바일 라이트, WF-11 데스크톱·모바일 라이트·메뉴 열림 다크·관리자 드로어 라이트/다크, WF-12 데스크톱 라이트·A·B, 모바일 라이트·A·B, 모바일 다크 B. 나머지는 같은 구조의 복제본이라 개별 확인을 하지 않았다 [미확인]. PNG 파일 자체를 다시 열어 보지는 않았다(내보내기 응답의 바이트 수만 확인).
 - 사용한 도구는 FigCraft MCP, Skill, Read, Edit, Write(`.keep`)이다. 웹·셸·REPL은 쓰지 않았다.
+
+---
+
+## WF-13~16 (P3-4 · 네 번째 묶음) · v4·WF-05~08·WF-09~12 시각 언어
+
+호배님이 2026-11-20 10:39 KST에 WF-09~12를 확정·커밋하고(review-11 경미 4건은 고치지 않고 유지) WF-13~16을 같은 방식으로 진행하라고 했다. 이 절은 **WF-13~16만** 다룬다. 기준은 develop `4b66d1d`의 기획 v1.0(DEC-081), 기능 범위는 `screen-data-actions.md`의 WF-13~16과 공통 헤더·푸터다. 새 빈 파일 [screens-wf13-16.figcraft](screens-wf13-16.figcraft)에서 시작했고, 이전 묶음 파일은 구조·토큰 값을 읽기만 했으며 복사·복제하지 않았다. 라이트/다크는 디자이너용 시안이며 테마 선택기(Q-090, DEC-101)는 프로필(WF-15)을 포함해 어느 프레임에도 두지 않는다. 터치 기기의 마우스 올림 썸네일은 생략한다(DEC-084, 이 묶음에 썸네일 화면 없음). 텍스트 4.5:1, UI·포커스·필수 경계 3:1을 목표로 DS 토큰 쌍만 골랐다(DEC-102, 화면별 실측은 [미확인]). 확인 대화상자는 기획에 없어 WF-13 숨김·노출과 WF-14 삭제에 만들지 않았다(DEC-068).
+
+### 이어받은 시각 언어
+
+- 헤더 72px·푸터 60px, 본문 폭 1120(가로 160~1280), 모바일 360(좌우 16, 44px 터치), 표면 `surface`(화면 바탕) → `surface-raised`(카드), 카드 그림자 1단계, 금색 `accent`는 28×2 수면선 같은 장식만, 오류 아이콘은 `error`.
+- **관리자 헤더(WF-13·14):** 일반 회원과 같은 헤더에 회원 메뉴 항목만 프로필·관리·로그아웃(WF-11·12에서 확정). 헤더 본체에 관리 바로가기를 더하지 않았다. 모바일 드로어도 프로필·관리·로그아웃. 메뉴를 연 프레임은 WF-11 `menu-open`에서 이미 보였으므로 이 묶음에서는 만들지 않았다.
+- **일반 회원 헤더(WF-15·16):** 프로필·로그아웃, 관리 없음, 드로어도 같다. 관리자는 WF-15 본문이 같으므로(AC 접근 대상: 관리자도 동일) 관리자 헤더 변형은 따로 그리지 않았다. 차이는 헤더 회원 메뉴 한 줄뿐이며 WF-11·12 프레임으로 이미 확인된다.
+- 아치 메달리온은 서비스·상태 표지에만 쓴다. 폼·목록·알림 안에는 쓰지 않았고 이 묶음에는 메달리온이 필요한 빈 상태·완료·차단 화면이 없다.
+
+### 구성 근거 (그리기 전에 작성)
+
+#### WF-13 관리자 오픈소스 관리
+
+- **주요 목표:** 관리자가 오픈소스(1차 Litpage)의 노출 상태를 보고 숨기거나 다시 노출한다. 숨기면 무슨 일이 생기는지 눌러 보기 전에 알고, 나루 드라이브는 이 화면과 무관하게 유지된다는 점을 헷갈리지 않는다.
+- **정보 위계:** (1) 「오픈소스 관리」 제목과 경로(관리 > 오픈소스 관리) (2) 목록 한 줄 = 오픈소스 이름, 노출 상태(글자 배지), 동작(숨김/노출) (3) 숨김 안내(모든 회원에게 보이지 않고 사용 차단, 결과물은 드라이브에만) (4) 상태 B에서만 나루 드라이브 유지 안내.
+- **구성:** **제목 열 + 목록 카드**(WF-11과 같은 비대칭 4/8, 같은 관리 영역임을 한눈에 알린다). 왼쪽 4열은 제목·경로·금색 수면선·한 줄 설명, 오른쪽 8열(728)은 목록 카드 한 장이다. 카드 머리 행(이름·노출 상태·동작)과 오픈소스 행. 행 선택 방식·검색·정렬·페이지 나눔은 [미확인]이라 그리지 않는다. 숨김 안내는 카드 아래 `info` 알림 한 개로 두어 동작 전에 읽히게 하고(색만이 아니라 글자와 아이콘), 확인 대화상자 대신 안내로 결과를 미리 알린다. 노출 중에는 「숨김」(secondary), 숨김 중에는 「노출」(secondary)이다. 되돌릴 수 있는 동작이라 위험 버튼을 쓰지 않았다. 상태 A는 Litpage 행이 숨김으로 바뀌고, 상태 B는 모든 오픈소스 숨김이다. 오픈소스가 Litpage 하나뿐이라 두 상태의 목록이 같게 보이므로 **상태 B만** 카드 위에 「나루 드라이브는 계속 사용할 수 있습니다」 알림(`[문구 미확정]`)을 둔다. 나루 드라이브를 목록 행으로 만들지 않았다(숨김 대상이 아님). 없는 오픈소스를 채우지 않았다. 모바일은 한 열: 제목 → 목록 행(이름, 배지, 전폭 44px 동작) → 알림. 드로어는 관리자.
+- **이끈 스킬 규칙:** ui-ux-pro-max(`color-not-decorative-only`, 터치 44, 비파괴 동작은 확인 대신 결과 안내), hallmark(게이트 4 카드 안 카드 금지, 라벨은 본문체·소문자 격·무자간, 상태점·가운뎃점 금지, 한 화면 약 80단어), web-design-guidelines(`<table>` 의미, 동작 버튼 구체 라벨, 비동기 결과 `aria-live`), frontend-design(대담함은 한 곳: 제목 열의 수면선, 그 밖은 조용히), design-taste-frontend(양쪽 가장자리, 상단 정렬, 빈 영역에 없는 기능을 채우지 않음).
+
+#### WF-14 관리자 카테고리 관리
+
+- **주요 목표:** 카테고리를 추가·이름 변경·삭제하고 서비스가 어느 카테고리에 속할지 바꾼다. 저장 버튼이 없고 바로 반영된다는 점을 알고 쓴다.
+- **정보 위계:** (1) 「카테고리 관리」 제목과 경로, 반영 안내 (2) 카테고리 이름 목록과 줄 동작(이름 변경·삭제) (3) 카테고리 추가 (4) 서비스 배정(서비스 이름 → 카테고리 드롭다운).
+- **구성:** **제목 열 + 카드 두 장.** 왼쪽 4열은 제목·경로·수면선·반영 안내(「변경은 홈과 헤더에 바로 반영됩니다. 저장 버튼은 없습니다.」)로 WF-13과 같은 문법이다. 오른쪽 8열은 서로 다른 일을 하는 카드 두 장(`카테고리` 목록, `서비스 배정`)을 세로로 쌓는다(한 카드에 두 일을 섞지 않는다). 카테고리 카드: 문서·저장소 두 줄과 각 줄의 「이름 변경」「삭제」, 맨 아래 「카테고리 추가」(앞에 `plus` 아이콘, 제안: 입력 UI·이름 규칙·삭제 확인·삭제 시 소속 서비스 처리는 [미확인]이라 입력 필드·대화상자를 그리지 않고 열린 질문으로 남긴다). 서비스 배정 카드: Litpage와 나루 드라이브 줄마다 선택 칸(드롭다운 닫힌 모양). **상태 A:** Litpage가 숨김이라 「문서」에 노출 서비스가 없는 관리 화면. 배정은 그대로 두고(숨김 오픈소스는 배정과 무관) 카테고리 줄에 「노출 중인 서비스 없음」 글자 표시와 서비스 줄에 「숨김」 배지를 더한다. **회원용 WF-02 빈 상태는 다시 그리지 않는다.** 삭제는 일반 secondary 버튼이다(확인 절차가 기획에 없어 빨강으로 강조해 파괴 확인을 암시하지 않는다). 모바일은 한 열로 쌓고 줄 동작은 44px 높이 버튼 두 개를 줄 아래에 가로로 둔다. 드로어는 관리자.
+- **이끈 스킬 규칙:** ui-ux-pro-max(`form-labels`, `error-clarity`, 터치 44, 한 화면 한 주 동작), hallmark(카드 하나에 한 가지 일, 게이트 3 아이콘 타일 반복 금지, 라벨 소문자 격), web-design-guidelines(폼 컨트롤은 `<label>`/`aria-label`, 아이콘만 있는 버튼 접근 이름, 변경 즉시 반영은 `aria-live="polite"`), frontend-design(사실은 한 곳에: 반영 안내는 제목 열에만), design-taste-frontend(두 카드 폭 같게, 오른쪽 열 높이를 왼쪽 열과 가장자리 정렬).
+
+#### WF-15 프로필
+
+- **주요 목표:** 내 계정이 어떻게 보이는지 확인하고, 표시 이름과 화면 언어를 정하고, 드라이브를 얼마나 쓰는지 본다. 계정 설정으로 가는 길을 찾는다.
+- **정보 위계:** (1) 내 계정(Google 계정 사진 자리·이름·이메일, 보기만) (2) 표시 이름(고칠 수 있는 유일한 텍스트 입력, 저장 자리) (3) 화면 언어 (4) 드라이브 사용량 (5) 계정 설정 링크.
+- **구성:** **계정 열 + 설정 카드 둘.** 왼쪽 4열(360)은 보기만 있는 것들, 오른쪽 8열(728)은 바꿀 수 있는 것들이다. 이 구분으로 「어디가 고칠 수 있는 곳인가」가 구성으로 읽힌다. 왼쪽: 계정 카드(아바타, Google 계정 이름, 이메일, 「Google 계정 정보는 여기서 바꿀 수 없습니다」 보조 문구), 사용량 카드(큰 수치 하나와 `[단위 미확인]` 초안 표기, **한도가 없으므로 진행 막대를 그리지 않는다**), 「계정 설정」 이동 행(chevron, → WF-16). 오른쪽: 표시 이름 카드(라벨, 입력, 규칙 한 줄, 「저장」, 미설정이면 Google 계정 이름이 표시된다는 보조 문구, 한 번 정하면 비울 수 없다는 보조 문구), 화면 언어 카드(한국어/영어 라디오, 선택은 다음 방문에도 유지). 「저장」은 버튼 형태가 기획에 없어(문서의 자리 표시 [미확인]) 입력 옆 primary 버튼 한 개(배경 `primary`, 라벨 `on-primary`)의 최소 자리만 둔다. 이 화면의 유일한 저장 동작이라 시안은 primary로 확정했다(review-12 major 1). **탈퇴 메뉴·테마 선택기는 어디에도 없다.** 기본 상태의 프로필 사진은 가짜 인물 사진 대신 단색 아바타(이니셜)로 처리한다. **상태 A:** 사진이 없을 때 점선 원 자리와 「Google 프로필 사진이 없습니다」 안내. **상태 B:** 표시 이름 오류. 입력 경계와 아이콘·글자를 `error`로 바꾸고 대표 오류 한 문장(`[문구 미확정]`), 입력값은 반영되지 않는다는 안내. 사유별 문구는 [미확인]이라 구분하지 않는다. **상태 C:** 사용량 0(「0 B」와 단위 [미확인]). 모바일은 한 열: 계정 → 표시 이름 → 화면 언어 → 사용량 → 계정 설정 행. 드로어는 일반 회원.
+- **이끈 스킬 규칙:** ui-ux-pro-max(`inline-validation`, `error-clarity`, 라벨은 항상 보임·플레이스홀더만 쓰지 않음, 색만으로 오류 전달 금지, 라디오 44px 히트 영역), hallmark(카드 안 카드 금지, 한 카드 한 일, 라벨 소문자 격, 가짜 사진·지표 금지, 막대 같은 장식 지표 금지), web-design-guidelines(`<label>`·`autocomplete="off"`·`spellcheck` 끔·오류는 필드 옆 인라인·`aria-live`, 라디오는 라벨과 컨트롤이 하나의 히트 영역, 숫자 `tabular-nums`, 이메일 `translate="no"`), frontend-design(오류는 원인과 다음 행동), design-taste-frontend(양쪽 가장자리, 두 열 상단 정렬).
+
+#### WF-16 계정 설정
+
+- **주요 목표:** 탈퇴 화면(WF-09)으로 간다. 이 화면의 일은 그것뿐이다.
+- **정보 위계:** (1) 「계정 설정」 제목과 경로(프로필 > 계정 설정) (2) 「탈퇴」 메뉴 한 줄.
+- **구성:** **제목 열 + 메뉴 한 줄 카드**(WF-11과 같은 4/8 문법의 가장 짧은 형태). 오른쪽 8열에 행 하나짜리 카드를 두고, 행은 제목 「탈퇴」·한 줄 설명 초안·이동 표시다. 본문 아래 여백은 넓지만 **기획에 없는 설정 항목을 채우지 않는다.** 위험 색을 쓰지 않는다(이 행은 확인 화면으로 가는 이동일 뿐 실행이 아니다). 경로의 「프로필」은 WF-15로 돌아가는 링크다(진입이 WF-15의 링크뿐이라는 기획과 모순되지 않는 상위 이동; 회원 메뉴에는 이 항목을 두지 않았다). WF-09 취소 시 복귀 전용 프레임은 만들지 않는다. 이미 탈퇴한 계정의 표현은 [미확인]이라 그리지 않는다. 추가 상태 없음. 모바일은 한 열, 행 높이 72px로 44px 터치를 확보한다. 드로어는 일반 회원.
+- **이끈 스킬 규칙:** frontend-design(한 곳에만 대담함, 없는 것을 꾸미지 않음), design-taste-frontend(빈 영역에 기능 발명 금지, 가장자리 정렬), ui-ux-pro-max(`nav-hierarchy`, 터치 44, 현재 위치 표시), hallmark(한 화면 한 동작, 아이콘 타일 카드 줄 금지), web-design-guidelines(링크는 `<a>`, 이동 행 키보드 포커스).
+
+### 스킬 적용 기록
+
+| 스킬 | 로드 방법 | 읽은 파일 | 가져온 규칙·권고 | 반영한 화면·상태 |
+| --- | --- | --- | --- | --- |
+| frontend-design | Skill 도구 | 플러그인 `SKILL.md`(Skill 호출 결과) | 한 곳에만 대담함, 장식 라벨·한 단어 강조 금지, 한 사실은 한 곳, 오류·빈 상태는 원인과 행동 | WF-13~14 제목 열 수면선, WF-14 반영 안내 위치, WF-15 오류 문구 |
+| design-taste-frontend | Skill 도구 + Read | `SKILL.md`, `references/layout-v4.md` 앞부분(제품 앱이라 마케팅·사진·셰이더 규칙과 `gate.mjs`는 제외) | 양쪽 가장자리, 상단 정렬, 3열 아이콘 카드 지양, 빈 영역에 기능을 채우지 않음 | WF-13~16 4/8 구성, WF-16 여백 |
+| ui-ux-pro-max | Skill 도구 + Read | `SKILL.md`, `references/pro-rules.md`(`search.py` 미실행, 팔레트 hex로 Deep Ink 변경 없음) | 터치 44, 색만으로 전달 금지, 상태 대비 라이트·다크 별도 점검, 라벨·인라인 오류, 토큰 사용 | 전 화면 버튼·배지, WF-15 상태 B |
+| hallmark | Skill 도구 + Read | `SKILL.md`, `references/gates.md` 1~4 앞부분(lint 미실행) | 카드 안 카드 금지, 라벨 본문체·소문자 격·무자간, 가운뎃점·상태점·이모지 금지, 가짜 지표 금지 | WF-13~16 카드, 푸터, WF-15 사용량 카드(막대 없음) |
+| web-design-guidelines | Skill 도구 + 프롬프트 인라인 규칙 | `SKILL.md`(네트워크 미사용) | 폼 라벨·인라인 오류·`aria-live`·`autocomplete`, 구체적 버튼 라벨, `tabular-nums`·`translate="no"`, 한국어 문구 우선 | WF-15 폼, WF-13·14 동작 라벨 |
+
+참조 파일 읽기 기록: ui-ux-pro-max `references/pro-rules.md`(앞 120행), hallmark `references/gates.md`(앞 90행), design-taste-frontend `references/layout-v4.md`(앞 80행)를 Read로 열었다. design-taste-frontend·hallmark·frontend-design의 나머지 참조 파일, ui-ux-pro-max의 `quick-reference.md`는 열지 않았다. `gate.mjs`·`search.py`·`sloplint.mjs`·네트워크는 쓰지 않았다. 구성 근거에 적은 kebab-case 규칙 이름(`form-labels`, `inline-validation` 등)은 이전 절의 표기를 따른 것으로 원문 대조는 [미확인]이다.
+
+### WF-13~16 프레임과 상태 (WF · FR/AC · 상태)
+
+**프레임 합계 48개** = 기본·상태 40(데스크톱 20 + 모바일 20) + 모바일 헤더 드로어 8(WF-13·14 관리자, WF-15·16 일반 회원 × 라이트·다크). 데스크톱 1440×900, 모바일 폭 360(높이는 내용에 맞춤, 드로어 360×800). 라이트·다크는 같은 구조에 변수 컬렉션 `Deep Ink`의 Light/Dark 모드만 바꿨다.
+
+| WF | 상태 | 관련 FR / AC | 화면 내용 |
+| --- | --- | --- | --- |
+| WF-13 오픈소스 관리 | 기본 | FR-ADM-003 · AC-FR-ADM-003-01·03 | 관리자 헤더, 경로, 목록 카드(이름 Litpage, 노출 상태 「노출」 배지, 「숨김」 버튼), 숨김 안내(모든 회원에게 보이지 않고 사용 차단, 결과물은 드라이브에만). 확인 대화상자 없음 |
+| WF-13 | A Litpage 숨김 | AC-FR-ADM-003-01·02 | 배지 「숨김」, 버튼 「노출」 |
+| WF-13 | B 모든 오픈소스 숨김 | AC-FR-ADM-003-02 · AC-FR-HOME-001-02 | A와 같은 목록 + 카드 위 「모든 오픈소스를 숨겼습니다. 나루 드라이브는 계속 사용할 수 있습니다.」(`[문구 미확정]`). 오픈소스가 Litpage뿐이라 목록은 A와 같고 이 안내로 구별 |
+| WF-13 | 모바일 드로어 | FR-SHELL-001 · AC-FR-SHELL-001-04 | 관리자: 서비스 전환, 카테고리, 프로필·**관리**(현재 위치)·로그아웃. 테마 선택기 없음 |
+| WF-14 카테고리 관리 | 기본 | FR-ADM-004 · AC-FR-ADM-004-01·02·03 | 관리자 헤더, 경로, 반영 안내, 「카테고리」 카드(문서·저장소, 줄별 이름 변경·삭제, `plus` 아이콘 + 카테고리 추가), 「서비스 배정」 카드(서비스별 선택 칸). 입력 UI·삭제 확인 없음 |
+| WF-14 | A 노출 서비스 없는 카테고리 | AC-FR-HOME-002-02 · AC-FR-ADM-004-02 | Litpage 「숨김」 배지(배정은 「문서」 그대로), 「문서」 줄에 「노출 중인 서비스 없음」 표시. 회원용 WF-02 빈 상태는 다시 그리지 않음 |
+| WF-14 | 모바일 드로어 | FR-SHELL-001 | 관리자 항목 포함 |
+| WF-15 프로필 | 기본 | FR-SHELL-003 · AC-FR-SHELL-003-01·02·04·05·06 | 일반 회원 헤더, 계정 카드(단색 이니셜 아바타, Google 계정 이름·이메일 보기만), 사용량 카드(예 1.2 GB, 한도·막대 없음), 계정 설정 행(→ WF-16), 표시 이름 카드(입력, 저장 최소 자리, 규칙·미설정 시 Google 계정 이름·한 번 정하면 비울 수 없음 안내), 화면 언어 라디오(한국어/영어, 다음 방문에도 유지). 탈퇴·테마 항목 없음 |
+| WF-15 | A 사진 없음 | AC-FR-SHELL-003-01 | 아바타 자리가 점선 원 + 사용자 아이콘, 「등록된 Google 프로필 사진이 없습니다」 안내 |
+| WF-15 | B 표시 이름 오류 | AC-FR-SHELL-003-03·07·08 | 입력 경계·오류 아이콘·글자 `error`, 대표 오류 한 문장 `[문구 미확정]`(허용 외 문자 예시 「나루!!」, 반영하지 않음). 사유별 문구 구분 없음 |
+| WF-15 | C 사용량 0 | AC-FR-SHELL-003-06 | 「0 B」(단위 초안, [미확인]) |
+| WF-15 | 모바일 드로어 | FR-SHELL-001 | 일반 회원: 서비스 전환, 카테고리, 프로필(현재 위치)·로그아웃. 관리 없음 |
+| WF-16 계정 설정 | 기본 | FR-AUTH-006 · AC-FR-AUTH-006-01 | 일반 회원 헤더, 경로(프로필 > 계정 설정), 「계정 설정」, 「탈퇴」 메뉴 한 줄(→ WF-09). 그 밖의 설정 항목 없음 |
+| WF-16 | 모바일 드로어 | FR-SHELL-001 | 일반 회원(관리 없음). 이 화면은 회원 메뉴 항목이 아니므로 현재 위치 표시 없음 |
+
+관리자 헤더 변형을 WF-15에 따로 그리지 않은 이유: 본문이 같고(접근 대상: 로그인한 회원, 관리자도 동일) 차이가 회원 메뉴의 「관리」 한 줄뿐이며, 그 차이는 WF-11 `menu-open`과 이 묶음의 관리자 드로어(WF-13·14)로 이미 확인되기 때문이다. 공통 푸터(이용약관, 개인정보처리방침, 오픈소스 라이선스 고지, 문의 `aslanhobae@gmail.com`, `Dev. Aslan0`, 회사 정보 없음)는 모든 프레임에 있다. 테마 선택기(Q-090)는 어디에도 없다. 로딩 화면은 기획에 없어 만들지 않았다. 표의 이름·이메일·용량·입력 예시는 예시 값이다(`Hana Park`, `example.com`, `1.2 GB`).
+
+### PNG 파일 링크 표 (`exports/wf13-16/`)
+
+| 화면·상태 | 데스크톱 라이트 | 데스크톱 다크 | 모바일 라이트 | 모바일 다크 |
+| --- | --- | --- | --- | --- |
+| WF-13 기본 | [png](exports/wf13-16/WF-13-oss-desktop-light.png) | [png](exports/wf13-16/WF-13-oss-desktop-dark.png) | [png](exports/wf13-16/WF-13-oss-mobile-light.png) | [png](exports/wf13-16/WF-13-oss-mobile-dark.png) |
+| WF-13 A | [png](exports/wf13-16/WF-13-oss-desktop-light-state-A.png) | [png](exports/wf13-16/WF-13-oss-desktop-dark-state-A.png) | [png](exports/wf13-16/WF-13-oss-mobile-light-state-A.png) | [png](exports/wf13-16/WF-13-oss-mobile-dark-state-A.png) |
+| WF-13 B | [png](exports/wf13-16/WF-13-oss-desktop-light-state-B.png) | [png](exports/wf13-16/WF-13-oss-desktop-dark-state-B.png) | [png](exports/wf13-16/WF-13-oss-mobile-light-state-B.png) | [png](exports/wf13-16/WF-13-oss-mobile-dark-state-B.png) |
+| WF-14 기본 | [png](exports/wf13-16/WF-14-categories-desktop-light.png) | [png](exports/wf13-16/WF-14-categories-desktop-dark.png) | [png](exports/wf13-16/WF-14-categories-mobile-light.png) | [png](exports/wf13-16/WF-14-categories-mobile-dark.png) |
+| WF-14 A | [png](exports/wf13-16/WF-14-categories-desktop-light-state-A.png) | [png](exports/wf13-16/WF-14-categories-desktop-dark-state-A.png) | [png](exports/wf13-16/WF-14-categories-mobile-light-state-A.png) | [png](exports/wf13-16/WF-14-categories-mobile-dark-state-A.png) |
+| WF-15 기본 | [png](exports/wf13-16/WF-15-profile-desktop-light.png) | [png](exports/wf13-16/WF-15-profile-desktop-dark.png) | [png](exports/wf13-16/WF-15-profile-mobile-light.png) | [png](exports/wf13-16/WF-15-profile-mobile-dark.png) |
+| WF-15 A | [png](exports/wf13-16/WF-15-profile-desktop-light-state-A.png) | [png](exports/wf13-16/WF-15-profile-desktop-dark-state-A.png) | [png](exports/wf13-16/WF-15-profile-mobile-light-state-A.png) | [png](exports/wf13-16/WF-15-profile-mobile-dark-state-A.png) |
+| WF-15 B | [png](exports/wf13-16/WF-15-profile-desktop-light-state-B.png) | [png](exports/wf13-16/WF-15-profile-desktop-dark-state-B.png) | [png](exports/wf13-16/WF-15-profile-mobile-light-state-B.png) | [png](exports/wf13-16/WF-15-profile-mobile-dark-state-B.png) |
+| WF-15 C | [png](exports/wf13-16/WF-15-profile-desktop-light-state-C.png) | [png](exports/wf13-16/WF-15-profile-desktop-dark-state-C.png) | [png](exports/wf13-16/WF-15-profile-mobile-light-state-C.png) | [png](exports/wf13-16/WF-15-profile-mobile-dark-state-C.png) |
+| WF-16 기본 | [png](exports/wf13-16/WF-16-account-desktop-light.png) | [png](exports/wf13-16/WF-16-account-desktop-dark.png) | [png](exports/wf13-16/WF-16-account-mobile-light.png) | [png](exports/wf13-16/WF-16-account-mobile-dark.png) |
+
+모바일 드로어(360×800)
+
+| 화면 | 라이트 | 다크 |
+| --- | --- | --- |
+| WF-13 드로어(관리자) | [png](exports/wf13-16/WF-13-oss-mobile-light-drawer.png) | [png](exports/wf13-16/WF-13-oss-mobile-dark-drawer.png) |
+| WF-14 드로어(관리자) | [png](exports/wf13-16/WF-14-categories-mobile-light-drawer.png) | [png](exports/wf13-16/WF-14-categories-mobile-dark-drawer.png) |
+| WF-15 드로어(일반 회원) | [png](exports/wf13-16/WF-15-profile-mobile-light-drawer.png) | [png](exports/wf13-16/WF-15-profile-mobile-dark-drawer.png) |
+| WF-16 드로어(일반 회원) | [png](exports/wf13-16/WF-16-account-mobile-light-drawer.png) | [png](exports/wf13-16/WF-16-account-mobile-dark-drawer.png) |
+
+`exports/wf13-16/.keep`은 export 폴더 생성을 위한 플레이스홀더다. FigCraft 파일 안 `TEMPLATE-*` 프레임(셸 2개, 드로어 패널 2개)과 로고·아이콘 원본은 복제용 작업 부품이며 내보내지 않았다.
+
+### 새 토큰·컴포넌트 제안
+
+새 DS 색 토큰은 없다. 쓴 변수는 `bg`, `surface`, `surface-raised`, `surface-hover`, `text`, `text-muted`, `border`, `border-strong`, `primary`, `on-primary`, `accent`, `focus`, `success`, `success-subtle`, `warning`, `warning-subtle`, `error`, `error-subtle`, `info`, `info-subtle`, `overlay`(DS 값 그대로)와 파일 안 보조 변수 `wordmark`(라이트 `#1E3A5F`, 다크 `#E8EDF5`, WF-09~12와 같은 이유의 파일 내부 값이며 DS 토큰 제안 아님)다. `focus`·`error-subtle`은 변수만 만들고 이 묶음 프레임에서는 쓰지 않았다(포커스·눌림 프레임을 그리지 않음). 이 묶음은 새 빈 파일이라 DS 컴포넌트를 연결하지 않고 토큰 변수로 다시 그렸다. DS의 Button·Text field·Inline alert·Select와 일치하는지는 구현 전에 대조해야 한다 [미확인]. 아래는 DS에 반영하지 않은 제안이다.
+
+- **관리 목록 카드(Admin list card)**: 머리 행 + 행 구분선 + 행 동작(WF-13 한 줄 표, WF-14 카테고리·서비스 배정 카드, WF-16 이동 행). WF-11의 Admin menu row와 한 가족으로 정리할 것을 제안.
+- **상태 배지(Status badge)**: 노출(`success-subtle` + `success`)·숨김(`surface-hover` + `text`)·노출 서비스 없음(`warning-subtle` + `warning`). 글자로 구분하고 상태점·아이콘은 쓰지 않는다. WF-12의 이용 중/정지 배지와 같은 규격(높이 28, 반지름 14).
+- **선택 칸 닫힌 모양(Select closed)**: WF-14 서비스 배정. 높이 44, `border-strong` 1.5, 오른쪽 chevron. 열린 목록 모양은 그리지 않았다 [미확인].
+- **라디오 행(Radio row)**: WF-15 화면 언어. 행 전체가 히트 영역(높이 52, 모바일 44 이상), 선택은 `primary` 링 + 점.
+- **계정 카드(Account card)**: 단색 이니셜 아바타 72(모바일 64) + 이름 + 이메일. 사진이 없으면 점선 원 + 사용자 아이콘. 실제 사진이 있을 때의 크롭·대체 텍스트 규격은 [미확인].
+- **사용량 값(Usage figure)**: 32px Bold + `tabular-nums`. 한도가 없으므로 진행 막대·링 차트를 두지 않는다는 규칙을 DS에 적어 둘 것을 제안.
+- **폼 오류 행(Field error row)**: 입력 `error` 2px 경계 + 필드 아래 `error` 아이콘·글자 한 줄(WF-15 상태 B). DS Text field 오류 상태와 대조 필요.
+- **경로(Breadcrumb)**: 관리 > 하위 화면, 프로필 > 계정 설정. 14px, 상위는 `primary`, 현재는 `text-muted`. 구분 기호는 텍스트 「>」로 그렸다(아이콘 아님).
+- **드로어 현재 위치 표시**: 현재 항목 `surface-hover` 바탕 + SemiBold(WF-11 회원 메뉴 표시와 같은 방식).
+
+### 열린 기획 질문 (모두 기획 확인 필요)
+
+- **WF-13**: 행 선택 방식·검색·정렬·페이지 나눔(오픈소스가 늘 때), 숨김·노출 직후의 피드백(Toast 필요 여부, `aria-live` 문구), 나루 드라이브 유지 안내 문구와 이 안내를 상태 B에서만 둘지 항상 둘지, 로딩·오류·빈 목록.
+- **WF-14**: 카테고리 추가 입력 UI(인라인/대화상자), 이름 변경 입력 UI, 이름 규칙(길이·중복·번역), 삭제 확인 절차와 **삭제 시 소속 서비스 처리**, 한 서비스의 복수 카테고리, 카테고리 순서 변경 필요 여부, 드롭다운 목록에 「없음」을 둘지, 변경 직후 피드백, 로딩·오류.
+- **WF-15**: 「저장」 버튼 형태와 위치(문서의 자리 표시), 저장 직후 피드백, 표시 이름 오류의 사유별 문구(빈 값·허용 외 문자·길이·중복·탈퇴 보관 중 이름 구분 여부), 드라이브 사용량 단위·소수 자릿수(초안 `1.2 GB`, `0 B`), 화면 언어 보관 위치(계정/기기)와 영어 UI 문구, 사진이 있을 때의 표시 규격, 이미 정한 표시 이름 상태를 입력칸에 채워 보일지, 로딩.
+- **WF-16**: 탈퇴 메뉴 설명 문구(시안 초안 「탈퇴 안내를 확인한 뒤 진행합니다」), 경로의 「프로필」 상위 링크 허용 여부, 이미 탈퇴한 계정의 표현, 로딩·오류.
+- **공통**: Q-090 테마 선택기 위치(어느 프레임에도 두지 않음), 모바일 헤더·푸터·드로어 배치의 기획 확정 여부.
+
+### WF-13~16 한계와 [미확인]
+
+- 글꼴: 헤드리스 FigCraft에 IBM Plex Sans KR·IBM Plex Sans가 없어 PNG에는 대체 글꼴이 쓰인다. 파일에는 지정이 남아 있다. 굵기(Bold·SemiBold)가 PNG에서 약하게 보이는 곳이 있다.
+- 대비는 DS 대비표의 토큰 쌍만 골랐고 화면별로 다시 측정하지 않았다(DEC-102 화면 단위 충족 [미확인]). 키보드 포커스·읽기 순서·터치 동작·`aria-live`는 시안으로 검증할 수 없다. 호버·눌림·포커스·비활성 상태 프레임은 그리지 않았다.
+- 카드·알림·드로어 그림자 색은 변수에 묶지 않은 고정 값이다(다크에서도 같은 값). 로고는 WF-09~12 파일의 로고 벡터 경로를 읽어 같은 모양으로 다시 그렸다. 아이콘은 `design-system/icons`의 SVG를 불러와 `stroke`를 변수에 묶었다. (review-12 반영 전에는 `plus`·오류 아이콘이 DS에 없어 「+」 글자와 `warning` 재사용을 썼으나, 아래 「review-12 반영」에서 둘 다 전용 아이콘으로 바꿨다.)
+- 모바일 문구 줄바꿈은 글자 수 기준으로 직접 넣은 곳이 있다(WF-14 반영 안내, WF-15 도움말·오류). 실제 글꼴·폭에서는 다시 확인해야 한다. 데스크톱 도움말 일부는 줄바꿈을 직접 넣지 않았다.
+- WF-13 본문 아래, WF-14 본문 아래, WF-16 본문 아래 여백이 넓다(항목이 적고 기획에 없는 기능을 채우지 않는 선택).
+- 일반 회원 드로어에서 관리 행을 지우는 과정에서 생긴 빈 행을 발견해 수정했고, 도움말 오탈자(「셈니다」→「셉니다」) 18곳을 찾아 라이트·다크 모두 고쳐 해당 PNG를 다시 내보냈다.
+- 눈으로 확인한 프레임: WF-13 데스크톱 라이트 기본·A·B, 모바일 라이트 기본·B, 관리자 라이트 드로어, WF-14 데스크톱 라이트 기본, 모바일 라이트 기본, 모바일 다크 A, WF-15 데스크톱 라이트 기본·A·B, 데스크톱 다크 B, 모바일 라이트 기본·A·B, 모바일 다크 드로어, WF-16 데스크톱 라이트, 다크 드로어. 나머지 다크·상태 프레임(WF-14 데스크톱 A, WF-15 C 등)은 같은 구조의 복제본이라 개별 확인을 하지 않았다 [미확인]. 최종 PNG를 다시 열어 본 것은 WF-15 라이트 드로어, WF-16 다크 드로어 2장뿐이다.
+
+### review-12 반영 (2026-11-20, 호배님 지시: major 1, minor 1·2만)
+
+- **major 1 · WF-15 「저장」은 primary로 확정.** 시안을 고치지 않고 문서만 맞췄다. 위 구성 근거의 secondary 표기를 primary(`primary` 배경, `on-primary` 라벨)로 바꿨다. WF-15 12개 프레임(기본·A·B·C × 데스크톱/모바일 × 라이트/다크)을 모두 확인했고 전부 primary라 figcraft·PNG 변경은 없다.
+- **minor 1 · WF-14 「+ 카테고리 추가」.** 글자 「+」를 새 `plus` 아이콘으로 바꾸고 문구 「카테고리 추가」는 유지했다. 8개 프레임(기본·A × 데스크톱/모바일 × 라이트/다크). 아이콘 색은 글자와 같은 `primary`. 선이 시작하는 자리는 이전 「+」 글자 자리에 맞췄다(데스크톱 24×24 칸, 모바일은 줄 안 간격 8px). 드로어에는 이 버튼이 없어 드로어 PNG는 다시 내지 않았다.
+- **minor 2 · WF-15 상태 B.** `warning` 재사용을 버리고 새 `error` 아이콘(원 + 느낌표)으로 바꿨다. 색은 계속 `error` 토큰, 문구·레이아웃·입력 오류 경계는 그대로. 아이콘 칸을 20→24로 키워 24 규격으로 그렸고, 모바일은 간격을 8→4로 줄여 문구 시작 위치(28)를 유지했다. 4개 프레임(데스크톱/모바일 × 라이트/다크). 기본·A·C·드로어는 이 아이콘이 없어 그대로다.
+- **새 아이콘 규격.** `design-system.md` 아이콘 절과 같다: 24×24, 라이브 에어리어 패딩 2px, 스트로크 1.75, 라운드 캡·조인, `currentColor`, 외부 세트 복사 없음. `plus`는 십자 두 획(5.5~18.5), `error`는 `info`와 같은 원 곡선에 느낌표를 넣었다. `warning`(삼각형)·`info`(원 + i)와 윤곽이 달라 오류·경고·안내가 겹치지 않는다.
+- **배치 결정: 부분 B.** `design-system/icons/plus.svg`, `design-system/icons/error.svg` 두 파일만 추가했다(새 파일이라 이미 수정 중인 DS 파일과 섞이지 않는다). DS 아이콘 폴더가 SVG의 원본이라 시안에만 두면 구현 때 어긋나기 때문이다. `design-system.md` 아이콘 표(37→39종), `design-system.figcraft`의 `icon/<name>` 컴포넌트, 아이콘 시트 PNG는 이미 수정 중인 파일이라 **건드리지 않았고** DS 반영 제안으로 남긴다. 이 시안 파일에는 마스터 프레임 `plus`·`error`를 `x=-1000` 작업 영역에 두었다.
+- **다시 낸 PNG 12장**(`exports/wf13-16/`, 같은 이름 덮어씀, 1배): `WF-14-categories-desktop-{light,dark}`, `WF-14-categories-desktop-{light,dark}-state-A`, `WF-14-categories-mobile-{light,dark}`, `WF-14-categories-mobile-{light,dark}-state-A`, `WF-15-profile-desktop-{light,dark}-state-B`, `WF-15-profile-mobile-{light,dark}-state-B`(각 `.png`).
+- **minor 3·4는 손대지 않았다**: 카드·알림·드로어 그림자 고정값, 헤드리스 대체 글꼴과 모바일 도움말 수동 줄바꿈은 그대로다.
+- 눈으로 확인: figcraft 화면으로 WF-14 데스크톱 라이트 카드, WF-15 B 데스크톱·모바일 카드, 내보낸 PNG 중 WF-14 모바일 다크 A와 WF-15 데스크톱 다크 B. 나머지는 같은 복제 구조라 개별 확인하지 않았다 [미확인].
+- 열람 기록(정직성): `screens.md`의 앞 120행(v1·v2 절 일부 텍스트)과 WF-09~12 절을 읽었다. v1~v3의 FigCraft 파일과 PNG는 열지 않았고 v1~v3 절 문장은 레이아웃 근거로 쓰지 않았다. v4·WF-05~08의 FigCraft와 PNG는 열지 않았으며(해당 절 텍스트만 참조) `screens-wf09-12.figcraft`는 구조·토큰·로고 경로를 읽기 전용으로 조회했다. WF-09~12 PNG는 열지 않았다.
+- 사용한 도구는 FigCraft MCP, Skill, Read, Edit, Write(`.keep`)이다. 웹·셸·REPL은 쓰지 않았다.

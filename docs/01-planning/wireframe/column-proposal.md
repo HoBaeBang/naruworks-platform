@@ -1,6 +1,6 @@
 # 목록 열 구성 (확정)
 
-상태: 확정 (DEC-075, 2026-11-18 22:20 KST). DEC-073 기본안을 대체한다. 승인된 FRD·BR·NFR v1.1 본문은 고치지 않으며, 문장 수정은 `drafts/change-proposal-v1.2.md`에 제안한다.
+상태: 확정 (DEC-075, 2026-11-18 22:20 KST). DEC-073 기본안을 대체한다. 승인된 FRD·BR·NFR v1.1 본문은 고치지 않으며, 문장 수정은 `docs/01-planning/change-proposal-v1.2.md`에 제안한다.
 
 | 항목 | 내용 |
 |---|---|

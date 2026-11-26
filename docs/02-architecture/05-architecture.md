@@ -23,13 +23,14 @@
 | v0.2 | 2026-11-19 (KST) | v0.2 — Gemini 검토(P2-4-arch-05-06-review-gemini-01) RV-001~006 반영 (2026-11-19 KST) |
 | v0.3 | 2026-11-26 (KST) | rebaseline 2f1db92. 요청 흐름, 만료·백업 정책, 운영·프런트 책임 재대조 반영. |
 | v0.4 | 2026-11-26 (KST) | [ADR 0004](../decisions/0004-auth-idp-litpage.md) 연결. 나루 자체 인증·PostgreSQL 세션 및 Litpage 인증 경계 반영. |
+| v0.4 보완 | 2026-11-26 21:45 KST | 호배님 Litpage SSO B-1 결정 반영. |
 
 ### 1.1 입력 기준선
 
 | 직접 읽은 파일 | 확인한 표기 |
 |---|---|
 | [0003-backend-stack.md](../decisions/0003-backend-stack.md) | 개정 1, 2026-11-26 재대조. 스택 승인일 2026-11-19 |
-| [ADR 0004](../decisions/0004-auth-idp-litpage.md) | 개정 1, 2026-11-26 연결. 2026-11-19 15:07 KST 호배님 승인 |
+| [ADR 0004](../decisions/0004-auth-idp-litpage.md) | 개정 2. 2026-11-19 15:07 KST 호배님 승인, 2026-11-26 21:45 KST SSO B-1 결정 |
 | [04-NFR-technical.md](04-NFR-technical.md) | v0.3 |
 | [06F-stack-feasibility.md](06F-stack-feasibility.md) | v0.4 |
 | [NFR.md](../01-planning/nfr/NFR.md) | v1.3 |
@@ -46,7 +47,7 @@
 
 ### 1.2 문서 번호
 
-05는 C4 아키텍처, 06은 크레이트 구조다. API 계약은 07에서 다룬다. 인증/IdP·세션은 [ADR 0004](../decisions/0004-auth-idp-litpage.md)를 따르고 Litpage SSO 방식은 09에서 최종 확정한다. 배포 구성과 가용률 관측 세부는 후속 배포·운영 설계에 둔다.
+05는 C4 아키텍처, 06은 크레이트 구조다. API 계약은 07에서 다룬다. 인증/IdP·세션은 [ADR 0004](../decisions/0004-auth-idp-litpage.md)를 따르고 Litpage SSO는 B-1로 결정했으며 세부 계약은 [09](09-auth.md#4-litpage-sso)를 따른다. 배포 구성과 가용률 관측 세부는 후속 배포·운영 설계에 둔다.
 
 ## 2. 범위와 원칙
 
@@ -197,7 +198,7 @@ sequenceDiagram
 
 [기획] FR-AUTH-002, FR-OSS-001, NFR-SEC-001. 통합 로그아웃은 현재 기기의 나루와 Litpage 세션을 끝내며 다른 기기 세션은 유지한다(DEC-094). [제안값 PV-017] 로그아웃 전파 p99 ≤ 5초, 로그아웃 API p95 ≤ 2초, 액세스 토큰 수명 5분 이하 또는 백채널 로그아웃을 검토한다(AS-008). 토큰 수명만으로 전파 지연 목표를 만족하는지는 [미확인]이며 09에서 검증한다.
 
-[ADR 0004](../decisions/0004-auth-idp-litpage.md)는 Litpage 인증 연결을 새로 붙이고 SSO는 B-2(공유 세션 또는 내부 토큰)를 추천한다. 최종 방식은 09에서 확정한다.
+[ADR 0004](../decisions/0004-auth-idp-litpage.md)는 Litpage 인증 연결을 새로 붙이고 SSO는 B-1로 결정했다. 나루가 OIDC OP, Litpage가 새 RP이며 세부 계약은 [09](09-auth.md#4-litpage-sso)를 따른다.
 
 ```mermaid
 sequenceDiagram
@@ -208,15 +209,15 @@ sequenceDiagram
     M->>N: Litpage 진입
     N->>N: 회원 상태와 서비스 노출 확인
     alt 진입 허용
-        N->>I: 유효 세션 확인과 SSO 개시
-        I->>L: Litpage 세션 연계
+        N->>I: 유효 세션 확인과 OIDC 인가 흐름 개시
+        L->>I: OIDC 인가 코드 교환
         L-->>M: Litpage 사용 화면
     else 진입 조건 불충족
         N-->>M: 진입 차단
     end
     M->>N: 통합 로그아웃
     N->>I: 현재 기기 나루 세션 종료와 연동 종료 요청
-    I->>L: 현재 기기의 로그아웃 전파
+    I->>L: 현재 sid의 백채널 로그아웃 전파
     N-->>M: 로그아웃 화면
 ```
 
@@ -224,7 +225,7 @@ sequenceDiagram
 
 [기획] NFR-SEC-002·006, BR-005, DEC-092·098. 세션은 유휴 7일 또는 로그인 시작 후 절대 30일 중 먼저 도달하는 시점에 만료한다. 정지 회원의 재로그인·토큰 갱신·Litpage 진입은 새 로그인으로 보고 최신 회원 상태를 확인해 차단한다. 정지만으로 이미 열린 세션을 즉시 종료하지 않는다. 나루 PostgreSQL에서 세션을 관리한다. [ADR 0004](../decisions/0004-auth-idp-litpage.md)
 
-Q-087 [미확인]. 열린 세션이 토큰 갱신 때 차단되기까지의 최대 시간은 기획 확인이 필요하다. 액세스 토큰 수명 ≤5분은 PV-017의 제안값이다. Litpage 자체 세션에 같은 만료 기간을 적용할지와 실제 갱신·차단 지연은 09에서 다룬다. 정지 시험과 만료 경계는 04 §4.4, PV-018·029를 따른다.
+Q-087 [미확인]. 열린 세션이 토큰 갱신 때 차단되기까지의 최대 시간은 기획 확인이 필요하다. 액세스 토큰 수명 ≤5분은 PV-017의 제안값이다. Litpage RP의 사용 가능 기간은 나루 세션 만료를 넘지 않게 제안했다. 실제 갱신·차단 지연은 [미확인]이다. 정지 시험과 만료 경계는 04 §4.4, PV-018·029를 따른다.
 
 ```mermaid
 sequenceDiagram
@@ -265,7 +266,7 @@ sequenceDiagram
 
 | 포트 | 책임 | 결정 또는 후보와 판단 기준 |
 |---|---|---|
-| 인증/IdP·세션 | Google 인증 연계, 세션 발급·검증·갱신, Litpage SSO와 현재 기기 로그아웃 전파. 응용 계층이 재로그인·갱신·Litpage 진입 때 최신 정지 상태를 검사한다. | [ADR 0004](../decisions/0004-auth-idp-litpage.md). 나루(axum)가 Google 로그인·PostgreSQL 세션·정지를 직접 처리하고 Litpage 인증 연결을 새로 작성한다. GAP-028 해소. SSO는 09에서 최종 확정한다. |
+| 인증/IdP·세션 | Google 인증 연계, 세션 발급·검증·갱신, Litpage SSO와 현재 기기 로그아웃 전파. 응용 계층이 재로그인·갱신·Litpage 진입 때 최신 정지 상태를 검사한다. | [ADR 0004](../decisions/0004-auth-idp-litpage.md). 나루(axum)가 Google 로그인·PostgreSQL 세션·정지를 직접 처리하고 Litpage 인증 연결을 새로 작성한다. GAP-028 해소. SSO는 B-1(나루 OP·Litpage RP)이다. |
 | 파일 저장소 | 단일 요청의 파일 스트림을 임시 파일에 쓰고 확정 또는 실패 정리를 수행한다. 확정 객체의 읽기·삭제와 전체 사용량 관측에 필요한 저장소 메타데이터를 제공한다. | [ADR 대기] 로컬 FS(`tokio::fs`), S3 호환 + `aws-sdk-s3`, `object_store` 추상화. 06F §5에 따라 단일 요청 스트리밍, 실패 정리, 다중화·무중단 필요성, S3 이관 가능성, 백업·삭제 정합성과 운영 부담을 비교한다(AS-004). |
 | 잡 | 작업 등록, 예약 시각, 실행 상태, 재시도와 완료 기록을 다룬다. 응용 시각 판정에 쓰는 시계 경계를 포함한다. | [ADR 대기] tokio 내장 + DB 상태 테이블, apalis(PostgreSQL), tokio-cron-scheduler + 인프라 분리. 06F §4.5·§9에 따라 영속화와 중복 실행 제어를 검토한다. |
 
@@ -295,7 +296,7 @@ sequenceDiagram
 
 ## 11. 열린 질문
 
-- [ADR 0004](../decisions/0004-auth-idp-litpage.md)의 Litpage SSO 추천은 09에서 최종 확정한다.
+- [ADR 0004](../decisions/0004-auth-idp-litpage.md)의 Litpage SSO B-1에 대한 종단 동작과 로그아웃 전파를 [09](09-auth.md) 기준으로 검증한다 [미확인].
 - [ADR 대기] 파일 저장소, 잡 러너, 프런트엔드 스택.
 - [미확인] RB-017 Cloudflare 프록시 경로·본문 한도의 1GB 단일 업로드 충돌 여부(기획 결정 대기 중), 배포 토폴로지·IaC.
 - [미확인] Q-085 달력 날짜 30일의 시간대·경계 시각·시작일. 삭제 원장 보관과 복원 절차는 운영 설계에서 다룬다.

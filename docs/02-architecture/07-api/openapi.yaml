@@ -1,0 +1,3699 @@
+openapi: "3.1.0"
+info:
+  title: "NaruWorks API"
+  version: "v0.4"
+  description: "v0.4 · 2026-11-26 (KST) · 초안, Gemini 검토 대기. 기획 develop 2f1db92, 05·06 v0.4, ADR 0003·0004, 09 인증 v0.2·08 DB v0.2 정합, 호배님 21:45 KST Litpage SSO B-1 결정 반영. 경로·요청 형식·응답 및 상태 코드는 07의 설계 제안이다. 개별 업로드 초과 413은 06 §6의 매핑을 따른다. x-contract-status: outline은 후속 설계에서 확정하는 경계의 윤곽이다."
+servers:
+  -
+    url: "/api/v1"
+    description: "제안 API 접두사. 배포 호스트 [미확인]."
+security:
+  -
+    sessionCookie: []
+tags:
+  -
+    name: "Auth"
+    description: "Google 로그인과 세션"
+  -
+    name: "OIDC"
+    description: "나루 OP와 Litpage RP의 B-1 인증 및 로그아웃 계약"
+  -
+    name: "Account"
+    description: "계정·프로필"
+  -
+    name: "Catalog"
+    description: "홈·공통 헤더에 쓰는 카테고리·서비스"
+  -
+    name: "Legal"
+    description: "공개 문서"
+  -
+    name: "Litpage"
+    description: "Litpage 진입·저장 폴더·자동 저장"
+  -
+    name: "Drive"
+    description: "드라이브 파일·폴더"
+  -
+    name: "Trash"
+    description: "휴지통"
+  -
+    name: "Sharing"
+    description: "회원 공유 및 공개 링크 관리"
+  -
+    name: "PublicLinks"
+    description: "비회원 링크 보기"
+  -
+    name: "Admin"
+    description: "관리자 회원·오픈소스·카테고리"
+paths:
+  "/auth/google/start":
+    get:
+      tags: ["Auth"]
+      operationId: "startGoogleLogin"
+      summary: "Google 로그인 시작"
+      description: |-
+        로그인 화면의 언어 전환은 UI에서 처리한다. returnTo가 유효한 나루 내부 화면 또는 링크 보기 주소이면 로그인 흐름에 묶는다. 이미 유효한 세션이면 Google 대신 홈으로 이동한다(DEC-118·119).
+
+        근거 ID · FR-AUTH-001, FR-SHELL-001, FR-DRV-007. AC-FR-AUTH-001-01, AC-FR-AUTH-001-02, AC-FR-AUTH-001-04, AC-FR-AUTH-001-05, AC-FR-AUTH-001-06, AC-FR-SHELL-001-05, AC-FR-SHELL-001-06, AC-FR-DRV-007-04.
+      security:
+        - {}
+        -
+          sessionCookie: []
+      parameters:
+        - {"$ref":"#/components/parameters/ReturnTo"}
+      responses:
+        "303":
+          description: "Google 인증 화면 또는 이미 로그인한 회원의 홈으로 이동."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Location: {"$ref":"#/components/headers/Location"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/auth/google/callback":
+    get:
+      tags: ["Auth"]
+      operationId: "completeGoogleLogin"
+      summary: "Google 인증 결과 처리"
+      description: |-
+        Google 응답과 로그인 흐름을 검증한다. state와 함께 성공 시 code, 취소·실패 시 error 중 하나를 확인한다. 취소·인증 실패는 다시 시도할 수 있는 로그인 화면으로 돌려보낸다. 신규 회원은 승인 없이 가입하고, 성공 시 쿠키 발급 후 보관한 복귀 주소 또는 홈으로 이동한다. 보관 중 재가입은 데이터를 복구하되 회수된 받은 공유는 복구하지 않는다. 정지 회원도 기간 내 데이터 복구는 수행하되 정지 상태를 유지하고 세션을 발급하지 않는다. 30일 경과 후 새 데이터로 시작한다. 정지 시 로그인 차단 화면에서 로그인 화면으로 돌아갈 수 있다.
+
+        근거 ID · FR-AUTH-001, FR-AUTH-004, FR-AUTH-005, FR-HOME-001. AC-FR-AUTH-001-01, AC-FR-AUTH-001-02, AC-FR-AUTH-001-03, AC-FR-AUTH-001-05, AC-FR-AUTH-004-01, AC-FR-AUTH-004-02, AC-FR-AUTH-004-04, AC-FR-AUTH-005-01, AC-FR-AUTH-005-02, AC-FR-AUTH-005-03, AC-FR-HOME-001-01.
+      security: []
+      parameters:
+        - {"$ref":"#/components/parameters/GoogleCode"}
+        - {"$ref":"#/components/parameters/GoogleState"}
+        - {"$ref":"#/components/parameters/GoogleError"}
+      responses:
+        "303":
+          description: "로그인 성공 시 홈 또는 복귀 주소. 인증 취소·실패 시 로그인 화면. 세션 쿠키는 로그인 성공 시에만 발급한다."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Location: {"$ref":"#/components/headers/Location"}
+            Set-Cookie: {"$ref":"#/components/headers/SessionCookie"}
+        "400":
+          description: "INVALID_LOGIN_CALLBACK — 로그인 흐름을 검증할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_LOGIN_CALLBACK"]
+        "403":
+          description: "MEMBER_SUSPENDED — 정지 회원은 다시 로그인하거나 갱신·Litpage 진입을 할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["MEMBER_SUSPENDED"]
+            "text/html":
+              schema: {"$ref":"#/components/schemas/Text"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/auth/session":
+    get:
+      tags: ["Auth"]
+      operationId: "getSession"
+      summary: "현재 세션과 복구 안내 상태 조회"
+      description: |-
+        유효한 현재 나루 세션의 관리자 여부와 이번 로그인에서 발생한 복구 안내 상태를 반환한다. 홈 진입 후 복구 안내를 표시한다. 유휴 7일 또는 로그인 시작 후 절대 30일 중 먼저 도달하면 재로그인한다. 정지로 이미 열린 세션을 즉시 종료하지 않는다.
+
+        같은 오리진 응답의 X-CSRF-Token 헤더로 현재 CSRF 값을 전달한다. 복구 안내를 한 번만 표시하는 UI 상태 관리 방식은 [미확인]이다.
+
+        근거 ID · FR-AUTH-001, FR-AUTH-004, FR-AUTH-005, FR-HOME-001, FR-SHELL-001. AC-FR-AUTH-001-02, AC-FR-AUTH-001-06, AC-FR-AUTH-004-01, AC-FR-AUTH-004-03, AC-FR-AUTH-005-02, AC-FR-HOME-001-01, AC-FR-SHELL-001-01, AC-FR-SHELL-001-04. AC-NFR-SEC-006-01.
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            X-CSRF-Token: {"$ref":"#/components/headers/CsrfToken"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Session"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/auth/session/refresh":
+    post:
+      tags: ["Auth"]
+      operationId: "refreshSession"
+      summary: "세션 갱신 경계"
+      description: |-
+        유효한 세션의 최신 회원 상태를 확인하고 정지 또는 만료라면 갱신을 거부한다. 성공하면 절대 만료 기준을 유지하면서 쿠키 자격과 CSRF 값을 회전한다. 갱신 주기와 열린 세션 차단 상한(Q-087)은 [미확인]이다.
+
+        근거 ID · FR-AUTH-005. AC-FR-AUTH-005-02, AC-FR-AUTH-005-04. AC-NFR-SEC-002-01, AC-NFR-SEC-006-01.
+      x-contract-status: "outline"
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Set-Cookie: {"$ref":"#/components/headers/SessionCookie"}
+            X-CSRF-Token: {"$ref":"#/components/headers/CsrfToken"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "MEMBER_SUSPENDED — 정지 회원은 다시 로그인하거나 갱신·Litpage 진입을 할 수 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["MEMBER_SUSPENDED","CSRF_REJECTED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/auth/logout":
+    post:
+      tags: ["Auth"]
+      operationId: "logoutCurrentDevice"
+      summary: "현재 기기 통합 로그아웃"
+      description: |-
+        유효 세션이 있으면 CSRF 확인 후 현재 기기에 연계된 나루와 Litpage 세션을 종료하고 나루 쿠키를 제거한다. 다른 기기 세션은 유지한다. 유효 세션이 없으면 추가 상태 변경 없이 성공한다. B-1에서 현재 sid의 세션 폐기와 백채널 전파 기록을 저장한다. 응답 뒤 RP 전파가 이어질 수 있다.
+
+        근거 ID · FR-AUTH-002, FR-SHELL-001, FR-OSS-001. AC-FR-AUTH-002-01, AC-FR-AUTH-002-02, AC-FR-AUTH-002-03, AC-FR-SHELL-001-01, AC-FR-OSS-001-01. AC-NFR-SEC-001-01.
+      security:
+        - {}
+        -
+          sessionCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Set-Cookie: {"$ref":"#/components/headers/SessionCookie"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/account/profile":
+    get:
+      tags: ["Account"]
+      operationId: "getProfile"
+      summary: "본인 프로필 조회"
+      description: |-
+        Google 이름·이메일·사진은 읽기 전용이다. 표시 이름을 정하기 전에는 Google 이름을 대신 사용한다. 드라이브 사용량은 바이트 단위이며 총용량 한도는 없다. 계정 설정 링크는 프로필에서 제공한다.
+
+        근거 ID · FR-SHELL-003, FR-AUTH-006. AC-FR-SHELL-003-01, AC-FR-SHELL-003-04, AC-FR-SHELL-003-05, AC-FR-SHELL-003-06, AC-FR-SHELL-003-09, AC-FR-AUTH-006-01.
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Profile"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+    patch:
+      tags: ["Account"]
+      operationId: "updateProfile"
+      summary: "표시 이름·언어·테마 저장"
+      description: |-
+        표시 이름은 한글·영문·숫자만 허용한다. 가중 길이 2~20(한글 2, 영문·숫자 1), 빈 값·중복 금지, 탈퇴 보관 중 예약 및 보관 종료 후 재사용을 적용한다(BR-026). 읽기 전용 Google 정보는 변경할 수 없다. 언어·테마는 계정에 저장한다(DEC-100·101·110·113).
+
+        근거 ID · FR-SHELL-003, FR-AUTH-001, FR-OSS-001. AC-FR-SHELL-003-02, AC-FR-SHELL-003-03, AC-FR-SHELL-003-04, AC-FR-SHELL-003-05, AC-FR-SHELL-003-07, AC-FR-SHELL-003-08, AC-FR-SHELL-003-09, AC-FR-AUTH-001-04, AC-FR-OSS-001-03. AC-NFR-I18N-002-01, AC-NFR-USAB-002-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/ProfileUpdate"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Profile"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED"]
+        "409":
+          description: "DISPLAY_NAME_UNAVAILABLE — 이미 쓰고 있거나 탈퇴 보관 중 예약된 표시 이름."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["DISPLAY_NAME_UNAVAILABLE"]
+        "422":
+          description: "INVALID_DISPLAY_NAME — 표시 이름 규칙 위반."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_DISPLAY_NAME"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/account":
+    delete:
+      tags: ["Account"]
+      operationId: "withdrawAccount"
+      summary: "회원 탈퇴"
+      description: |-
+        계정 설정에서 확인한 후에만 요청한다. 취소는 UI 동작이다. 탈퇴 후 계정 사용을 막고 달력 날짜 30일 동안 데이터를 보관한다. 받은 공유는 즉시 회수하고, 보관 중 소유 공유·링크는 보기만 허용한다. 휴지통 시계는 계속 간다. 완료 후 UI가 안내하고 로그인으로 이동한다. 정지 상태의 열린 세션에서 탈퇴를 실행할 수 있는지는 [미확인]이다.
+
+        근거 ID · FR-AUTH-003, FR-AUTH-006, FR-SHELL-003, FR-DRV-004, FR-DRV-006, FR-DRV-007. AC-FR-AUTH-003-01, AC-FR-AUTH-003-02, AC-FR-AUTH-003-03, AC-FR-AUTH-006-01, AC-FR-SHELL-003-07, AC-FR-SHELL-003-08, AC-FR-DRV-004-07, AC-FR-DRV-006-06, AC-FR-DRV-006-07, AC-FR-DRV-007-06. AC-NFR-SEC-004-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Set-Cookie: {"$ref":"#/components/headers/SessionCookie"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/catalog/categories":
+    get:
+      tags: ["Catalog"]
+      operationId: "listCategories"
+      summary: "홈·헤더 카테고리 목록"
+      description: |-
+        서비스가 없는 카테고리도 포함한다. 입력된 카테고리 이름을 그대로 사용하고, 기본 문서·저장소와 관리자 변경을 반영한다(DEC-120).
+
+        근거 ID · FR-HOME-001, FR-HOME-002, FR-SHELL-001, FR-ADM-004. AC-FR-HOME-001-01, AC-FR-HOME-002-01, AC-FR-HOME-002-02, AC-FR-SHELL-001-01, AC-FR-SHELL-001-03, AC-FR-ADM-004-01, AC-FR-ADM-004-02.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/CategoryPage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/catalog/services":
+    get:
+      tags: ["Catalog"]
+      operationId: "listServices"
+      summary: "이용 가능한 서비스 목록"
+      description: |-
+        홈과 헤더가 같은 노출 목록을 사용한다. 숨긴 오픈소스는 모든 회원에게 제외한다. 각 서비스는 한 카테고리에 속하며 나루 드라이브는 유지한다.
+
+        근거 ID · FR-HOME-001, FR-HOME-002, FR-SHELL-001, FR-OSS-001, FR-ADM-003, FR-ADM-004. AC-FR-HOME-001-01, AC-FR-HOME-001-02, AC-FR-HOME-002-01, AC-FR-HOME-002-02, AC-FR-SHELL-001-01, AC-FR-SHELL-001-02, AC-FR-SHELL-001-03, AC-FR-OSS-001-02, AC-FR-ADM-003-01, AC-FR-ADM-003-02, AC-FR-ADM-004-01, AC-FR-ADM-004-02.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/ServicePage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/legal/{document}":
+    get:
+      tags: ["Legal"]
+      operationId: "getLegalDocument"
+      summary: "이용약관·개인정보처리방침·라이선스 고지 조회"
+      description: |-
+        푸터는 로그인·차단 안내·링크 보기에도 있다. 이용약관·개인정보처리방침은 화면 언어에 맞는 한국어·영어 본문을 새 창에서, 라이선스 고지는 같은 창의 대화상자에서 보여 준다. 문의 이메일과 제작자 표기는 푸터 UI에 둔다. 법적 문서 본문은 T-01·T-02 범위다.
+
+        근거 ID · FR-SHELL-002, FR-DRV-007. AC-FR-SHELL-002-01, AC-FR-SHELL-002-02, AC-FR-SHELL-002-03, AC-FR-SHELL-002-04, AC-FR-DRV-007-03. AC-NFR-I18N-003-01.
+      security: []
+      parameters:
+        - {"$ref":"#/components/parameters/Document"}
+        - {"$ref":"#/components/parameters/Language"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+          content:
+            "text/html":
+              schema: {"$ref":"#/components/schemas/Text"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "404":
+          description: "DOCUMENT_UNAVAILABLE — 문서가 제공되지 않음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["DOCUMENT_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/litpage/entry":
+    post:
+      tags: ["Litpage"]
+      operationId: "enterLitpage"
+      summary: "Litpage 신규 진입"
+      description: |-
+        유효 세션, 최신 정지 상태와 서비스 노출 상태를 검사한다. 저장 폴더를 정하지 않았으면 선택 상태를 반환한다. 설정 후 진입 시 나루 화면 언어를 전달한다. Litpage SSO는 B-1의 OIDC 인가를 사용한다. Litpage 쪽 진입 컨텍스트 전달 계약은 [미확인]이다.
+
+        근거 ID · FR-OSS-001, FR-OSS-002, FR-AUTH-005, FR-SHELL-001. AC-FR-OSS-001-01, AC-FR-OSS-001-02, AC-FR-OSS-001-03, AC-FR-OSS-002-01, AC-FR-OSS-002-02, AC-FR-AUTH-005-05, AC-FR-SHELL-001-01.
+      x-contract-status: "outline"
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/LitpageEntry"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "MEMBER_SUSPENDED — 정지 회원은 다시 로그인하거나 갱신·Litpage 진입을 할 수 없음. SERVICE_HIDDEN — 서비스가 숨겨져 사용할 수 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["MEMBER_SUSPENDED","SERVICE_HIDDEN","CSRF_REJECTED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+        "503":
+          description: "LITPAGE_UNAVAILABLE — Litpage에 일시적으로 진입할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["LITPAGE_UNAVAILABLE"]
+  "/litpage/storage-folder":
+    get:
+      tags: ["Litpage"]
+      operationId: "getLitpageStorageFolder"
+      summary: "Litpage 저장 폴더 설정 조회"
+      description: |-
+        미지정이면 서비스 이름 폴더를 제안한다. 기본 폴더가 없으면 드라이브 폴더 생성으로 만들 수 있다. 선택 취소는 설정을 변경하지 않으며, 미설정이면 다음 진입에서 다시 선택한다.
+
+        근거 ID · FR-OSS-002. AC-FR-OSS-002-01, AC-FR-OSS-002-02, AC-FR-OSS-002-03, AC-FR-OSS-002-04.
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/StorageFolder"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "SERVICE_HIDDEN — 서비스가 숨겨져 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SERVICE_HIDDEN"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    put:
+      tags: ["Litpage"]
+      operationId: "setLitpageStorageFolder"
+      summary: "Litpage 저장 폴더 지정·변경"
+      description: |-
+        현재 사용자가 지정할 수 있는 드라이브 폴더 하나를 선택한다. 변경 후 결과물에만 새 위치를 적용하고 기존 결과물은 이동하지 않는다. 첫 선택과 변경은 같은 UI를 쓴다.
+
+        근거 ID · FR-OSS-002, FR-OSS-003. AC-FR-OSS-002-01, AC-FR-OSS-002-03, AC-FR-OSS-002-04, AC-FR-OSS-003-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/StorageFolderUpdate"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/StorageFolder"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "SERVICE_HIDDEN — 서비스가 숨겨져 사용할 수 없음. FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SERVICE_HIDDEN","FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/litpage/results/{resultId}":
+    put:
+      tags: ["Litpage"]
+      operationId: "saveLitpageResult"
+      summary: "Litpage 결과물 자동 저장 경계"
+      description: |-
+        Litpage가 현재 지정된 폴더에 결과물을 자동 반영하고, 실패 시 작업 내용을 유지하도록 안내할 수 있는 오류를 전달한다. Markdown·CSV를 사용하며 무손실 패키징은 왕복 검증 대상이다. 아래 본문은 제출 경계의 윤곽이다. 실제 연동 호출 주체·인증(09), 패키지 인코딩·지연·재시도·실패 정의·1 GiB 적용(GAP-025)은 [미확인]이다.
+
+        근거 ID · FR-OSS-003, FR-OSS-002. AC-FR-OSS-003-01, AC-FR-OSS-003-02, AC-FR-OSS-002-03.
+      x-contract-status: "outline"
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/ResultId"}
+      requestBody:
+        required: true
+        content:
+          "application/octet-stream":
+            schema: {"$ref":"#/components/schemas/Binary"}
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "SERVICE_HIDDEN — 서비스가 숨겨져 사용할 수 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SERVICE_HIDDEN","CSRF_REJECTED"]
+        "409":
+          description: "STORAGE_FOLDER_REQUIRED — 저장 폴더 설정이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["STORAGE_FOLDER_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+        "503":
+          description: "AUTOSAVE_FAILED — 자동 저장에 실패함. 작업을 유지할 수 있도록 안내."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["AUTOSAVE_FAILED"]
+  "/drive/items":
+    get:
+      tags: ["Drive"]
+      operationId: "listDriveItems"
+      summary: "드라이브 파일·폴더 목록"
+      description: |-
+        상위 폴더의 직접 하위 항목을 반환한다. folderId를 생략하면 루트이다. scope=shared이면 호출자가 접근할 수 있는 받은 파일을 반환하며 folderId를 함께 사용하지 않는다. 빈 결과는 빈 배열이다. 숨긴 Litpage 결과물도 드라이브에는 남는다.
+
+        근거 ID · FR-DRV-001, FR-DRV-003, FR-DRV-005, FR-DRV-006, FR-DRV-008, FR-OSS-002. AC-FR-DRV-001-01, AC-FR-DRV-001-02, AC-FR-DRV-001-03, AC-FR-DRV-003-04, AC-FR-DRV-003-08, AC-FR-DRV-005-02, AC-FR-DRV-006-01, AC-FR-DRV-006-07, AC-FR-DRV-008-02, AC-FR-DRV-008-03, AC-FR-OSS-002-01.
+      parameters:
+        - {"$ref":"#/components/parameters/FolderQuery"}
+        - {"$ref":"#/components/parameters/DriveScope"}
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/DriveItemPage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "422":
+          description: "INVALID_DRIVE_SCOPE — 목록 범위와 폴더 조건을 함께 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_DRIVE_SCOPE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/folders":
+    post:
+      tags: ["Drive"]
+      operationId: "createDriveFolder"
+      summary: "폴더 생성"
+      description: |-
+        빈 이름이나 같은 위치의 중복 이름을 거부한다. parentId가 없거나 null이면 루트에 만든다. 자동 번호는 업로드에 적용한다.
+
+        근거 ID · FR-DRV-002, FR-OSS-002. AC-FR-DRV-002-01, AC-FR-DRV-002-02, AC-FR-OSS-002-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/FolderCreate"}
+      responses:
+        "201":
+          description: "저장 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/DriveItem"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "409":
+          description: "NAME_CONFLICT — 같은 위치에 같은 이름의 항목이 있음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["NAME_CONFLICT"]
+        "422":
+          description: "INVALID_FOLDER_NAME — 폴더 이름이 유효하지 않음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_FOLDER_NAME"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/folders/{folderId}":
+    patch:
+      tags: ["Drive"]
+      operationId: "updateDriveFolder"
+      summary: "폴더 이름 변경·이동"
+      description: |-
+        이름이나 상위 폴더 또는 둘 다 변경한다. 상위 폴더를 null로 지정하면 루트로 이동한다. 같은 위치의 중복 이름이나 자신·하위 폴더로의 이동을 거부하고 기존 상태를 유지한다.
+
+        근거 ID · FR-DRV-002. AC-FR-DRV-002-01, AC-FR-DRV-002-02.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FolderId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/FolderUpdate"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/DriveItem"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "409":
+          description: "NAME_CONFLICT — 같은 위치에 같은 이름의 항목이 있음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["NAME_CONFLICT"]
+        "422":
+          description: "INVALID_FOLDER_NAME — 폴더 이름이 유효하지 않음. INVALID_FOLDER_MOVE — 폴더를 해당 위치로 이동할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_FOLDER_NAME","INVALID_FOLDER_MOVE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/uploads/file":
+    post:
+      tags: ["Drive"]
+      operationId: "uploadFile"
+      summary: "파일 한 개 업로드"
+      description: |-
+        multipart 한 요청에 파일 한 개를 보낸다. 실제 수신 파일 크기 1~1,073,741,824 B를 허용한다. 0바이트는 422, 초과는 413으로 반환한다. 연결 중단 시 미완료 파일은 목록에 나타나지 않으며 전체 파일을 처음부터 다시 보낸다. 이름 충돌 시 첫 빈 번호를 붙여 실제 저장 항목을 돌려준다.
+
+        근거 ID · FR-DRV-003, FR-DRV-001. AC-FR-DRV-003-01, AC-FR-DRV-003-02, AC-FR-DRV-003-03, AC-FR-DRV-003-05, AC-FR-DRV-003-07, AC-FR-DRV-003-08, AC-FR-DRV-001-02, AC-FR-DRV-001-03. AC-NFR-PERF-002-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema: {"$ref":"#/components/schemas/FileUpload"}
+      responses:
+        "201":
+          description: "저장 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/DriveItem"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "413":
+          description: "FILE_TOO_LARGE — 파일 크기가 1,073,741,824바이트를 초과함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_TOO_LARGE"]
+        "422":
+          description: "EMPTY_FILE — 0바이트 파일은 업로드할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["EMPTY_FILE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/uploads/folder":
+    post:
+      tags: ["Drive"]
+      operationId: "uploadFolder"
+      summary: "폴더 통째 업로드"
+      description: |-
+        폴더 한 개의 상대 경로 목록과 바이트를 단일 요청으로 보내 하위 구조를 보존한다. 각 파일의 실제 수신 크기를 검사한다. 초과 파일만 제외하고 결과로 알리며 0바이트도 저장하지 않는다. 0바이트 파일도 개별 제외 결과로 알리는 것은 계약 제안이다. 유효한 나머지 파일과 디렉터리를 저장한다. 같은 이름에는 첫 빈 번호를 적용한다. 연결이 끊기면 미완료 요청을 처음부터 다시 보낸다. 제안 계약에서는 본문을 모두 수신해 검증하기까지 업로드 결과를 목록에 노출하지 않는다.
+
+        근거 ID · FR-DRV-003, FR-DRV-001. AC-FR-DRV-003-03, AC-FR-DRV-003-04, AC-FR-DRV-003-05, AC-FR-DRV-003-06, AC-FR-DRV-003-07, AC-FR-DRV-003-08, AC-FR-DRV-001-03. AC-NFR-PERF-002-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema: {"$ref":"#/components/schemas/FolderUpload"}
+            encoding:
+              manifest:
+                contentType: "application/json"
+              files:
+                contentType: "application/octet-stream"
+      responses:
+        "201":
+          description: "저장 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/FolderUploadResult"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FOLDER_NOT_FOUND — 사용할 수 있는 폴더를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FOLDER_NOT_FOUND"]
+        "422":
+          description: "INVALID_FOLDER_UPLOAD — 폴더 업로드 요청 구조가 유효하지 않음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["INVALID_FOLDER_UPLOAD"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/download":
+    get:
+      tags: ["Drive"]
+      operationId: "downloadDriveFile"
+      summary: "권한이 있는 파일 원본 다운로드"
+      description: |-
+        소유자 또는 원본을 받을 수 있는 회원에게 한 파일을 내려준다. 보기 공유에서 다운로드가 꺼져 있거나 소유자가 탈퇴 보관 중이면 원본을 반환하지 않는다. 휴지통·삭제·공유 회수 상태를 요청 시 검증한다. 폴더 통째 다운로드는 범위 밖이다.
+
+        근거 ID · FR-DRV-003, FR-DRV-006. AC-FR-DRV-003-01, AC-FR-DRV-006-01, AC-FR-DRV-006-06, AC-FR-DRV-006-07.
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Content-Disposition: {"$ref":"#/components/headers/Attachment"}
+          content:
+            "application/octet-stream":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "DOWNLOAD_FORBIDDEN — 다운로드가 허용되지 않음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["DOWNLOAD_FORBIDDEN"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/view":
+    get:
+      tags: ["Drive"]
+      operationId: "viewDriveFile"
+      summary: "회원용 화면 콘텐츠 조회"
+      description: |-
+        소유권 또는 유효한 회원 공유를 확인한다. 다운로드를 금지한 보기 공유 및 탈퇴 보관 중에는 화면용 표현만 반환한다. 이 경로의 응답은 화면용이며 표현의 형식은 [미확인]이다(DEC-109·111).
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-01, AC-FR-DRV-006-06, AC-FR-DRV-006-07.
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "*/*":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+        "503":
+          description: "VIEW_UNAVAILABLE — 화면용 표현을 일시적으로 제공할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["VIEW_UNAVAILABLE"]
+  "/drive/files/{fileId}/thumbnail":
+    get:
+      tags: ["Drive"]
+      operationId: "getDriveThumbnail"
+      summary: "대표 썸네일 조회"
+      description: |-
+        원본에 대한 보기 권한을 확인한 뒤 대표 썸네일만 반환한다. 204는 준비 중 또는 생성 불가이며 UI는 형식 아이콘을 표시한다. 터치 기기의 마우스 올림 미리보기 생략은 UI에서 처리한다.
+
+        근거 ID · FR-DRV-008. AC-FR-DRV-008-01, AC-FR-DRV-008-02, AC-FR-DRV-008-03. AC-NFR-PERF-003-01.
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "image/*":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "204":
+          description: "썸네일이 준비되지 않았거나 생성할 수 없음"
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/litpage/open":
+    post:
+      tags: ["Drive"]
+      operationId: "openLitpageDocument"
+      summary: "드라이브 결과물을 Litpage로 열기"
+      description: |-
+        해당 문서에 대한 접근 권한과 Litpage 신규 진입 조건을 확인한다. 숨김이면 파일은 목록에 남지만 열 수 없다. 저장 폴더 미설정 상태에서는 선택을 먼저 요구한다. Litpage SSO는 B-1의 OIDC 인가를 사용한다. 문서 진입 컨텍스트 전달 계약은 [미확인]이다. 문서 왕복 편집에서 무손실이어야 하며 패키징은 ADR 0004의 스파이크로 검증한다 [미확인].
+
+        근거 ID · FR-DRV-005, FR-OSS-001, FR-AUTH-005. AC-FR-DRV-005-01, AC-FR-DRV-005-02, AC-FR-OSS-001-02, AC-FR-AUTH-005-05.
+      x-contract-status: "outline"
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/LitpageEntry"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "MEMBER_SUSPENDED — 정지 회원은 다시 로그인하거나 갱신·Litpage 진입을 할 수 없음. SERVICE_HIDDEN — 서비스가 숨겨져 사용할 수 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["MEMBER_SUSPENDED","SERVICE_HIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "422":
+          description: "NOT_LITPAGE_DOCUMENT — Litpage에서 열 수 있는 문서가 아님."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["NOT_LITPAGE_DOCUMENT"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+        "503":
+          description: "LITPAGE_UNAVAILABLE — Litpage에 일시적으로 진입할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["LITPAGE_UNAVAILABLE"]
+  "/drive/items/{itemId}":
+    delete:
+      tags: ["Trash"]
+      operationId: "trashDriveItem"
+      summary: "파일 또는 폴더 한 개를 휴지통으로 이동"
+      description: |-
+        항목 한 개를 휴지통으로 옮기고 공개 링크 접근을 막는다. 자동 삭제는 달력 날짜 30일 기준이다. 드라이브 화면에 남아 목록을 갱신한다.
+
+        근거 ID · FR-DRV-004. AC-FR-DRV-004-01, AC-FR-DRV-004-03, AC-FR-DRV-004-08.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/ItemId"}
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "ITEM_NOT_FOUND — 항목을 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ITEM_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/trash":
+    get:
+      tags: ["Trash"]
+      operationId: "listTrash"
+      summary: "휴지통 목록"
+      description: |-
+        이름·종류·크기·자동 삭제까지의 남은 기간·원래 위치를 반환한다. 수정일은 목록에 없다. 자동 삭제된 항목은 목록에서 제외한다. 탈퇴 보관 중에도 휴지통 시계는 계속 간다(Q-085 [미확인]).
+
+        근거 ID · FR-DRV-004. AC-FR-DRV-004-01, AC-FR-DRV-004-02, AC-FR-DRV-004-04, AC-FR-DRV-004-05, AC-FR-DRV-004-06, AC-FR-DRV-004-07.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/TrashItemPage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/trash/{itemId}/restore":
+    post:
+      tags: ["Trash"]
+      operationId: "restoreDriveItem"
+      summary: "휴지통 항목 한 개 복원"
+      description: |-
+        자동 삭제 전에 원래 위치로 복원하고 다른 차단 조건이 없는 기존 공유 링크를 다시 연다. 원래 위치가 사라졌거나 이름이 겹칠 때의 복원 정책은 [미확인]이며 초안에서는 409로 실패를 반환한다.
+
+        근거 ID · FR-DRV-004. AC-FR-DRV-004-01, AC-FR-DRV-004-02, AC-FR-DRV-004-03, AC-FR-DRV-004-06, AC-FR-DRV-004-08.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/ItemId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/DriveItem"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "ITEM_NOT_FOUND — 항목을 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ITEM_NOT_FOUND"]
+        "409":
+          description: "RESTORE_CONFLICT — 원래 위치에 복원할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["RESTORE_CONFLICT"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/share-recipient-lookup":
+    post:
+      tags: ["Sharing"]
+      operationId: "findShareRecipient"
+      summary: "공유할 활동 회원 찾기"
+      description: |-
+        해당 파일의 소유자만 호출한다. 본문 이메일 전체를 대소문자 구분 없이 비교한다. 부분 일치·이름 검색은 제공하지 않는다. 활동하지 않는 회원과 본인은 공유 후보로 반환하지 않는다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-02, AC-FR-DRV-006-03.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/RecipientLookup"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/ShareRecipient"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "SHARE_RECIPIENT_UNAVAILABLE — 공유할 활동 회원을 찾을 수 없음. FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SHARE_RECIPIENT_UNAVAILABLE","FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/shares":
+    get:
+      tags: ["Sharing"]
+      operationId: "listMemberShares"
+      summary: "파일을 공유받는 회원 목록"
+      description: |-
+        소유자가 공유 화면에서 이미 공유한 회원과 권한을 조회한다. 공유하거나 화면을 닫을 때 UI에서 목록을 다시 조회할 수 있다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-01, AC-FR-DRV-006-04, AC-FR-DRV-006-07.
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/MemberSharePage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/shares/{memberId}":
+    put:
+      tags: ["Sharing"]
+      operationId: "setMemberShare"
+      summary: "회원 공유 설정"
+      description: |-
+        소유자가 활동 회원 한 명에게 보기 또는 편집 권한을 부여하거나 변경한다. 쓰기 시점에도 자격과 본인 공유 금지를 확인한다. 보기 권한은 다운로드 허용 여부를 지정한다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-01, AC-FR-DRV-006-02, AC-FR-DRV-006-03, AC-FR-DRV-006-04.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+        - {"$ref":"#/components/parameters/MemberId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/MemberShareSettings"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/MemberShare"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "SHARE_RECIPIENT_UNAVAILABLE — 공유할 활동 회원을 찾을 수 없음. FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SHARE_RECIPIENT_UNAVAILABLE","FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    delete:
+      tags: ["Sharing"]
+      operationId: "revokeMemberShare"
+      summary: "회원 공유 회수"
+      description: |-
+        소유자가 공유를 취소하면 대상의 접근을 회수한다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-02, AC-FR-DRV-006-04.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+        - {"$ref":"#/components/parameters/MemberId"}
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/edit-content":
+    get:
+      tags: ["Sharing"]
+      operationId: "readSharedEditableFile"
+      summary: "편집 권한이 있는 공유 파일 읽기"
+      description: |-
+        공유 파일의 소유자와 편집 권한 회원만 편집할 내용을 읽을 수 있다. 응답 헤더의 revision을 읽은 파일 상태로 사용한다. 탈퇴 보관 중에는 읽기 전용 화면용 조회를 사용한다. 실제 편집기 및 지원 형식은 [미확인]이다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-01, AC-FR-DRV-006-05, AC-FR-DRV-006-06, AC-FR-DRV-006-07.
+      x-contract-status: "outline"
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            X-File-Revision: {"$ref":"#/components/headers/Revision"}
+          content:
+            "application/octet-stream":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "EDIT_FORBIDDEN — 편집 권한이 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["EDIT_FORBIDDEN"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/revisions":
+    post:
+      tags: ["Sharing"]
+      operationId: "saveSharedFileEdit"
+      summary: "공유 파일 편집 결과 저장"
+      description: |-
+        편집 권한을 다시 검사한다. 시작 버전이 현재 버전과 다르면 원본을 덮어쓰지 않고 원본 폴더에 이름 (충돌 사본)으로 저장한다. 버전은 최근 10개를 30일간 보관한다(DEC-112). 충돌 사본 소유권과 편집 파일 형식은 [미확인]이다.
+
+        근거 ID · FR-DRV-006. AC-FR-DRV-006-01, AC-FR-DRV-006-05, AC-FR-DRV-006-06, AC-FR-DRV-006-07.
+      x-contract-status: "outline"
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+        - {"$ref":"#/components/parameters/BaseRevision"}
+      requestBody:
+        required: true
+        content:
+          "application/octet-stream":
+            schema: {"$ref":"#/components/schemas/Binary"}
+      responses:
+        "201":
+          description: "저장 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/EditResult"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "EDIT_FORBIDDEN — 편집 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["EDIT_FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/drive/files/{fileId}/link":
+    get:
+      tags: ["Sharing"]
+      operationId: "getDriveLink"
+      summary: "파일 공개 링크 설정 조회"
+      description: |-
+        소유자가 활성 링크 설정과 복사할 화면 주소를 확인한다. 꺼져 있으면 enabled=false를 반환한다.
+
+        근거 ID · FR-DRV-007. AC-FR-DRV-007-01, AC-FR-DRV-007-02.
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/LinkSettings"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    put:
+      tags: ["Sharing"]
+      operationId: "enableDriveLink"
+      summary: "파일 공개 링크 켜기·설정"
+      description: |-
+        소유자가 한 파일의 보기 전용 링크를 켜고 다운로드 허용 여부를 지정한다. 응답은 복사할 화면 주소를 제공한다. 만료·비밀번호는 1차에 없다.
+
+        근거 ID · FR-DRV-007. AC-FR-DRV-007-01, AC-FR-DRV-007-02, AC-FR-DRV-007-05.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/LinkUpdate"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/LinkSettings"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    delete:
+      tags: ["Sharing"]
+      operationId: "disableDriveLink"
+      summary: "파일 공개 링크 끄기"
+      description: |-
+        소유자가 링크를 끄면 기존 링크로 접근할 수 없다.
+
+        근거 ID · FR-DRV-007. AC-FR-DRV-007-02, AC-FR-DRV-007-06.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/FileId"}
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "FORBIDDEN — 이 작업을 할 권한이 없음. CSRF_REJECTED — 요청의 CSRF 검증 실패."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FORBIDDEN","CSRF_REJECTED"]
+        "404":
+          description: "FILE_UNAVAILABLE — 파일을 사용할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["FILE_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/public/links/{linkKey}":
+    get:
+      tags: ["PublicLinks"]
+      operationId: "getPublicLink"
+      summary: "비회원 링크 보기 상태 조회"
+      description: |-
+        세션 없이 링크로 조회한다. 링크 꺼짐·휴지통·삭제·탈퇴 후 데이터 삭제는 같은 404, LINK_UNAVAILABLE 코드와 공개 메시지를 반환한다. 요청 상관 ID는 요청마다 달라질 수 있다. 탈퇴 보관 중 열리는 링크는 보기만 허용한다. 다운로드 가능 여부는 설정과 현재 상태를 적용한 유효값이다.
+
+        근거 ID · FR-DRV-007, FR-DRV-004, FR-SHELL-001, FR-SHELL-002. AC-FR-DRV-007-01, AC-FR-DRV-007-02, AC-FR-DRV-007-03, AC-FR-DRV-007-04, AC-FR-DRV-007-05, AC-FR-DRV-007-06, AC-FR-DRV-004-03, AC-FR-SHELL-001-05, AC-FR-SHELL-001-06, AC-FR-SHELL-002-02. AC-NFR-SEC-003-01.
+      security: []
+      parameters:
+        - {"$ref":"#/components/parameters/LinkKey"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/PublicLink"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "404":
+          description: "LINK_UNAVAILABLE — 링크를 열 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["LINK_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/public/links/{linkKey}/view":
+    get:
+      tags: ["PublicLinks"]
+      operationId: "viewPublicLink"
+      summary: "비회원 화면용 콘텐츠 조회"
+      description: |-
+        링크와 원본 상태를 매 요청에 검사한다. 화면용 표현을 반환하며 다운로드 금지 시 원본을 전송하지 않는다. 화면용 형식은 [미확인]이다.
+
+        근거 ID · FR-DRV-007, FR-DRV-004. AC-FR-DRV-007-01, AC-FR-DRV-007-05, AC-FR-DRV-007-06, AC-FR-DRV-004-03. AC-NFR-SEC-003-01.
+      security: []
+      parameters:
+        - {"$ref":"#/components/parameters/LinkKey"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "*/*":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "404":
+          description: "LINK_UNAVAILABLE — 링크를 열 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["LINK_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+        "503":
+          description: "VIEW_UNAVAILABLE — 화면용 표현을 일시적으로 제공할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["VIEW_UNAVAILABLE"]
+  "/public/links/{linkKey}/download":
+    get:
+      tags: ["PublicLinks"]
+      operationId: "downloadPublicLink"
+      summary: "허용된 공개 링크 원본 다운로드"
+      description: |-
+        링크가 유효하고 다운로드가 허용될 때만 원본을 반환한다. 탈퇴 보관 중 다운로드는 금지한다. 열 수 없는 링크는 조회와 동일한 오류를 반환한다.
+
+        근거 ID · FR-DRV-003, FR-DRV-007, FR-DRV-004. AC-FR-DRV-003-01, AC-FR-DRV-007-01, AC-FR-DRV-007-05, AC-FR-DRV-007-06, AC-FR-DRV-004-03. AC-NFR-SEC-003-01.
+      security: []
+      parameters:
+        - {"$ref":"#/components/parameters/LinkKey"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Content-Disposition: {"$ref":"#/components/headers/Attachment"}
+          content:
+            "application/octet-stream":
+              schema: {"$ref":"#/components/schemas/Binary"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "403":
+          description: "DOWNLOAD_FORBIDDEN — 다운로드가 허용되지 않음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["DOWNLOAD_FORBIDDEN"]
+        "404":
+          description: "LINK_UNAVAILABLE — 링크를 열 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["LINK_UNAVAILABLE"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/members":
+    get:
+      tags: ["Admin"]
+      operationId: "listAdminMembers"
+      summary: "관리자 회원 목록"
+      description: |-
+        관리자만 이용한다. 표시 이름(미설정 시 Google 이름), 이메일, 정지 여부를 반환한다. 검색·정렬은 제공하지 않으며 페이지 나눔만 지원한다(DEC-121). 비관리자의 관리 화면 접근은 화면에서 홈으로 이동한다.
+
+        근거 ID · FR-ADM-001, FR-SHELL-001. AC-FR-ADM-001-01, AC-FR-ADM-001-02, AC-FR-ADM-001-03, AC-FR-ADM-001-04, AC-FR-SHELL-001-04.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/AdminMemberPage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ADMIN_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/members/{memberId}/suspension":
+    put:
+      tags: ["Admin"]
+      operationId: "setMemberSuspension"
+      summary: "회원 정지·해제"
+      description: |-
+        정지는 UI에서 확인한 뒤 요청한다. 같은 상태 요청은 상태를 그대로 유지한다. 확정한 정지·해제는 감사 기록을 남긴다(DEC-104). 정지만으로 열린 세션을 즉시 종료하지 않으며 재로그인·갱신·Litpage 진입을 차단한다.
+
+        근거 ID · FR-ADM-002, FR-AUTH-004, FR-AUTH-005. AC-FR-ADM-002-01, AC-FR-ADM-002-02, AC-FR-ADM-002-03, AC-FR-ADM-002-04, AC-FR-AUTH-004-04, AC-FR-AUTH-005-01, AC-FR-AUTH-005-02, AC-FR-AUTH-005-04, AC-FR-AUTH-005-05. AC-NFR-SEC-002-01.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/MemberId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/Suspension"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/AdminMember"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "404":
+          description: "MEMBER_NOT_FOUND — 관리 대상 회원을 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["MEMBER_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/open-sources":
+    get:
+      tags: ["Admin"]
+      operationId: "listAdminOpenSources"
+      summary: "관리자 오픈소스 노출 목록"
+      description: |-
+        숨김 상태를 포함한 오픈소스 이름과 노출 여부를 반환한다.
+
+        근거 ID · FR-ADM-003. AC-FR-ADM-003-01, AC-FR-ADM-003-03.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/AdminOpenSourcePage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ADMIN_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/open-sources/{serviceId}/visibility":
+    put:
+      tags: ["Admin"]
+      operationId: "setOpenSourceVisibility"
+      summary: "오픈소스 숨김·노출"
+      description: |-
+        확정한 숨김·노출은 감사 기록을 남긴다. 숨기면 홈·헤더와 기존 진입·사용에서 차단하되 기존 파일과 나루 드라이브는 유지한다.
+
+        근거 ID · FR-ADM-003, FR-HOME-001, FR-HOME-002, FR-SHELL-001, FR-OSS-001, FR-DRV-005. AC-FR-ADM-003-01, AC-FR-ADM-003-02, AC-FR-ADM-003-04, AC-FR-HOME-001-02, AC-FR-HOME-002-02, AC-FR-SHELL-001-02, AC-FR-OSS-001-02, AC-FR-DRV-005-02.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/ServiceId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/Visibility"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/AdminOpenSource"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "404":
+          description: "OPEN_SOURCE_NOT_FOUND — 대상 오픈소스를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["OPEN_SOURCE_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/categories":
+    get:
+      tags: ["Admin"]
+      operationId: "listAdminCategories"
+      summary: "관리자 카테고리 목록"
+      description: |-
+        배정할 카테고리를 조회한다. 초기 카테고리는 문서·저장소다. 입력한 이름을 그대로 반환한다.
+
+        근거 ID · FR-ADM-004. AC-FR-ADM-004-01, AC-FR-ADM-004-02, AC-FR-ADM-004-03, AC-FR-ADM-004-04.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/CategoryPage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ADMIN_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    post:
+      tags: ["Admin"]
+      operationId: "createCategory"
+      summary: "카테고리 추가"
+      description: |-
+        입력한 이름을 카테고리에 사용한다. 상세 길이·중복 규칙은 [미확인]이다.
+
+        근거 ID · FR-ADM-004. AC-FR-ADM-004-03.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/CategoryName"}
+      responses:
+        "201":
+          description: "저장 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Category"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/service-assignments":
+    get:
+      tags: ["Admin"]
+      operationId: "listServiceAssignments"
+      summary: "관리자 서비스 배정 목록"
+      description: |-
+        숨김 여부와 무관하게 서비스의 카테고리 배정을 조회한다. 초기 Litpage는 문서, 나루 드라이브는 저장소에 배정된다.
+
+        근거 ID · FR-ADM-004. AC-FR-ADM-004-01, AC-FR-ADM-004-02, AC-FR-ADM-004-04.
+      parameters:
+        - {"$ref":"#/components/parameters/Cursor"}
+        - {"$ref":"#/components/parameters/Limit"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/ServicePage"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["ADMIN_REQUIRED"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/categories/{categoryId}":
+    patch:
+      tags: ["Admin"]
+      operationId: "renameCategory"
+      summary: "카테고리 이름 변경"
+      description: |-
+        이름 변경을 홈·헤더에 반영한다.
+
+        근거 ID · FR-ADM-004. AC-FR-ADM-004-02, AC-FR-ADM-004-03.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/CategoryId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/CategoryName"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Category"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "404":
+          description: "CATEGORY_NOT_FOUND — 카테고리를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CATEGORY_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+    delete:
+      tags: ["Admin"]
+      operationId: "deleteCategory"
+      summary: "배정된 서비스가 없는 카테고리 삭제"
+      description: |-
+        숨긴 오픈소스를 포함해 배정된 서비스가 하나라도 있으면 삭제를 막고 카테고리를 유지한다. UI는 차단 안내 대화상자를 표시한다(DEC-115).
+
+        근거 ID · FR-ADM-004. AC-FR-ADM-004-03, AC-FR-ADM-004-04.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/CategoryId"}
+      responses:
+        "204":
+          description: "완료. 응답 본문 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "404":
+          description: "CATEGORY_NOT_FOUND — 카테고리를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CATEGORY_NOT_FOUND"]
+        "409":
+          description: "CATEGORY_HAS_SERVICES — 서비스가 배정된 카테고리는 삭제할 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CATEGORY_HAS_SERVICES"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/admin/services/{serviceId}/category":
+    put:
+      tags: ["Admin"]
+      operationId: "assignServiceCategory"
+      summary: "서비스의 카테고리 배정 변경"
+      description: |-
+        서비스당 카테고리는 하나다. 변경을 홈·헤더에 반영하고 숨긴 서비스는 계속 숨긴다(DEC-120).
+
+        근거 ID · FR-ADM-004, FR-HOME-002, FR-SHELL-001. AC-FR-ADM-004-01, AC-FR-ADM-004-02, AC-FR-HOME-002-01, AC-FR-HOME-002-02, AC-FR-SHELL-001-03.
+      security:
+        -
+          sessionCookie: []
+          csrfHeader: []
+      parameters:
+        - {"$ref":"#/components/parameters/ServiceId"}
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema: {"$ref":"#/components/schemas/CategoryAssignment"}
+      responses:
+        "200":
+          description: "조회 또는 변경 완료."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/Service"}
+        "400": {"$ref":"#/components/responses/InvalidRequest"}
+        "401": {"$ref":"#/components/responses/SessionRequired"}
+        "403":
+          description: "CSRF_REJECTED — 요청의 CSRF 검증 실패. ADMIN_REQUIRED — 관리자 권한이 필요함."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["CSRF_REJECTED","ADMIN_REQUIRED"]
+        "404":
+          description: "SERVICE_NOT_FOUND — 서비스를 찾을 수 없음. CATEGORY_NOT_FOUND — 카테고리를 찾을 수 없음."
+          headers:
+            X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema:
+                allOf:
+                  - {"$ref":"#/components/schemas/Error"}
+                  -
+                    properties:
+                      code:
+                        enum: ["SERVICE_NOT_FOUND","CATEGORY_NOT_FOUND"]
+        "500": {"$ref":"#/components/responses/InternalError"}
+  "/.well-known/openid-configuration":
+    servers:
+      - {url: "/", description: "나루 OP issuer 오리진. 호스트 [미확인]."}
+    get:
+      tags: ["OIDC"]
+      operationId: "getOidcDiscovery"
+      summary: "나루 OP 메타데이터 조회"
+      security: []
+      responses:
+        "200":
+          description: "issuer는 실행 환경의 HTTPS 오리진이다. 엔드포인트는 절대 HTTPS URL이다."
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/OidcDiscovery"}
+  "/oidc/authorize":
+    servers:
+      - {url: "/", description: "나루 OP. 호스트 [미확인]."}
+    get:
+      tags: ["OIDC"]
+      operationId: "authorizeOidc"
+      summary: "Litpage RP에 인가 코드 발급"
+      description: "정적 등록 client와 redirect_uri를 검증한다. 나루 세션이 없으면 검증된 인가 요청을 서버에 바인딩하고 Google 로그인 후 재개한다. 정지·탈퇴 및 신규 진입 조건 위반은 access_denied로 처리한다. 인가 요청 자체의 검증에 실패하고 등록 복귀 주소를 확인할 수 없으면 브라우저에서 오류를 표시한다. 등록한 Litpage RP의 권한 범위는 openid로 한정한다."
+      security:
+        - {}
+        - {sessionCookie: []}
+      parameters:
+        - {name: "response_type", in: "query", required: true, schema: {const: "code"}}
+        - {name: "client_id", in: "query", required: true, schema: {type: "string", minLength: 1}}
+        - {name: "redirect_uri", in: "query", required: true, schema: {type: "string", format: "uri"}}
+        - {name: "scope", in: "query", required: true, schema: {const: "openid"}}
+        - {name: "state", in: "query", required: true, schema: {type: "string", minLength: 1}}
+        - {name: "nonce", in: "query", required: true, schema: {type: "string", minLength: 1}}
+        - {name: "code_challenge", in: "query", required: true, schema: {type: "string", pattern: '^[A-Za-z0-9_-]{43}$'}}
+        - {name: "code_challenge_method", in: "query", required: true, schema: {const: "S256"}}
+      responses:
+        "302": {"$ref":"#/components/responses/OidcAuthorizationRedirect"}
+        "400":
+          description: "잘못된 요청. 검증되지 않은 주소로 이동하지 않는다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+    post:
+      tags: ["OIDC"]
+      operationId: "authorizeOidcForm"
+      summary: "폼으로 Litpage RP 인가 요청"
+      description: "GET과 같은 판정 및 복귀 계약이다. 로그인이나 사용자 상호작용이 필요하면 303으로 나루 화면으로 이동한다."
+      security:
+        - {}
+        - {sessionCookie: []}
+      requestBody:
+        required: true
+        content:
+          "application/x-www-form-urlencoded":
+            schema:
+              type: "object"
+              required: ["response_type", "client_id", "redirect_uri", "scope", "state", "nonce", "code_challenge", "code_challenge_method"]
+              properties:
+                response_type: {const: "code"}
+                client_id: {type: "string", minLength: 1}
+                redirect_uri: {type: "string", format: "uri"}
+                scope: {const: "openid"}
+                state: {type: "string", minLength: 1}
+                nonce: {type: "string", minLength: 1}
+                code_challenge: {type: "string", pattern: '^[A-Za-z0-9_-]{43}$'}
+                code_challenge_method: {const: "S256"}
+      responses:
+        "303": {"$ref":"#/components/responses/OidcAuthorizationRedirect"}
+        "400":
+          description: "잘못된 요청. 검증되지 않은 주소로 이동하지 않는다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+  "/oidc/token":
+    servers:
+      - {url: "/", description: "나루 OP. 호스트 [미확인]."}
+    post:
+      tags: ["OIDC"]
+      operationId: "issueOidcToken"
+      summary: "인가 코드 교환 또는 리프레시 토큰 회전"
+      description: "TLS 연결에서 client_secret_basic을 검증한다. 코드 교환은 등록 redirect_uri와 PKCE verifier 및 일회용 코드를 검사한다. 두 grant 모두 유효한 연결 세션과 최신 회원 상태가 필요하다. 인증·검증 결과와 응답 자격 원문은 로그에 남기지 않는다."
+      security:
+        - {oidcClientBasic: []}
+      requestBody:
+        required: true
+        content:
+          "application/x-www-form-urlencoded":
+            schema:
+              oneOf:
+                - type: "object"
+                  required: ["grant_type", "code", "redirect_uri", "code_verifier"]
+                  properties:
+                    grant_type: {const: "authorization_code"}
+                    code: {type: "string", minLength: 1}
+                    redirect_uri: {type: "string", format: "uri"}
+                    code_verifier: {type: "string", pattern: '^[A-Za-z0-9._~-]{43,128}$'}
+                - type: "object"
+                  required: ["grant_type", "refresh_token"]
+                  properties:
+                    grant_type: {const: "refresh_token"}
+                    refresh_token: {type: "string", minLength: 1}
+      responses:
+        "200":
+          description: "액세스·리프레시 토큰 발급. id_token은 최초 코드 교환에서 필수이고 갱신에서는 생략한다. 수명은 원본 나루 세션의 유휴·절대 만료를 넘지 않는다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+            Pragma: {required: true, schema: {const: "no-cache"}}
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                required: ["access_token", "token_type", "expires_in", "refresh_token"]
+                properties:
+                  access_token: {type: "string", minLength: 1}
+                  token_type: {const: "Bearer"}
+                  expires_in: {type: "integer", minimum: 1, maximum: 300, description: "액세스 토큰의 유효기간(초)."}
+                  id_token: {type: "string", minLength: 1}
+                  refresh_token: {type: "string", minLength: 1}
+        "400":
+          description: "유효하지 않은 요청 또는 grant. 세션의 폐기·만료, 정지·탈퇴 회원은 invalid_grant로 응답한다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/OidcError"}
+        "401":
+          description: "invalid_client. Basic 클라이언트 인증 실패."
+          headers:
+            WWW-Authenticate: {required: true, schema: {type: "string"}}
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "application/json":
+              schema: {"$ref":"#/components/schemas/OidcError"}
+  "/oidc/jwks":
+    servers:
+      - {url: "/", description: "나루 OP. 호스트 [미확인]."}
+    get:
+      tags: ["OIDC"]
+      operationId: "getOidcJwks"
+      summary: "OP 서명 키의 공개 JWK 조회"
+      security: []
+      responses:
+        "200":
+          description: "활성 공개 키와 정상 회전 중 검증 유예 공개 키. 교체할 새 공개 키를 활성화 전에 게시할 수 있다."
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                required: ["keys"]
+                properties:
+                  keys:
+                    type: "array"
+                    items:
+                      type: "object"
+                      additionalProperties: false
+                      required: ["kid", "kty", "use", "alg", "n", "e"]
+                      properties:
+                        kid: {type: "string"}
+                        kty: {const: "RSA"}
+                        use: {const: "sig"}
+                        alg: {const: "RS256"}
+                        n: {type: "string", description: "RSA 공개 모듈러스"}
+                        e: {type: "string", description: "RSA 공개 지수"}
+  "/oidc/userinfo":
+    servers:
+      - {url: "/", description: "나루 OP. 호스트 [미확인]."}
+    get:
+      tags: ["OIDC"]
+      operationId: "getOidcUserInfo"
+      summary: "액세스 토큰의 주체 확인"
+      description: "UserInfo 전용 토큰과 나루 세션을 검사하고 정지·탈퇴 여부를 조회한다. Litpage RP는 이 주체를 ID 토큰 또는 기존 RP 세션의 주체와 대조한다."
+      security:
+        - {oidcUserInfoBearer: []}
+      responses:
+        "200": {"$ref":"#/components/responses/OidcUserInfoSubject"}
+        "401": {"$ref":"#/components/responses/OidcUserInfoUnauthorized"}
+    post:
+      tags: ["OIDC"]
+      operationId: "postOidcUserInfo"
+      summary: "액세스 토큰의 주체 확인"
+      security:
+        - {oidcUserInfoBearer: []}
+      responses:
+        "200": {"$ref":"#/components/responses/OidcUserInfoSubject"}
+        "401": {"$ref":"#/components/responses/OidcUserInfoUnauthorized"}
+  "/oidc/end-session":
+    servers:
+      - {url: "/", description: "나루 OP. 호스트 [미확인]."}
+    get:
+      tags: ["OIDC"]
+      operationId: "startOidcEndSession"
+      summary: "RP 시작 로그아웃 확인 요청"
+      description: "등록된 client_id·post_logout_redirect_uri를 대조하고 logout_hint의 sid를 현재 나루 세션과 확인한다. 이미 종료됐거나 현재 세션과 다르면 현재 세션을 유지하고 검증된 복귀 경로로 이동한다."
+      security:
+        - {}
+        - {sessionCookie: []}
+      parameters:
+        - {name: "client_id", in: "query", required: true, schema: {type: "string", minLength: 1}}
+        - {name: "logout_hint", in: "query", required: true, schema: {type: "string", description: "RP가 받은 현재 sid. 인증 자격으로 사용하지 않는다."}}
+        - {name: "post_logout_redirect_uri", in: "query", required: true, schema: {type: "string", format: "uri"}}
+        - {name: "state", in: "query", required: true, schema: {type: "string", minLength: 1}}
+      responses:
+        "200":
+          description: "현재 기기 로그아웃 확인 화면과 일회용 폼을 제공한다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "text/html":
+              schema: {type: "string"}
+        "303": {"$ref":"#/components/responses/OidcEndSessionRedirect"}
+        "400":
+          description: "유효하지 않은 로그아웃 요청. 검증되지 않은 복귀 경로로 이동하지 않는다."
+    post:
+      tags: ["OIDC"]
+      operationId: "postOidcEndSession"
+      summary: "RP 로그아웃 시작 또는 나루 확인 폼 제출"
+      description: "RP의 시작 POST는 GET과 동일한 필드를 받으며 즉시 세션을 변경하지 않는다. 확인 POST는 일회용 시도와 나루 세션에 바인딩된 동일 오리진 CSRF를 검증한다. sid가 일치한 현재 세션만 폐기하고 백채널 전파를 등록한다."
+      security:
+        - {}
+        - {sessionCookie: []}
+      requestBody:
+        required: true
+        content:
+          "application/x-www-form-urlencoded":
+            schema:
+              oneOf:
+                - type: "object"
+                  required: ["client_id", "logout_hint", "post_logout_redirect_uri", "state"]
+                  properties:
+                    client_id: {type: "string", minLength: 1}
+                    logout_hint: {type: "string", minLength: 1}
+                    post_logout_redirect_uri: {type: "string", format: "uri"}
+                    state: {type: "string", minLength: 1}
+                - type: "object"
+                  required: ["logout_attempt", "csrf_token"]
+                  properties:
+                    logout_attempt: {type: "string", minLength: 1}
+                    csrf_token: {type: "string", minLength: 1}
+      responses:
+        "200":
+          description: "로그아웃 시작 요청의 확인 화면."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+          content:
+            "text/html":
+              schema: {type: "string"}
+        "303": {"$ref":"#/components/responses/OidcEndSessionRedirect"}
+        "400":
+          description: "유효하지 않은 종료 요청 또는 확인 폼."
+        "403":
+          description: "현재 세션의 로그아웃 확인 CSRF 검증 실패."
+  "/oidc/backchannel-logout":
+    servers:
+      - url: "https://{litpageHost}"
+        description: "별도 Litpage RP 오리진. 배포 호스트 [미확인]."
+        variables:
+          litpageHost:
+            default: "litpage.invalid"
+            description: "예시용 예약 호스트. 정적 등록의 실제 호스트는 [미확인]."
+    post:
+      tags: ["OIDC"]
+      operationId: "receiveLitpageBackchannelLogout"
+      summary: "Litpage RP가 OP의 로그아웃 통지를 수신"
+      description: "RS256 Logout Token과 등록 issuer·audience·sid·iat·exp·jti·events 및 nonce 부재를 검증한다. 현재 sid의 세션과 웹소켓만 종료한다. 브라우저 자격은 요구하지 않는다."
+      security: []
+      requestBody:
+        required: true
+        content:
+          "application/x-www-form-urlencoded":
+            schema:
+              type: "object"
+              required: ["logout_token"]
+              properties:
+                logout_token: {type: "string", minLength: 1}
+      responses:
+        "200":
+          description: "대상 sid의 세션 종료. 이미 종료한 sid에 대한 유효한 중복 통지도 성공이다."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        "400":
+          description: "유효하지 않은 통지 또는 RP 처리 실패."
+          headers:
+            Cache-Control: {"$ref":"#/components/headers/NoStore"}
+components:
+  securitySchemes:
+    oidcClientBasic:
+      type: "http"
+      scheme: "basic"
+      description: "등록한 기밀 RP의 client_secret_basic"
+    oidcUserInfoBearer:
+      type: "http"
+      scheme: "bearer"
+      description: "나루 OP에서 발급한 UserInfo 전용 불투명 액세스 토큰"
+    sessionCookie:
+      type: "apiKey"
+      in: "cookie"
+      name: "naru_session"
+      description: "나루 PostgreSQL에서 검증하는 현재 브라우저의 세션 쿠키. 09에 따라 Secure·HttpOnly·SameSite=Lax 및 Path=/, Domain·Expires 생략, 절대 만료까지 남은 Max-Age를 적용한다."
+    csrfHeader:
+      type: "apiKey"
+      in: "header"
+      name: "X-CSRF-Token"
+      description: "쿠키 인증 쓰기와 Litpage 진입에서 세션 쿠키와 함께 검증하는 CSRF 값. 세션 조회 응답으로 전달하고 로그인·갱신 때 회전한다."
+  parameters:
+    Cursor:
+      name: "cursor"
+      in: "query"
+      description: "같은 조회 조건으로 다음 페이지를 요청하는 불투명 커서. 첫 요청에서 생략한다."
+      schema:
+        type: "string"
+        minLength: 1
+    Limit:
+      name: "limit"
+      in: "query"
+      description: "요청 페이지 크기. 09 제안은 기본 50, 최대 100이다."
+      schema:
+        type: "integer"
+        minimum: 1
+        maximum: 100
+        default: 50
+    ReturnTo:
+      name: "returnTo"
+      in: "query"
+      description: "인증 후 복귀할 나루 내부 화면 또는 링크 보기 주소. 서버가 허용된 동일 오리진 상대 경로만 저장한다."
+      schema:
+        type: "string"
+        format: "uri-reference"
+    GoogleCode:
+      name: "code"
+      in: "query"
+      description: "Google 인증 성공 시 반환되는 코드."
+      schema:
+        type: "string"
+    GoogleState:
+      name: "state"
+      in: "query"
+      required: true
+      description: "로그인 시작 흐름과 콜백을 연결하는 검증 값."
+      schema:
+        type: "string"
+    GoogleError:
+      name: "error"
+      in: "query"
+      description: "Google 인증 실패·취소인 경우 전달되는 오류 분류. 공개 응답에 복사하지 않는다."
+      schema:
+        type: "string"
+    Document:
+      name: "document"
+      in: "path"
+      required: true
+      description: "공개 문서 종류."
+      schema:
+        type: "string"
+        enum: ["terms","privacy","licenses"]
+    Language:
+      name: "language"
+      in: "query"
+      description: "문서 언어. 생략 시 화면 언어 전달 또는 기본 언어 선택은 [미확인]."
+      schema: {"$ref":"#/components/schemas/Language"}
+    FolderQuery:
+      name: "folderId"
+      in: "query"
+      description: "조회할 상위 폴더. 소유 목록에서 생략하면 루트."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    DriveScope:
+      name: "scope"
+      in: "query"
+      description: "소유 항목 또는 받은 공유 파일."
+      schema:
+        type: "string"
+        enum: ["owned","shared"]
+        default: "owned"
+    BaseRevision:
+      name: "baseRevision"
+      in: "query"
+      required: true
+      description: "편집을 시작한 원본 버전."
+      schema:
+        type: "string"
+        description: "파일 버전을 식별하는 불투명한 값."
+        minLength: 1
+    ResultId:
+      name: "resultId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    FolderId:
+      name: "folderId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    ItemId:
+      name: "itemId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    FileId:
+      name: "fileId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    MemberId:
+      name: "memberId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    ServiceId:
+      name: "serviceId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    CategoryId:
+      name: "categoryId"
+      in: "path"
+      required: true
+      description: "대상 식별자."
+      schema:
+        type: "string"
+        description: "서비스가 발급한 불투명 식별자."
+        minLength: 1
+    LinkKey:
+      name: "linkKey"
+      in: "path"
+      required: true
+      description: "공유 주소의 불투명한 키. URL과 요청 로그에서 키를 보호한다."
+      schema:
+        type: "string"
+        minLength: 1
+  headers:
+    RequestId:
+      description: "응답 본문의 requestId와 같은 상관 ID. 무본문 응답에서도 쓸 수 있다."
+      schema:
+        type: "string"
+        minLength: 1
+    NoStore:
+      description: "세션·개인 데이터 또는 공개 링크 결과를 재사용 가능한 캐시에 남기지 않는다."
+      schema:
+        const: "no-store"
+        type: "string"
+    Location:
+      description: "서버가 지정한 이동 주소."
+      schema:
+        type: "string"
+        format: "uri-reference"
+    SessionCookie:
+      description: "나루 세션 쿠키 발급·갱신 또는 제거. 속성과 발급 조건은 07 개요와 09 참조."
+      schema:
+        type: "string"
+    Attachment:
+      description: "원본 파일을 첨부로 제공한다."
+      schema:
+        type: "string"
+    Revision:
+      description: "편집을 시작한 파일 상태를 나타내는 버전."
+      schema:
+        type: "string"
+        description: "파일 버전을 식별하는 불투명한 값."
+        minLength: 1
+    CsrfToken:
+      description: "인증된 같은 오리진 화면에서 변경·진입 요청에 사용할 현재 CSRF 값. 발급·회전은 09를 따른다."
+      schema:
+        type: "string"
+        minLength: 1
+  responses:
+    OidcAuthorizationRedirect:
+      description: "나루 로그인 화면으로 이동하거나, 검증된 RP 콜백에 code 또는 OAuth error와 원래 state를 반환한다."
+      headers:
+        Location: {required: true, schema: {type: "string"}}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+    OidcUserInfoSubject:
+      description: "등록 RP에 반환하는 안정적인 로그인 주체."
+      headers:
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+      content:
+        "application/json":
+          schema:
+            type: "object"
+            required: ["sub"]
+            properties:
+              sub: {type: "string", minLength: 1}
+    OidcUserInfoUnauthorized:
+      description: "Bearer 인증 필요. 잘못되었거나 폐기된 토큰 및 정지·탈퇴 회원의 토큰은 invalid_token."
+      headers:
+        WWW-Authenticate: {required: true, schema: {type: "string"}}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+    OidcEndSessionRedirect:
+      description: "OP 자체 확인 화면 또는 정확히 등록된 복귀 URI로 이동한다. RP 복귀 시 state를 반환한다. 폐기 완료 시 나루 쿠키를 제거한다."
+      headers:
+        Location: {required: true, schema: {type: "string"}}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+        Set-Cookie: {"$ref":"#/components/headers/SessionCookie"}
+    SessionRequired:
+      description: "AUTH_REQUIRED — 로그인이 필요함. SESSION_EXPIRED — 세션이 만료되어 다시 로그인해야 함."
+      headers:
+        X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+      content:
+        "application/json":
+          schema:
+            allOf:
+              - {"$ref":"#/components/schemas/Error"}
+              -
+                properties:
+                  code:
+                    enum: ["AUTH_REQUIRED","SESSION_EXPIRED"]
+    InvalidRequest:
+      description: "INVALID_REQUEST — 요청의 경로·쿼리·본문 형식이 유효하지 않음."
+      headers:
+        X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+      content:
+        "application/json":
+          schema:
+            allOf:
+              - {"$ref":"#/components/schemas/Error"}
+              -
+                properties:
+                  code:
+                    enum: ["INVALID_REQUEST"]
+    InternalError:
+      description: "INTERNAL_ERROR — 요청을 처리하지 못함."
+      headers:
+        X-Request-Id: {"$ref":"#/components/headers/RequestId"}
+        Cache-Control: {"$ref":"#/components/headers/NoStore"}
+      content:
+        "application/json":
+          schema:
+            allOf:
+              - {"$ref":"#/components/schemas/Error"}
+              -
+                properties:
+                  code:
+                    enum: ["INTERNAL_ERROR"]
+  schemas:
+    OidcDiscovery:
+      type: "object"
+      required:
+        - "issuer"
+        - "authorization_endpoint"
+        - "token_endpoint"
+        - "jwks_uri"
+        - "userinfo_endpoint"
+        - "end_session_endpoint"
+        - "scopes_supported"
+        - "response_types_supported"
+        - "response_modes_supported"
+        - "subject_types_supported"
+        - "grant_types_supported"
+        - "id_token_signing_alg_values_supported"
+        - "token_endpoint_auth_methods_supported"
+        - "code_challenge_methods_supported"
+        - "request_uri_parameter_supported"
+        - "backchannel_logout_supported"
+        - "backchannel_logout_session_supported"
+      properties:
+        issuer: {type: "string", format: "uri"}
+        authorization_endpoint: {type: "string", format: "uri"}
+        token_endpoint: {type: "string", format: "uri"}
+        jwks_uri: {type: "string", format: "uri"}
+        userinfo_endpoint: {type: "string", format: "uri"}
+        end_session_endpoint: {type: "string", format: "uri"}
+        scopes_supported: {const: ["openid"]}
+        response_types_supported: {const: ["code"]}
+        response_modes_supported: {const: ["query"]}
+        subject_types_supported: {const: ["public"]}
+        grant_types_supported: {const: ["authorization_code", "refresh_token"]}
+        id_token_signing_alg_values_supported: {const: ["RS256"]}
+        token_endpoint_auth_methods_supported: {const: ["client_secret_basic"]}
+        code_challenge_methods_supported: {const: ["S256"]}
+        request_uri_parameter_supported: {const: false}
+        backchannel_logout_supported: {const: true}
+        backchannel_logout_session_supported: {const: true}
+    OidcError:
+      type: "object"
+      required: ["error"]
+      properties:
+        error: {type: "string"}
+        error_description: {type: "string"}
+    Error:
+      type: "object"
+      additionalProperties: false
+      required: ["code","message","requestId"]
+      properties:
+        code:
+          type: "string"
+          description: "클라이언트가 분기할 수 있는 오류 코드."
+          pattern: "^[A-Z][A-Z0-9_]*$"
+        message:
+          type: "string"
+          description: "사용자에게 공개할 수 있는 안내."
+          minLength: 1
+        requestId:
+          type: "string"
+          description: "요청과 운영 로그를 연결하는 불투명한 값."
+          minLength: 1
+    Binary:
+      type: "string"
+      description: "본문의 바이너리 바이트."
+      format: "binary"
+    Text:
+      type: "string"
+    Language:
+      type: "string"
+      enum: ["ko","en"]
+    Theme:
+      type: "string"
+      enum: ["system","light","dark"]
+    Session:
+      type: "object"
+      additionalProperties: false
+      required: ["isAdmin","dataRestored"]
+      properties:
+        isAdmin:
+          type: "boolean"
+        dataRestored:
+          type: "boolean"
+          description: "이번 로그인에서 보관 데이터가 복구된 경우 true."
+    Profile:
+      type: "object"
+      additionalProperties: false
+      required: ["googleName","googleEmail","photoUrl","displayName","effectiveDisplayName","language","theme","driveUsageBytes"]
+      properties:
+        googleName:
+          type: "string"
+        googleEmail:
+          type: "string"
+          format: "email"
+        photoUrl:
+          type: ["string","null"]
+          format: "uri"
+        displayName:
+          type: ["string","null"]
+        effectiveDisplayName:
+          type: "string"
+        language:
+          type: ["string","null"]
+          enum: ["ko","en",null]
+          description: "미설정 null이면 기기 언어를 적용한다."
+        theme: {"$ref":"#/components/schemas/Theme"}
+        driveUsageBytes:
+          type: "integer"
+          minimum: 0
+    ProfileUpdate:
+      type: "object"
+      additionalProperties: false
+      properties:
+        displayName:
+          type: "string"
+          description: "한글 2점, 영문·숫자 1점의 합이 2~20. 한글·영문·숫자만 허용한다."
+          minLength: 1
+        language: {"$ref":"#/components/schemas/Language"}
+        theme: {"$ref":"#/components/schemas/Theme"}
+      minProperties: 1
+    Category:
+      type: "object"
+      additionalProperties: false
+      required: ["id","name"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+    Service:
+      type: "object"
+      additionalProperties: false
+      required: ["id","name","kind","categoryId"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+        kind:
+          type: "string"
+          enum: ["drive","openSource"]
+        categoryId:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+    LitpageEntry:
+      oneOf:
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["state"]
+          properties:
+            state:
+              const: "storageFolderRequired"
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["state","language"]
+          properties:
+            state:
+              const: "ready"
+            language: {"$ref":"#/components/schemas/Language"}
+    StorageFolder:
+      type: "object"
+      additionalProperties: false
+      required: ["folderId","suggestedFolderName"]
+      properties:
+        folderId:
+          type: ["string","null"]
+          minLength: 1
+          description: "선택한 폴더. 미지정이면 null."
+        suggestedFolderName:
+          type: "string"
+          minLength: 1
+    StorageFolderUpdate:
+      type: "object"
+      additionalProperties: false
+      required: ["folderId"]
+      properties:
+        folderId:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+    DriveItem:
+      type: "object"
+      additionalProperties: false
+      required: ["id","parentId","name","kind","sizeBytes","modifiedAt","isShared","fileType","isLitpageDocument"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        parentId:
+          type: ["string","null"]
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+        kind:
+          type: "string"
+          enum: ["folder","file"]
+        sizeBytes:
+          type: ["integer","null"]
+          minimum: 0
+          description: "파일 크기. 폴더 크기 집계 방식은 [미확인]이며 값이 없으면 null."
+        modifiedAt:
+          type: "string"
+          format: "date-time"
+        isShared:
+          type: "boolean"
+        fileType:
+          type: ["string","null"]
+          description: "파일 형식 또는 알 수 없는 경우 null. 폴더는 null."
+        isLitpageDocument:
+          type: "boolean"
+    FolderCreate:
+      type: "object"
+      additionalProperties: false
+      required: ["name"]
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+        parentId:
+          type: ["string","null"]
+          minLength: 1
+    FolderUpdate:
+      type: "object"
+      additionalProperties: false
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+        parentId:
+          type: ["string","null"]
+          minLength: 1
+      minProperties: 1
+    FileUpload:
+      type: "object"
+      additionalProperties: false
+      required: ["file"]
+      properties:
+        folderId:
+          type: "string"
+          description: "대상 폴더. 생략하면 루트."
+          minLength: 1
+        file: {"$ref":"#/components/schemas/Binary"}
+    FolderManifest:
+      type: "object"
+      additionalProperties: false
+      required: ["folderName","directories","filePaths"]
+      properties:
+        folderName:
+          type: "string"
+          minLength: 1
+        directories:
+          type: "array"
+          items:
+            type: "string"
+            description: "업로드 루트 아래의 상대 디렉터리 경로. 빈 하위 폴더도 기재."
+            minLength: 1
+        filePaths:
+          type: "array"
+          items:
+            type: "string"
+            description: "업로드 루트 아래의 상대 파일 경로."
+            minLength: 1
+    FolderUpload:
+      type: "object"
+      additionalProperties: false
+      required: ["manifest"]
+      properties:
+        folderId:
+          type: "string"
+          description: "대상 폴더. 생략하면 루트."
+          minLength: 1
+        manifest: {"$ref":"#/components/schemas/FolderManifest"}
+        files:
+          type: "array"
+          items: {"$ref":"#/components/schemas/Binary"}
+          description: "manifest.filePaths에 대응하는 반복 바이너리 파트. 상대 경로와 바이트 파트는 같은 순서로 일대일 대응한다. 파일이 없는 폴더는 이 필드를 생략한다. 파트 수와 경로 수가 일치해야 한다. 중복 경로, 절대 경로 및 상위 경로 이동은 허용하지 않는다."
+    FolderUploadResult:
+      type: "object"
+      additionalProperties: false
+      required: ["folder","skipped"]
+      properties:
+        folder: {"$ref":"#/components/schemas/DriveItem"}
+        skipped:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: false
+            required: ["relativePath","code"]
+            properties:
+              relativePath:
+                type: "string"
+                minLength: 1
+              code:
+                type: "string"
+                enum: ["FILE_TOO_LARGE","EMPTY_FILE"]
+    TrashItem:
+      type: "object"
+      additionalProperties: false
+      required: ["id","name","kind","sizeBytes","remainingCalendarDays","originalFolderPath"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+        kind:
+          type: "string"
+          enum: ["folder","file"]
+        sizeBytes:
+          type: ["integer","null"]
+          minimum: 0
+        remainingCalendarDays:
+          type: "integer"
+          minimum: 0
+        originalFolderPath:
+          type: "string"
+          description: "사용자에게 표시할 원래 폴더 위치."
+    RecipientLookup:
+      type: "object"
+      additionalProperties: false
+      required: ["email"]
+      properties:
+        email:
+          type: "string"
+          format: "email"
+    ShareRecipient:
+      type: "object"
+      additionalProperties: false
+      required: ["id","displayName"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        displayName:
+          type: "string"
+          description: "표시 이름 또는 미설정 시 Google 이름."
+    MemberShareSettings:
+      oneOf:
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["permission","downloadAllowed"]
+          properties:
+            permission:
+              const: "view"
+            downloadAllowed:
+              type: "boolean"
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["permission"]
+          properties:
+            permission:
+              const: "edit"
+    MemberShare:
+      type: "object"
+      additionalProperties: false
+      required: ["recipient","settings"]
+      properties:
+        recipient: {"$ref":"#/components/schemas/ShareRecipient"}
+        settings: {"$ref":"#/components/schemas/MemberShareSettings"}
+    EditResult:
+      type: "object"
+      additionalProperties: false
+      required: ["outcome","itemId","revision"]
+      properties:
+        outcome:
+          type: "string"
+          enum: ["saved","conflictCopySaved"]
+        itemId:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        revision:
+          type: "string"
+          description: "파일 버전을 식별하는 불투명한 값."
+          minLength: 1
+    LinkSettings:
+      oneOf:
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["enabled"]
+          properties:
+            enabled:
+              const: false
+        -
+          type: "object"
+          additionalProperties: false
+          required: ["enabled","url","downloadAllowed"]
+          properties:
+            enabled:
+              const: true
+            url:
+              type: "string"
+              format: "uri-reference"
+            downloadAllowed:
+              type: "boolean"
+    LinkUpdate:
+      type: "object"
+      additionalProperties: false
+      required: ["downloadAllowed"]
+      properties:
+        downloadAllowed:
+          type: "boolean"
+    PublicLink:
+      type: "object"
+      additionalProperties: false
+      required: ["name","sizeBytes","downloadAllowed"]
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+        sizeBytes:
+          type: "integer"
+          minimum: 0
+        downloadAllowed:
+          type: "boolean"
+    AdminMember:
+      type: "object"
+      additionalProperties: false
+      required: ["id","displayName","email","suspended"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        displayName:
+          type: "string"
+        email:
+          type: "string"
+          format: "email"
+        suspended:
+          type: "boolean"
+    Suspension:
+      type: "object"
+      additionalProperties: false
+      required: ["suspended"]
+      properties:
+        suspended:
+          type: "boolean"
+    AdminOpenSource:
+      type: "object"
+      additionalProperties: false
+      required: ["id","name","visible"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+        visible:
+          type: "boolean"
+    Visibility:
+      type: "object"
+      additionalProperties: false
+      required: ["visible"]
+      properties:
+        visible:
+          type: "boolean"
+    CategoryName:
+      type: "object"
+      additionalProperties: false
+      required: ["name"]
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+    CategoryAssignment:
+      type: "object"
+      additionalProperties: false
+      required: ["categoryId"]
+      properties:
+        categoryId:
+          type: "string"
+          description: "서비스가 발급한 불투명 식별자."
+          minLength: 1
+    CategoryPage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/Category"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+    ServicePage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/Service"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+    Breadcrumb:
+      type: "object"
+      additionalProperties: false
+      required: ["id","name"]
+      properties:
+        id:
+          type: "string"
+          description: "서비스가 발급한 불투명 폴더 식별자."
+          minLength: 1
+        name:
+          type: "string"
+          minLength: 1
+    DriveItemPage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor","breadcrumbs"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/DriveItem"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+        breadcrumbs:
+          type: "array"
+          items: {"$ref":"#/components/schemas/Breadcrumb"}
+          description: "제안 형식. 루트 기준 첫 폴더부터 현재 조회 폴더까지 순서대로 포함한다. 루트 목록과 폴더 조회가 아닌 받은 공유 목록은 빈 배열이다."
+    TrashItemPage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/TrashItem"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+    MemberSharePage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/MemberShare"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+    AdminMemberPage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/AdminMember"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."
+    AdminOpenSourcePage:
+      type: "object"
+      additionalProperties: false
+      required: ["items","nextCursor"]
+      properties:
+        items:
+          type: "array"
+          items: {"$ref":"#/components/schemas/AdminOpenSource"}
+        nextCursor:
+          type: ["string","null"]
+          description: "다음 페이지 커서. 마지막 페이지는 null."

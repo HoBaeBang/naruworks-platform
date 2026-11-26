@@ -105,7 +105,7 @@ FigCraft의 `Deep Ink` 컬렉션은 라이트와 다크에 같은 색 토큰 31�
 
 ## 아이콘
 
-DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나루) 스타일로 새로 그린 **커스텀 아이콘 세트 39개**를 쓴다. 라이선스는 프로젝트 소유(project-owned)이다.
+DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나루) 스타일로 새로 그린 **커스텀 아이콘 세트 40개**를 쓴다. 라이선스는 프로젝트 소유(project-owned)이다.
 
 마스터는 24×24 그리드, 라이브 에어리어 패딩 2px, 스트로크 1.75px, 라운드 캡·조인, 단색 `currentColor`다. 코너 곡선은 로고 아치와 같은 부드러운 언어를 따른다. 같은 마스터를 16·20·24px로 광학 검사했다. SVG는 [icons/](icons/)에 두고, FigCraft 컴포넌트 이름은 `icon/<name>`이다.
 
@@ -124,6 +124,7 @@ DES-004에 따라 구 제안은 폐기하고, 브랜드 A Deep Ink (먹빛 나�
 | 압축 | `file-archive` |
 | 기타 파일 | `file` |
 | 올리기 | `upload` |
+| 폴더 올리기 (v1.1, DEC-086/106) | `folder-upload` |
 | 내려받기 | `download` |
 | 공유 | `share` |
 | 링크 | `link` |
@@ -167,7 +168,7 @@ FigCraft에 컴포넌트 세트 30개를 두었다. 라이트 보드의 원본�
 | Checkbox | 미선택 · 선택 · 혼합 | default · hover · pressed · focus · disabled | WF-05 상태 D, WF-07 |
 | Radio | 미선택 · 선택 | default · hover · pressed · focus · disabled | WF-07, WF-15 |
 | Toggle | 꺼짐 · 켜짐 | default · hover · pressed · focus · disabled | WF-05, WF-13 |
-| Segmented control | 시스템/밝게/어둡게 · 한국어/EN | 각 선택값 · hover · pressed · focus · disabled | WF-15 (테마는 설계 제안) |
+| Segmented control | 시스템/밝게/어둡게 · 한국어/EN | 각 선택값 · hover · pressed · focus · disabled | WF-15 (테마는 설계 제안). v1.1: 한국어/EN 변형을 WF-01 언어 전환(DEC-100)에도 재사용. 위치(카드 안/모서리)는 [미확인]이며 임시로 카드 하단. 아이콘 필요 여부 [미확인] |
 | Tabs | 폴더 · 파일 | default · hover · pressed · focus · disabled | WF-05, WF-11 (확장 예시) |
 | Breadcrumb | 링크 · 현재 위치 | default · hover · focus | WF-03, WF-05~06 |
 | Drive navigation | 데스크톱 사이드바 · 모바일 드라이브 메뉴 / 내 드라이브 · 휴지통(현재 위치) | default · current | WF-05, WF-06 |
@@ -177,13 +178,15 @@ FigCraft에 컴포넌트 세트 30개를 두었다. 라이트 보드의 원본�
 | Menu | 서비스 · 파일 · 회원 일반 · 회원 관리자 | default · hover · pressed · focus · disabled | WF-02, WF-05, WF-12 |
 | Toast / Snackbar | success · error · info / 닫기 | 기본 | WF-04~07, WF-12, WF-15 (결과 표현) |
 | Inline alert / Banner | success · warning · error · info | 기본 | WF-03~10, WF-13~15 |
+| Inline alert / Skipped files (v1.1 신규) | 빠진 파일 목록(경고 톤, 파일 이름 나열) | 기본 | WF-05 폴더 올리기(DEC-106). 사유 구분(0바이트/1GB 초과)·문구는 [미확인], 현재 문구 「일부 파일을 올리지 못했습니다.」는 임시 |
 | Empty state | 빈 폴더 · 빈 휴지통 | 기본 | WF-02, WF-05~06, WF-12, WF-14 |
 | Skeleton / Loading | 목록 · 카드 | loading | WF-02, WF-05, WF-07, WF-12 (대기 표현) |
 | Progress | 전송 · 완료 · 실패 · 취소됨 | 진행/취소 · 완료 · 실패/재시도 | WF-05 (전송 상태 디자인) |
 | Dialog / Modal | 확인 · 파괴적 · 링크 공유 · 라이선스 · 폴더 만들기 · 이름 변경 · 저장 폴더 선택 · 이동 대상 선택 | default · loading · error | WF-02, WF-03, WF-05, WF-09, WF-12 |
+| Dialog / Category delete blocked (v1.1 신규) | 확인 버튼 하나(배정된 서비스가 있어 삭제 차단) | 기본 | WF-14(DEC-115). 문구는 [미확인], 「이 카테고리에 배정된 서비스가 있어 삭제할 수 없습니다.」는 임시 |
 | Share dialog / Member sharing page | 모달(WF-05 상태 D) · WF-07 독립 화면(데스크톱·모바일, 권한 Radio) | default · loading · error | WF-07 · WF-05 상태 D |
 | Bottom sheet | 파일 · 휴지통 복원 | default · focus | WF-05~06 (모바일 적용) |
-| Pagination | 현재 · 첫 · 마지막 | default · hover · pressed · focus · disabled | WF-05, WF-12~14 (확장 예시) |
+| Pagination | 현재 · 첫 · 마지막 | default · hover · pressed · focus · disabled | WF-05, WF-12~14 (확장 예시). v1.1: 관리자 회원 목록 페이지 나눔(DEC-121)에 기존 Pagination 재사용(이전·다음·번호, 첫/마지막 disabled 확인). 페이지당 회원 수는 [미확인] |
 | Admin table | 회원 · 오픈소스 · 카테고리 | default · 행 hover · 행 액션 focus · loading · empty | WF-12~14 |
 | File list row | 파일 · 폴더 · 휴지통 · 모바일 · 데스크톱 호버 썸네일 | default · hover · pressed · focus · selected | WF-03, WF-05~06 |
 | File grid card | 파일 · 데스크톱 호버 썸네일 · 모바일 유형 표시 | default · hover · pressed · focus · selected | WF-05 (목록의 그리드 변형) |
@@ -198,6 +201,8 @@ FigCraft에 컴포넌트 세트 30개를 두었다. 라이트 보드의 원본�
 - WF-07은 전체 이메일 완전 일치 조회와 보기/편집 권한, 다운로드 허용을 다룬다. WF-05 링크 공유는 다운로드 허용 선택을 제공한다. 업로드 진행·취소는 WF-05에 덧붙인 전송 상태 디자인이다.
 - WF-05 데스크톱은 포인터 호버가 가능한 환경에서 이미지·PDF·동영상 대표 썸네일을 표시한다. 모바일은 호버 썸네일 없이 파일 유형과 이름을 바로 보여 준다. GAP-017 기준선 반영 여부는 [미확인]이며 모바일 처리는 이 초안의 전제다.
 - WF-06 휴지통은 남은 기간, 원래 위치와 복원을 제공한다. WF-12 회원 정지는 확인 대화상자를 거치고 기존 세션은 로그아웃까지 이어진다.
+- v1.1 폴더 올리기(DEC-086/106): 기존 Button(secondary·md 가정) 스타일에 `folder-upload` 아이콘과 「폴더 올리기」 레이블을 쓴다. 올리기 버튼 옆이라는 위치는 [미확인] 가정이다. FigCraft에는 별도 버튼 노드를 만들지 않았다.
+- v1.1 테마 선택(DEC-113): 새 컴포넌트 없이 기존 Radio(또는 Segmented control 시스템/밝게/어둡게)를 재사용한다. 프로필에서 고르고 Litpage에는 적용하지 않는다.
 - 테마의 시스템/밝게/어둡게 선택과 저장 위치는 승인 대상이다. 화면 언어는 WF-15에서 변경하고 다음 방문에도 유지한다.
 - 오버레이를 열면 배경 조작을 막고 포커스를 안에 유지한다. 닫을 때는 트리거로 포커스를 돌려준다. 모바일 시트에는 눈에 보이는 닫기 버튼을 둔다.
 
@@ -363,7 +368,8 @@ on-tooltip  #FFFFFF / #0B1220
 
 - foundations · [Light](exports/foundations-light.png) / [Dark](exports/foundations-dark.png)
 - brand-assets · [Light](exports/brand-assets-light.png) / [Dark](exports/brand-assets-dark.png)
-- 아이콘 SVG 39개 · [icons/](icons/)
+- 아이콘 SVG 40개 · [icons/](icons/)
+- 참고: v1.1 추가분(`folder-upload`, Skipped files 알림, 카테고리 삭제 차단 대화상자)은 FigCraft에만 반영했고 PNG는 다시 내보내지 않았다. 나중에 icons·components-feedback·components-overlays 시트를 다시 내보내기를 제안한다.
 - icons · [Light](exports/icons-light.png) / [Dark](exports/icons-dark.png)
 - components-buttons · [Light](exports/components-buttons-light.png) / [Dark](exports/components-buttons-dark.png)
 - components-inputs · [Light](exports/components-inputs-light.png) / [Dark](exports/components-inputs-dark.png)
@@ -439,4 +445,5 @@ WF-03에서 저장 폴더를 변경하면 이후 결과물에만 새 폴더를 �
 - WF-08은 Common header guest, WF-05·06은 Drive navigation, WF-03·05는 Dialog / Folder workflows와 File list row, WF-07은 Member sharing page를 참조한다.
 - FigCraft의 Foundations, Contrast, Buttons, Inputs, Feedback, Navigation, Overlays, Data, Shell 예시를 각 모드의 구현 검토에 사용한다.
 
+- **v1.1 순서안 0** — `folder-upload`(40번째 아이콘), Inline alert / Skipped files, Dialog / Category delete blocked를 추가했다. Pagination·Segmented control·Radio는 재사용한다.
 - **v0.3 검수(review-03)** — 16px에서 `file-pdf`의 PDF 표식을 선명하게 하고 `file-archive`의 지퍼 눈금과 당김 손잡이 사이를 넓혔다. 라이트·다크 컴포넌트 PNG를 모두 다시 내보냈다.

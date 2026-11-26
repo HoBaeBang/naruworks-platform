@@ -1,6 +1,6 @@
 # NaruWorks 제품 요구사항 문서 (PRD)
 
-상태: 기획 기준선 v1.0 = develop 4b66d1d(승인⑤), 현재 v1.2 (호배님 승인 대기)
+상태: 기획 기준선 develop `2f1db92`(PR #99 머지), 라운드 16~19(DEC-081~121) 호배님 승인 완료. 현재 v1.2.
 
 ## 1. 문서 정보·개정 이력
 
@@ -8,13 +8,13 @@
 |---|---|
 | 문서명 | NaruWorks 제품 요구사항 문서 (PRD) |
 | 버전 | v1.2 |
-| 상태 | 기획 기준선 v1.0 = develop 4b66d1d(승인⑤), 현재 v1.2. 라운드 18·19 반영분(DEC-107~121)은 호배님 승인 대기. |
+| 상태 | 기획 기준선 develop `2f1db92`(PR #99 머지), 라운드 16~19(DEC-081~121) 호배님 승인 완료. 현재 v1.2. |
 | 작성일 | 2026-11-18 (Asia/Seoul) |
 | 개정일 | 2026-11-26 (Asia/Seoul) |
 | 작성 | 기획 봇 |
 | 범위 근거 | 서비스 정의 v1.0 (승인① 완료, 2026-11-18 16:56 KST), DEC-016~026 (인터뷰 라운드 04–05) |
 | 결정 근거 | DEC-001~026, DEC-080(성공 지표), DEC-081(기준선), DEC-085(지표 집계 보관), 인터뷰 라운드 01–05, 15, 16, 17(DEC-092~094, DEC-096, DEC-098) |
-| 관련 문서 | `docs/01-planning/00-context/service-definition.md`, `docs/01-planning/00-context/glossary.md`, `docs/01-planning/02-decision-log/decision-log.md`, `docs/01-planning/02-decision-log/open-questions.md`, `docs/01-planning/change-proposal-prd-v1.1.md`, `docs/01-planning/frd/FRD.md` (v1.4), `docs/01-planning/business-rules/BR.md` (v1.4), `docs/01-planning/nfr/NFR.md` (v1.3) |
+| 관련 문서 | `docs/01-planning/00-context/service-definition.md`, `docs/01-planning/00-context/glossary.md`, `docs/01-planning/02-decision-log/decision-log.md`, `docs/01-planning/02-decision-log/open-questions.md`, `docs/01-planning/change-proposal-prd-v1.1.md`, `docs/01-planning/frd/FRD.md` (v1.5), `docs/01-planning/business-rules/BR.md` (v1.5), `docs/01-planning/nfr/NFR.md` (v1.4) |
 
 본 문서는 1차 출시(MVP)의 제품 요구를 정의한다. 성공 지표의 목표 수치와 측정 기간은 DEC-080을 따른다. 남은 열린 질문은 Q-081·Q-085·Q-087·Q-091·Q-092이며 설계 이관은 `02-decision-log/open-questions.md`에 기록한다.
 

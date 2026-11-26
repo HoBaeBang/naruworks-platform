@@ -2,17 +2,24 @@
 
 | 항목 | 값 |
 | --- | --- |
-| 버전 | v0.1 |
+| 버전 | v0.2 |
 | 일시 | 2026-11-26 (KST) |
 | 상태 | 초안, Gemini 검토 대기 |
 | 기획 기준선 | develop `2f1db92` (PR #99) |
 | 작업 브랜치 | `feature/NARU-94-architecture`, HEAD `24b5849` |
 | 관측·구조 입력 | [04 기술 NFR v0.3](04-NFR-technical.md), [05 아키텍처 v0.4](05-architecture.md), [06 크레이트 구조 v0.4](06-crate-layout.md), [06F 스택 타당성](06F-stack-feasibility.md), [ADR 0003](../decisions/0003-backend-stack.md) |
-| 계약 입력 | [07 API v0.3](07-api/07-api.md), [OpenAPI v0.3](07-api/openapi.yaml), [08 DB v0.1](08-db/08-db-schema.md), [08 문서용 SQL](08-db/migrations/0001_init.sql), [09 인증 v0.1](09-auth.md), [ADR 0004](../decisions/0004-auth-idp-litpage.md) |
+| 계약 입력 | [07 API v0.4](07-api/07-api.md), [OpenAPI v0.4](07-api/openapi.yaml), [08 DB v0.2](08-db/08-db-schema.md), [08 문서용 SQL](08-db/migrations/0001_init.sql), [09 인증 v0.2](09-auth.md), [ADR 0004](../decisions/0004-auth-idp-litpage.md) |
 
 설계서 23장의 `10-observability-ops.md` 정의에 대응하는 산출물은 `10-observability-ci.md`이며, 로그·트레이싱·지표, CI(`cargo fmt`·`clippy`·`test`), 컨테이너 빌드를 다룬다.
 
 23장의 완료 기준인 ‘CI 게이트 명령 확정’에 사용할 명령을 §7에 제안한다. **[기획]**은 `2f1db92`의 요구·결정, **[제안]**은 10의 검토안, **[제안값 PV-…]**은 04의 기술 수치화 제안이다. [기획 NFR](../01-planning/nfr/NFR.md), [결정 로그](../01-planning/02-decision-log/decision-log.md), [열린 질문](../01-planning/02-decision-log/open-questions.md)
+
+## 변경 이력
+
+| 버전 | 일시 | 변경 |
+| --- | --- | --- |
+| v0.1 | 2026-11-26 (KST) | 관측·CI 설계 초안. |
+| v0.2 | 2026-11-26 (KST) | SSO B-1 결정 반영, B-2 대기 문구 제거. |
 
 ## 1. 기존 CI 현황
 
@@ -64,7 +71,7 @@ ADR 0003의 `tracing`·`tower-http`를 사용한다. **[제안]** `naru-http`에
 
 ## 5. 헬스체크
 
-07 OpenAPI v0.3의 `paths`에는 헬스체크 경로가 없다. 아래는 **[제안]** 운영 전용 경로이며 채택 후 07 개정에서 `/api/v1` 외부의 운영 경계와 프로브 계약을 반영한다. [07 OpenAPI](07-api/openapi.yaml), [05 §4·§8](05-architecture.md)
+07 OpenAPI v0.4의 `paths`에는 헬스체크 경로가 없다. 아래는 **[제안]** 운영 전용 경로이며 채택 후 07 개정에서 `/api/v1` 외부의 운영 경계와 프로브 계약을 반영한다. [07 OpenAPI](07-api/openapi.yaml), [05 §4·§8](05-architecture.md)
 
 | 경로 후보 | 검사 |
 | --- | --- |
@@ -128,7 +135,7 @@ Rust 워크스페이스와 실제 구현 마이그레이션이 준비된 시점�
 | Q-085·Q-087 [미확인] | 휴지통·탈퇴 보관 달력 날짜 30일의 시간대·경계·시작일 산입, 열린 세션의 갱신 주기와 정지 후 차단까지의 최대 시간. |
 | Q-092 [미확인] | 전체 저장 용량 경보 기준 수치·수신자·방법. |
 | DM-002/004/006/007/009/010/011 [미확인] | 07·08의 디자인 대응 보류 항목. |
-| SSO [미확인] | 09의 B-2 기본안 최종 채택은 호배님 결정 대기. |
+| SSO | 호배님이 2026-11-26 21:45 KST에 B-1(나루 OIDC OP·Litpage 새 RP)을 채택하고 B-2를 기각했다. 인증 라이브러리 선정 스파이크, Litpage RP 재부착 검증, B-1 로그아웃 백채널 전파·웹소켓 폐기 및 실측은 [미확인]이다. [09 §4·5·9·11](09-auth.md), [13 §3.4·6](13-cutover.md) |
 | CO-03 [미확인] | 기존 OAuth 클라이언트 재사용·재발급 및 redirect URI 재사용·추가 등록 여부. |
 | 운영 [미확인] | 배포 호스트·이미지 레지스트리, 런타임 시크릿 위치, 관측 저장소, 성공 지표 집계 항목·보관 기간, 분산 추적·헬스체크 적용 범위, §4의 미확인 경보 설정. |
 | CI·브랜치 [미확인] | 설계서 4·23·29장 원문, 실제 Ruleset 상태, 최종 게이트 및 워크스페이스·임시 DB에서의 실행 결과. **필요한 권한**은 후속 구현 시 도구 설치·시험 PostgreSQL 실행 승인과 §8의 저장소 설정 권한이다. |

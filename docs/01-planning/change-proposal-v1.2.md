@@ -12,7 +12,7 @@
 | 작성 | 기획 봇 |
 | 근거 | 인터뷰 라운드 13·14 및 14 후속, DEC-062~077. 호배님 답변 2026-11-18 21:18 KST, 22:05 KST, 22:20 KST, 22:34 KST, 22:39 KST |
 | 대상 | 승인된 FRD·BR·NFR v1.1의 개정 후보 |
-| 관련 문서 | `drafts/01-interview/round-13.md`, `drafts/01-interview/round-14.md`, `drafts/02-decision-log/decision-log.md`, `drafts/frd/FRD.md`, `drafts/business-rules/BR.md`, `drafts/nfr/NFR.md` |
+| 관련 문서 | `docs/01-planning/01-interview/round-13.md`, `docs/01-planning/01-interview/round-14.md`, `docs/01-planning/02-decision-log/decision-log.md`, `docs/01-planning/frd/FRD.md`, `docs/01-planning/business-rules/BR.md`, `docs/01-planning/nfr/NFR.md` |
 
 PRD v1.0과 결정 로그의 승인 기록 행, 기존 DEC 행은 수정하지 않는다. NFR v1.1 본문은 필수 수정 문장이 없다(법적 문서 한·영은 그대로). PRD v1.0의 REQ-006·개요는 푸터에 '회사 정보'를 두고 있으나, 승인된 PRD는 고치지 않는다. 회사 정보 대신 'Dev. Aslan0'을 두는 규칙은 FR·BR v1.2 제안에만 적고, PRD와의 문구 차이는 승인 기록에 남긴다.
 
@@ -33,7 +33,7 @@ PRD v1.0과 결정 로그의 승인 기록 행, 기존 DEC 행은 수정하지 �
 | DEC-070 | 로그인 화면·로그인 차단 안내·링크 보기 화면에도 공통 푸터를 둔다. | FR-SHELL-002 보완 |
 | DEC-071 | 링크 보기 화면은 공통 헤더와 로그인 버튼을 둔다. | FR-SHELL-001, FR-DRV-007 변경(기존에 헤더를 정하지 않음) |
 | DEC-072 | 재가입 복구 안내는 로그인 직후 홈 위 대화상자(로그인 화면 상태가 아님). | FR-AUTH-004, FR-HOME-001 보완 |
-| DEC-073 | 목록 열은 기본안을 제안한 뒤 확인한다. 확인 전 미확정. | DEC-075로 확정·대체. 당시 기본안은 `drafts/wireframe/column-proposal.md` 기록 |
+| DEC-073 | 목록 열은 기본안을 제안한 뒤 확인한다. 확인 전 미확정. | DEC-075로 확정·대체. 당시 기본안은 `docs/01-planning/wireframe/column-proposal.md` 기록([미확인] 파일 존재는 이번에 확인하지 못함) |
 | DEC-075 | 목록 열 확정. 드라이브: 이름·종류·크기·수정일·공유 여부. 휴지통: 이름·종류·크기·자동 삭제까지 남은 기간·원래 위치(수정일 없음). 회원 목록: 표시 이름·이메일·정지 여부. OSS 목록: 이름·노출 상태. 가입일 제외. | FR-DRV-001, FR-DRV-004, FR-ADM-001, FR-ADM-003 보완 |
 | DEC-076 | 링크 보기 화면 비회원 헤더의 로고·카테고리·서비스 전환을 눌러도 로그인 화면으로 이동한다. | FR-SHELL-001, FR-DRV-007 보완 |
 | DEC-077 | 푸터 문의 이메일은 aslanhobae@gmail.com. 오픈소스 라이선스 고지는 같은 창 팝업(새 창 아님). DEC-069 보완. | FR-SHELL-002, BR-021 보완 |
@@ -41,7 +41,7 @@ PRD v1.0과 결정 로그의 승인 기록 행, 기존 DEC 행은 수정하지 �
 
 ## 3. 초안 반영 방침
 
-승인된 FRD·BR·NFR v1.1, PRD v1.0은 지금 수정하지 않는다. 아래 전문은 제안이며, 승인 후 v1.2로 올린다. `UF.md` v0.7과 `AC.md` v0.7, `matrix.csv`, `drafts/wireframe/column-proposal.md`(확정)에는 같은 결정을 초안으로 바로 반영한다.
+승인된 FRD·BR·NFR v1.1, PRD v1.0은 지금 수정하지 않는다. 아래 전문은 제안이며, 승인 후 v1.2로 올린다. `UF.md` v0.7과 `AC.md` v0.7, `matrix.csv`, `docs/01-planning/wireframe/column-proposal.md`(확정)에는 같은 결정을 초안으로 바로 반영한다.
 
 ## 4. 제안하는 문장 수정
 
@@ -257,7 +257,7 @@ PRD v1.0과 결정 로그의 승인 기록 행, 기존 DEC 행은 수정하지 �
 
 ### 5.8 목록 열 구성 (DEC-075, DEC-073 기본안을 대체)
 
-호배님이 2026-11-18 22:20 KST에 열 구성을 확정했다. 가입일은 두지 않는다. 호배님이 '크기, 수정일'을 넣자고 한 것은 드라이브 목록에 적용하고, 휴지통에는 크기만 추가하며 수정일은 두지 않는다. 확정 표는 `drafts/wireframe/column-proposal.md`와 같다. 아래 문장을 해당 FR에 추가한다.
+호배님이 2026-11-18 22:20 KST에 열 구성을 확정했다. 가입일은 두지 않는다. 호배님이 '크기, 수정일'을 넣자고 한 것은 드라이브 목록에 적용하고, 휴지통에는 크기만 추가하며 수정일은 두지 않는다. 확정 표는 `docs/01-planning/wireframe/column-proposal.md`와 같다. 아래 문장을 해당 FR에 추가한다.
 
 **FR-DRV-001** (4.4에 이어서) **입력·처리·결과** 끝에 추가:
 

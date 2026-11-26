@@ -12,26 +12,19 @@ if [[ ! -x "$pandoc_bin" ]]; then
   }
 fi
 
-# README 표에서 폴더, Markdown 파일명, Word 파일명을 읽는다.
-docx_row='^[[:blank:]]*\|[[:blank:]]*([[:alnum:]_-]+)[[:blank:]]*\|[[:blank:]]*([[:alnum:]_.-]+\.md)[[:blank:]]*→[[:blank:]]*([[:alnum:]_.-]+\.docx)[[:blank:]]*\|'
-converted=0
-while IFS= read -r row || [[ -n "$row" ]]; do
-  if [[ "$row" =~ $docx_row ]]; then
-    folder=${BASH_REMATCH[1]}
-    source_file=${BASH_REMATCH[2]}
-    output_file=${BASH_REMATCH[3]}
-    document_dir="$planning_dir/$folder"
+# 기획 폴더를 기준으로 Markdown 원본과 Word 출력 경로를 지정한다.
+while read -r source_path output_path; do
+  document_dir="$planning_dir/${source_path%/*}"
 
-    "$pandoc_bin" "$document_dir/$source_file" \
-      --reference-doc="$reference_doc" \
-      --resource-path="$document_dir" \
-      --output="$document_dir/$output_file" </dev/null
-    printf '%s/%s\n' "$folder" "$output_file"
-    converted=$((converted + 1))
-  fi
-done < "$planning_dir/README.md"
-
-if [[ "$converted" -eq 0 ]]; then
-  printf 'README.md 표에서 Word 변환 대상을 찾을 수 없습니다.\n' >&2
-  exit 1
-fi
+  "$pandoc_bin" "$planning_dir/$source_path" \
+    --reference-doc="$reference_doc" \
+    --resource-path="$document_dir" \
+    --output="$planning_dir/$output_path" </dev/null
+  printf '%s\n' "$output_path"
+done <<'DOCX_TARGETS'
+prd/PRD.md prd/PRD.docx
+frd/FRD.md frd/FRD.docx
+business-rules/BR.md business-rules/Business-Rules.docx
+nfr/NFR.md nfr/NFR.docx
+acceptance-criteria/AC.md acceptance-criteria/Acceptance-Criteria.docx
+DOCX_TARGETS

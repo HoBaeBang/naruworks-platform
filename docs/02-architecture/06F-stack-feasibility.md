@@ -5,10 +5,11 @@
 | 항목 | 내용 |
 |---|---|
 | 문서명 | NaruWorks 설계 문서 06F — 스택 타당성 검토 (백엔드만) |
-| 버전 | v0.3 |
+| 버전 | v0.4 |
 | 작성일 | 2026-11-19 (Asia/Seoul) |
 | 작성 | 설계 봇 |
-| 상태 | 백엔드 추천 승인됨 → [ADR 0003](../decisions/0003-backend-stack.md) (2026-11-19 호배님) |
+| 상태 | 백엔드 추천 승인됨 → [ADR 0003](../decisions/0003-backend-stack.md) (2026-11-19 호배님), 인증/IdP·Litpage → [ADR 0004](../decisions/0004-auth-idp-litpage.md) (§9). 기존 평가·미확인 표는 당시 검토 기록으로 유지. |
+| 개정일 | 2026-11-26 (KST), ADR 0004 연결 |
 | 입력 | `_reviews/06F-spike-mac.md` (Mac 실측, job `P2-2-06F-update-claude-01`로 반영), `_reviews/06F-research-gemini.md` (job `P2-2-06F-research-gemini-01`), `_reviews/06F-spike-codex.md` (job `P2-2-06F-spike-codex-01`), `04-NFR-technical.md` v0.2, `01-planning/02-decision-log/decision-log.md`(DEC-001~080 전체 직접 확인), `01-planning/nfr/NFR.md`(§1~4.4 직접 확인), `01-planning/prd/PRD.md`(§1~5 Must 직접 확인), `01-planning/02-decision-log/open-questions.md` |
 | 직접 읽지 못한 입력 | `FRD.md`, `BR.md`, `NFR.md` §4.5 이후, `PRD.md` §5 Won't 이후. 이들 내용은 04 문서를 경유해 인용했으며 원문 대조는 [미확인] (§11 U-15) |
 
@@ -19,6 +20,7 @@
 | v0.1 | 2026-11-19 (KST) | 초안. 조사(Gemini)·스파이크(Codex) 결과를 04 문서 PV·GAP 번호와 대조해 정리 |
 | v0.2 | 2026-11-19 (KST) | Mac 실측 스파이크(06F-spike-mac.md) 반영, 2026-11-19 KST. §6 실측 교체, 해석 버전 표 추가, 재채점(변동 없음), 추천 "확정 후보"로 상향, §8·§11 갱신. 기획 원문(NFR·PRD·decision-log) 직접 대조 |
 | v0.3 | 2026-11-19 (KST) | 백엔드 추천 승인, ADR 0003 연결 |
+| v0.4 | 2026-11-26 (KST) | §9 인증/IdP·세션 결정에 [ADR 0004](../decisions/0004-auth-idp-litpage.md) 연결. |
 
 ## 2. 범위와 원칙
 
@@ -288,7 +290,7 @@ ADR 결정 전 필요한 기획 확인: GAP-005(재개 필수·프록시 경유)
 | **ADR-웹 프레임워크** → [ADR 0003](../decisions/0003-backend-stack.md)으로 결정 | ① axum ② actix-web ③ poem(OpenAPI 일체형 포함) ④ loco | §4.1 점수, §6 스파이크 a, K1·K2·K7 | 동시 3건·20 VU 측정(§7.2, 단일 업로드·OpenAPI는 합격). 인증/IdP ADR과의 정합 확인 |
 | **ADR-DB 접근·마이그레이션** → [ADR 0003](../decisions/0003-backend-stack.md)으로 결정 | ① sqlx + sqlx migrate ② sea-orm + sea-orm-migration ③ diesel + diesel-async + (refinery 등) | §4.2·§4.3, PV-011·015·020 질의 요구 | `query_as` 컴파일 합격(`query!`는 제외, 채택 여부는 ADR에서 결정), PG 검증 환경 승인, GAP-021 답변(30일 기산) |
 | **ADR-파일 저장소** | ① 로컬 FS ② S3 호환(MinIO 등) + aws-sdk-s3 ③ `object_store` 추상화(로컬로 시작) | §5 비교, PV-001·002·003·014·015, GAP-005·009·010·027 | 스파이크 a(단일 업로드 합격, 동시 3건 남음), GAP-005(재개·프록시), GAP-010(백업 삭제 상충), 05 문서 배포 구조 |
-| **ADR-인증/IdP·세션** (06 문서 연결) | ① Keycloak 유지(OIDC RP) ② 자체 구현(OIDC Provider 또는 자체 세션) ③ 하이브리드(미검토, 선택지 발굴 필요) | DEC-008, PV-017·018·029, FR-OSS-001 | **GAP-028(결정 자체가 이 ADR의 몫)**, GAP-012·013·014·034, Litpage 코드 현황 확인(U-15) |
+| **ADR-인증/IdP·세션** → 완료 ([ADR 0004](../decisions/0004-auth-idp-litpage.md)) | Keycloak 제거, 나루(axum)가 Google 로그인·PostgreSQL 세션·정지를 직접 처리. Litpage 인증 연결을 새로 작성하고 저장 형식은 Markdown·CSV(무손실 재열기 조건). | DEC-008·092·094·098, NFR-SEC-001·002·006, PV-017·018·029, FR-OSS-001~003 | GAP-028 해소. SSO 최종 확정은 09, 무손실 패키징 채택은 왕복 스파이크 합격 후. Q-087 [미확인]. |
 | **ADR-백그라운드 작업** | ① tokio 내장 + DB 상태 테이블(자체 큐) ② apalis(PostgreSQL) ③ tokio-cron-scheduler + 인프라 분리 | §4.5, PV-002·005·014·016·020 | 썸네일 유실 허용 여부(PV-005 확인), 스파이크 미포함 → 별도 소규모 검증 |
 | ADR-API 계약·관측성 (필요 시 분리) | ① utoipa → [ADR 0003](../decisions/0003-backend-stack.md)으로 결정 ② aide ③ poem-openapi(poem 선택 시) / 관측: tracing 단독 vs +OTel | §4.4·§4.6, PV-016·021 | 웹 프레임워크 ADR(스파이크 c는 합격) |
 

@@ -1,0 +1,216 @@
+--- new/naru_orch.py	2026-11-24 11:35:14.863868188 +0900
++++ v017/naru_orch.py	2026-11-25 00:25:06.475734399 +0900
+@@ -29,6 +29,11 @@
+   config.json의 exhaustion_patterns는 기본 패턴에 더해서 쓴다(덮어쓰지 않음).
+   (2) save-result·build_docx·figcraft_export의 허용 문서 폴더를 작업 폴더 별칭별로 정한다(doc_roots).
+   기획=docs/01-planning, 디자인=docs/03-ui-design, 설계=docs/02-architecture. 다른 봇 폴더에는 쓰지 못한다.
++- v0.1.7: 잡별 토큰 사용량 기록(job_usage 표). 잡이 끝나면(done/failed/timeout/fallback 전) 같은 작업 폴더에서
++  잡 시간대에 시작한 Claude Code 세션(~/.claude/projects/<인코딩된 cwd>/*.jsonl)의 usage 필드와
++  Codex 세션(~/.codex/sessions/**/rollout-*.jsonl)의 token_count만 읽어 숫자로 저장한다. 대화 내용은 저장하지 않는다.
++  `naru-orch usage <job_id> [--refresh]`로 조회. 집계 실패는 잡 상태에 영향을 주지 않는다(job_log에만 남김).
++  Gemini(antigravity)는 사용량 필드를 찾지 못해 기록하지 않는다 [미확인].
+ """
+ from __future__ import annotations
+ 
+@@ -46,7 +51,7 @@
+ import sys
+ from pathlib import Path
+ 
+-VERSION = "0.1.6"
++VERSION = "0.1.7"
+ HOME = Path(os.environ.get("NARU_ORCH_HOME", str(Path.home() / ".naru-orch"))).expanduser()
+ DB_PATH = HOME / "state.db"
+ CONFIG_PATH = HOME / "config.json"
+@@ -289,6 +294,19 @@
+   until TEXT NOT NULL,
+   evidence TEXT
+ );
++CREATE TABLE IF NOT EXISTS job_usage (
++  job_id TEXT NOT NULL,
++  provider TEXT NOT NULL,
++  session TEXT NOT NULL,          -- 세션 파일 이름(확장자 제외). 내용은 저장하지 않는다
++  api_calls INTEGER NOT NULL DEFAULT 0,
++  input INTEGER NOT NULL DEFAULT 0,
++  output INTEGER NOT NULL DEFAULT 0,
++  cache_creation INTEGER NOT NULL DEFAULT 0,
++  cache_read INTEGER NOT NULL DEFAULT 0,
++  ctx_max INTEGER NOT NULL DEFAULT 0,
++  recorded_at TEXT NOT NULL,
++  PRIMARY KEY (job_id, session)
++);
+ """
+ # v0.1.0 → v0.1.1 열 추가 (ALTER TABLE ADD COLUMN, 데이터 보존)
+ JOB_COLUMNS_V011 = {"model": "TEXT", "thinking": "TEXT", "role": "TEXT", "fallback_hops": "INTEGER NOT NULL DEFAULT 0",
+@@ -802,6 +820,134 @@
+     return out({"ok": st == "done", "cmd": "submit", "job_id": row["id"], "state": st, "output": str(dst)}, 0 if st == "done" else 1)
+ 
+ 
++# ---------------------------------------------------------------- usage (v0.1.7)
++# 숫자만 읽는다. 메시지 본문·도구 결과는 읽어서 버리고 어디에도 저장하지 않는다.
++CLAUDE_PROJECTS = Path.home() / ".claude" / "projects"
++CODEX_SESSIONS = Path.home() / ".codex" / "sessions"
++USAGE_SLACK_SEC = 120  # 잡 시작 전 이만큼 일찍 시작한 세션까지 포함
++
++
++def _ts(s):
++    try:
++        return _dt.datetime.fromisoformat(str(s).replace("Z", "+00:00")).astimezone()
++    except Exception:
++        return None
++
++
++def _claude_project_dir(cwd: Path) -> Path:
++    # Claude Code는 cwd의 영숫자 외 문자를 '-'로 바꾼 폴더명을 쓴다(2026-11-24 실측: naru-design 등) [특수문자 미확인]
++    return CLAUDE_PROJECTS / re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
++
++
++def _claude_usage(path: Path):
++    seen, calls, tot, ctx_max, first = set(), 0, [0, 0, 0, 0], 0, None
++    with path.open(encoding="utf-8", errors="ignore") as f:
++        for line in f:
++            try:
++                o = json.loads(line)
++            except Exception:
++                continue
++            if first is None and o.get("timestamp"):
++                first = _ts(o["timestamp"])
++            m = o.get("message") if isinstance(o.get("message"), dict) else None
++            if o.get("type") != "assistant" or not m or not m.get("usage"):
++                continue
++            key = (m.get("id"), o.get("requestId"))   # content 블록마다 같은 usage가 반복 기록됨(실측) → 한 번만 센다
++            if key in seen:
++                continue
++            seen.add(key)
++            u = m["usage"]
++            v = [u.get("input_tokens") or 0, u.get("output_tokens") or 0,
++                 u.get("cache_creation_input_tokens") or 0, u.get("cache_read_input_tokens") or 0]
++            tot = [a + b for a, b in zip(tot, v)]
++            calls += 1
++            ctx_max = max(ctx_max, v[0] + v[2] + v[3])
++    return first, {"api_calls": calls, "input": tot[0], "output": tot[1], "cache_creation": tot[2],
++                   "cache_read": tot[3], "ctx_max": ctx_max}
++
++
++def _codex_usage(path: Path):
++    first, cwd, calls, total, ctx_max = None, None, 0, {}, 0
++    with path.open(encoding="utf-8", errors="ignore") as f:
++        for line in f:
++            try:
++                o = json.loads(line)
++            except Exception:
++                continue
++            if first is None and o.get("timestamp"):
++                first = _ts(o["timestamp"])
++            p = o.get("payload") or {}
++            if o.get("type") == "session_meta":
++                cwd = p.get("cwd")
++            if p.get("type") == "token_count" and p.get("info"):
++                calls += 1
++                total = p["info"].get("total_token_usage") or total
++                last = p["info"].get("last_token_usage") or {}
++                ctx_max = max(ctx_max, last.get("input_tokens") or 0)
++    cached = total.get("cached_input_tokens") or 0
++    return first, cwd, {"api_calls": calls, "input": (total.get("input_tokens") or 0) - cached,
++                        "output": total.get("output_tokens") or 0, "cache_creation": 0,
++                        "cache_read": cached, "ctx_max": ctx_max}
++
++
++def collect_usage(row) -> list:
++    """잡 시간대(created_at-120s ~ updated_at)에 같은 cwd에서 시작한 Claude·Codex 세션의 사용량 목록."""
++    if not row.get("cwd_path"):
++        return []
++    cwd = Path(row["cwd_path"])
++    start = _ts(row.get("started_at") or row.get("created_at"))
++    end = _ts(row.get("updated_at")) or _dt.datetime.now().astimezone()
++    if not start:
++        return []
++    lo = start - _dt.timedelta(seconds=USAGE_SLACK_SEC)
++    found = []
++    pdir = _claude_project_dir(cwd)
++    if pdir.is_dir():
++        for f in pdir.glob("*.jsonl"):
++            if _dt.datetime.fromtimestamp(f.stat().st_mtime).astimezone() < lo:
++                continue
++            first, u = _claude_usage(f)
++            if first and lo <= first <= end and u["api_calls"]:
++                found.append({"provider": "claude", "session": f.stem, **u})
++    if CODEX_SESSIONS.is_dir():
++        for day in {lo.date(), end.date()}:
++            ddir = CODEX_SESSIONS / f"{day:%Y}" / f"{day:%m}" / f"{day:%d}"
++            for f in (ddir.glob("rollout-*.jsonl") if ddir.is_dir() else []):
++                first, scwd, u = _codex_usage(f)
++                if first and lo <= first <= end and scwd and Path(scwd) == cwd and u["api_calls"]:
++                    found.append({"provider": "codex", "session": f.stem, **u})
++    return found
++
++
++def record_usage(con, row) -> list:
++    rows = collect_usage(dict(row))
++    for u in rows:
++        con.execute("""INSERT OR REPLACE INTO job_usage(job_id,provider,session,api_calls,input,output,cache_creation,cache_read,ctx_max,recorded_at)
++                       VALUES(?,?,?,?,?,?,?,?,?,?)""",
++                    (row["id"], u["provider"], u["session"], u["api_calls"], u["input"], u["output"],
++                     u["cache_creation"], u["cache_read"], u["ctx_max"], now()))
++    return rows
++
++
++def _record_usage_safe(con, row) -> None:
++    try:
++        rows = record_usage(con, get_job(con, row["id"]))
++        job_log(row["id"], f"usage recorded: {len(rows)} session(s)")
++    except Exception as e:  # 사용량 집계 실패는 잡 상태에 영향을 주지 않는다
++        job_log(row["id"], f"usage record failed: {type(e).__name__}: {e}"[:300])
++
++
++def cmd_usage(args, cfg):
++    con = db()
++    row = get_job(con, args.job_id)
++    if args.refresh:
++        record_usage(con, row)
++    rows = [dict(r) for r in con.execute("SELECT * FROM job_usage WHERE job_id=? ORDER BY provider, session", (row["id"],))]
++    total = {k: sum(r[k] for r in rows) for k in ("api_calls", "input", "output", "cache_creation", "cache_read")}
++    total["ctx_max"] = max([r["ctx_max"] for r in rows] or [0])
++    return out({"ok": True, "cmd": "usage", "job_id": row["id"], "sessions": rows, "total": total})
++
++
+ def _refresh(con, cfg, row) -> dict:
+     """running 작업 하나의 상태를 paseo inspect로 갱신."""
+     if row["state"] not in ("running", "needs_permission") or not row["paseo_agent_id"]:
+@@ -818,6 +964,7 @@
+             set_state(con, row, "needs_permission", last_error=f"{len(pending)} pending permission(s) — 자동 허용 안 함")
+     elif status in STATUS_DONE | STATUS_FAILED and (exh := check_agent_exhaustion(con, cfg, row, status))[0]:
+         ev, last_msg = exh
++        _record_usage_safe(con, row)  # v0.1.7: 소진된 시도의 사용량도 남긴다
+         if row["kind"] == "agent.run":
+             res = _fallback(con, cfg, row, ev, from_agent=row["paseo_agent_id"], last_message=last_msg)
+         else:  # agent.send는 같은 세션에 묶여 있어 다른 LLM으로 옮기지 않는다
+@@ -835,13 +982,16 @@
+         warn = "commit_detected" if row["head_before"] and head_after and head_after != row["head_before"] else None
+         set_state(con, row, "done", head_after=head_after, last_error=warn)
+         unlock(con, row["id"])
++        _record_usage_safe(con, row)
+     elif status in STATUS_FAILED:
+         set_state(con, row, "failed", last_error=f"agent status {status}")
+         unlock(con, row["id"])
++        _record_usage_safe(con, row)
+     elif elapsed_min > row["timeout_min"]:
+         run_cmd([bin_path(cfg, "paseo"), "stop", row["paseo_agent_id"], "--json"], cfg, timeout=60)
+         set_state(con, row, "timeout", last_error=f"> {row['timeout_min']} min, paseo stop 실행")
+         unlock(con, row["id"])
++        _record_usage_safe(con, row)
+     elif status not in STATUS_BUSY and status != "unknown":
+         event(con, row["id"], row["state"], row["state"], {"unrecognized_status": status})  # [미확인] 값 기록
+     out_row = dict(get_job(con, row["id"]))
+@@ -1029,10 +1179,11 @@
+     p = sp.add_parser("drop-snapshot"); p.add_argument("name")
+     p = sp.add_parser("limits"); p.add_argument("--clear", choices=PROVIDERS)
+     p = sp.add_parser("save-result"); p.add_argument("job_id"); p.add_argument("alias"); p.add_argument("path"); p.add_argument("--force", action="store_true")
++    p = sp.add_parser("usage"); p.add_argument("job_id"); p.add_argument("--refresh", action="store_true")
+     args = ap.parse_args(argv)
+     handlers = {"init": cmd_init, "doctor": cmd_doctor, "submit": cmd_submit, "status": cmd_status,
+                 "result": cmd_result, "cancel": cmd_cancel, "retry": cmd_retry, "permits": cmd_permits,
+-                "agents": cmd_agents, "snapshot": cmd_snapshot, "drop-snapshot": cmd_drop_snapshot, "limits": cmd_limits, "save-result": cmd_save_result}
++                "agents": cmd_agents, "snapshot": cmd_snapshot, "drop-snapshot": cmd_drop_snapshot, "limits": cmd_limits, "save-result": cmd_save_result, "usage": cmd_usage}
+     try:
+         cfg = load_config()
+         if args.cmd != "init" and not DB_PATH.exists():

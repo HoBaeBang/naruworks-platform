@@ -3,7 +3,7 @@
 상태: 기획 기준선 develop `2f1db92`(PR #99 머지), 라운드 16~19(DEC-081~121) 호배님 승인 완료. 갱신일은 2026-11-26(Asia/Seoul)이다. 문서 간 충돌은 README의 우선순위를 따른다(DEC-081).
 관련 문서: `docs/01-planning/00-context/service-definition.md`, `docs/01-planning/02-decision-log/decision-log.md`
 
-관련 문서는 PRD v1.2, FRD·BR v1.5, NFR v1.4, AC·UF v1.3이다.
+관련 문서는 PRD v1.3, FRD·BR v1.7, NFR v1.5, AC·UF v1.5이다.
 
 | 용어 | 정의 | 출처 |
 |---|---|---|

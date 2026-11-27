@@ -1,17 +1,8 @@
-연결 중단, 표만 유지(호배님 23:20 KST). FigCraft 연결·수정 금지.
-연결됨(트리거id>도착id):
-72 82>208
-208 236>919; 256>3769; 224>4300
-919 980>208; 982>1201
-1201 1204>208
-3769 3772>208; 3803>3996; 3839>4163
-3996 3999>208; 4026>3769
-4163 4166>208
-4300 4302>208; 4332>4354
-4354 4356>208; 4379>4384; 4429>4300
-4384 4386>208; 4413>4354; 4415>4430
-4430 4483>72
-표: prototype/README.md 화면 이동 표. 표만 17, 미확인 1.
-파일: 작업 docs/03-ui-design/prototype/prototype-wf01-02.figcraft. 원본 docs/03-ui-design/screens/ 열기·저장 금지. 임시본 tmp-screens-wf09-12, wf13-16, wf05-08 그대로.
-다음: 새 연결 잡 없음. 표만 유지. 커밋·push·검수 안 함.
-금지: 미커밋 PNG, file-pdf/archive, stash, .omc, screen-data, 01-planning, 02-architecture
+# 핸드오프 순서 6 (P3-6-v11-proto-01)
+표: prototype/README.md (A 기존 22 연결됨, B 화면 파일 라이트 20, C 표만 20·미확인 2).
+신규 연결(screens-wf05-08만, 라이트): 8511·8883·8966·9271 → 3968. 기존 26개는 유지. 다크 9개는 표에 안 적음(정책: 라이트만).
+prototype-wf01-02.figcraft·tmp-*.figcraft·`screens-wf05-08 2.figcraft` 미수정.
+[미확인]: WF-07 닫기(5575), 휴지통 사이드바에 공유받은 파일 메뉴 없음, DEC-110 언어별 프레임.
+DEC-118·119는 표만(교차 파일). WF-14 상태 B(2978)·WF-09 보관은 같은 화면이라 주석만.
+커밋·push 안 함. 다음 잡 없음.
+금지: 미커밋 PNG, file-pdf/archive, stash, .omc, 01-planning, 02-architecture

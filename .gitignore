@@ -36,3 +36,9 @@ tmp/
 
 # Claude/OMC local state
 .omc/
+
+# Keys and local spike build artifacts
+*.pem
+*.key
+**/auth/keys/
+spike-lab/**/target/

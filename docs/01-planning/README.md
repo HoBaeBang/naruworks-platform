@@ -1,24 +1,26 @@
 # 기획 산출물 (docs/01-planning)
 
-이슈: #91 · 브랜치: feature/NARU-91-planning-gap
+이슈: #100 · 브랜치: `feature/NARU-100-planning-rebaseline`
 
 기획 봇이 README(2026-11-11 버전)를 출발점으로 사용자와 대화하며 만든 기획 문서를 둔다.
 
 ## 기준선과 버전
 
-**기획 기준선 v1.0 = develop 4b66d1d(승인⑤).**
+**현재 기획 기준선은 develop `2f1db92`(PR #99 머지)이다.**
 
-- AC·UF v1.2에는 기준선 v1.0 확정본과 라운드 16~19(DEC-081~121) 반영분이 포함된다.
-- 라운드 18·19(2026-11-26)의 문서 반영분은 호배님 승인 대기이다. 승인 기록은 결정 로그에서 관리한다.
+- 라운드 16~19(DEC-081~121) 반영분은 호배님 승인 완료다. 승인 기록은 결정 로그에서 관리한다.
+- 라운드 20(DEC-122) 개정분은 호배님 승인 대기다.
+- 라운드 21(DEC-123) 및 DEC-122 화면 영향 개정분은 호배님 승인 대기.
+- 라운드 22(DEC-124~135) 개정분은 호배님 승인 대기.
 
 | 문서 | 현재 버전 | 비고 |
 |---|---|---|
-| PRD | v1.2 | 1차 범위·제품 요구 및 재가입 데이터 복구 지표 갱신 |
-| FRD | v1.4 | 라운드 18·19 기능 정책, 전용 WF가 없는 상태 설명 반영 |
-| BR | v1.4 | 라운드 18·19 제품 규칙 반영 |
-| NFR | v1.3 | 업로드·공유·복구·언어·테마의 적용 범위와 측정 기준 갱신 |
-| AC | v1.2 | 모든 AC-FR-*는 Must, 개정 수용 기준 41개(신규 7개 포함) |
-| UF | v1.2 | 라운드 18·19 사용자 흐름과 화면 상태 반영 |
+| PRD | v1.3 | REQ-006·007·013·015·018·020·026과 관리자 범위 및 재가입 복구 지표를 보완. 라운드 22 개정분 승인 대기 |
+| FRD | v1.7 | 공유·업로드·휴지통·가입·정지·언어·푸터·관리 기능을 보완. 라운드 22 개정분 승인 대기 |
+| BR | v1.7 | 휴지통·탈퇴 보관의 날짜 경계와 정지·공유·푸터·업로드·언어·관리 정책을 보완. 라운드 22 개정분 승인 대기 |
+| NFR | v1.5 | 보관 경계, 정지 반영 최대 시간 및 비로그인 언어 전환의 측정 기준을 보완. 라운드 22 개정분 승인 대기 |
+| AC | v1.5 | 기존 검증에 반영하고 AC-FR-DRV-003-10에서 단일·분할 업로드 화면 동작을 검증. 라운드 22 개정분 승인 대기 |
+| UF | v1.5 | 로그인·드라이브·공유·탈퇴·관리 흐름과 공통 푸터를 보완. 라운드 22 개정분 승인 대기 |
 
 ## 충돌 시 우선순위
 
@@ -39,7 +41,7 @@
 |---|---|---|
 | 00-context/service-definition.md | 서비스 정의 v1.0 | - |
 | 00-context/glossary.md | 용어집 | - |
-| 01-interview/round-15.md, round-16.md, round-17.md, round-18.md, round-19.md 외 | 라운드별 질문과 답변 원문 | Q-### |
+| 01-interview/round-15.md, round-16.md, round-17.md, round-18.md, round-19.md, round-20.md, [round-21.md](01-interview/round-21.md), [round-22.md](01-interview/round-22.md) 외 | 라운드별 질문과 답변 원문 | Q-### |
 | 02-decision-log/decision-log.md | 결정 로그, 승인 기록 | DEC-### |
 | 02-decision-log/open-questions.md | 열린 질문 | Q-### |
 | prd/PRD.md | PRD (→ PRD.docx) | REQ-### |
@@ -51,6 +53,8 @@
 | wireframe/ | FigCraft 원본(WF.figcraft), exports/ PNG | WF-## |
 | traceability/matrix.csv | 요구·결정·수용 기준 및 PRD §6 성공 지표 추적표 | - |
 | carry-over/README.md | 이어받는 설정(도메인, Cloudflare, 소셜 로그인)의 보관 위치. 비밀 값은 적지 않음 | CO-## |
+| [carry-over/design-impact-DEC-122.md](carry-over/design-impact-DEC-122.md) | 업로드 화면 영향과 디자인·설계 이관 사항 | DEC-122, DEC-128 |
+| [carry-over/design-handoff-naru93.md](carry-over/design-handoff-naru93.md) | 디자인 확인 63항목 대응표와 라운드 22 답변 | DEC-124~135 |
 | change-proposal-v1.2.md, change-proposal-prd-v1.1.md | 승인된 변경안(이력 보존) | - |
 | gemini-consistency-review-01.md | Gemini 정합성 검토 | - |
 | _templates, _tools | 문서 템플릿(reference.docx), 변환·검사 스크립트 | - |
@@ -59,6 +63,6 @@
 
 ## 작업 원칙
 
-- Markdown이 원본이고 .docx는 pandoc으로 만든 생성물이다. 라운드 18·19 개정을 반영한 Markdown에서 표에 표시된 Word 문서 5종을 다시 생성했다.
+- Markdown이 원본이고 .docx는 pandoc으로 만든 생성물이다. 표에 표시된 Word 문서 5종은 `_tools/build-docx.sh`로 다시 생성한다.
 - 비밀 값(.env, 키, 토큰)은 어떤 문서에도 적지 않는다. 보관 위치만 적는다(CO-01~03은 carry-over/README.md).
 - 문서 안의 경로는 `drafts/...`가 아니라 `docs/01-planning/...` 실제 경로로 적는다.
